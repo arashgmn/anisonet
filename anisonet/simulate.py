@@ -5,6 +5,7 @@ This is the main module to set up and simulate an anisotropic network. Other
 modules are auxillary utilities used here. 
 """
 
+import os
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
@@ -22,7 +23,8 @@ from landscape import make_landscape
 from anisofy import get_post_syns
 
 
-root = '/home/arash/gdrive/UMG/anisonet/anisonet/'
+root = './'
+
 class Simulate(object):
     """
     High-level object for simulating an anisotropic network in Brian.
@@ -48,6 +50,13 @@ class Simulate(object):
         :param scalar: A scaling factor for downsizing the network, defaults to 1
         :type scalar: int, optional    
         """
+        
+        # making necessary folders
+        if not os.path.exists('results'):
+            os.makedirs('results')
+        if not os.path.exists('results/data'):
+            os.makedirs('results/data')
+        
         
         # initialize with defaults
         self.pops_cfg , self.conn_cfg = configs.get_config(net_name, scalar=scalar)

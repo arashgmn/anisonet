@@ -16,7 +16,7 @@ import numpy as np
 from brian2.units import ms
 import utils 
 
-root = '/home/arash/gdrive/UMG/anisonet/anisonet/'
+root = './'
 
 def get_cax(ax):
     """

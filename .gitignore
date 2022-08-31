@@ -1,11 +1,10 @@
 anisonet/__pycache__/
 anisonet/.ipynb_checkpoints
 anisonet/old
-anisonet/tests
+tests
 anisonet/tmp
-anisonet/results/*
-!anisonet/results/data
-anisonet/results/data/*
+anisonet/results/
+                                                                                                                                                                                                                                                                                                                                                                                            
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

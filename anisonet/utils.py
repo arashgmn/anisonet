@@ -10,7 +10,7 @@ import numpy as np
 from brian2 import Equations 
 from brian2 import mV, nS, pA, ms
 
-root = '/home/arash/gdrive/UMG/anisonet/anisonet/'
+root = './'
 
 def coord2idx(coords, pop):
     """
