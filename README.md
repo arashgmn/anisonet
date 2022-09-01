@@ -14,7 +14,7 @@ The code structure is simple. We have a main class called `Simulate` which sets 
 For further details check the documentation in `docs/index.html` (you need to clone the repo first).
 
 ## Setting up the environment
-You basically need three things:
+You basically need five things:
 
 - brian
 - numpy
@@ -22,19 +22,19 @@ You basically need three things:
 - matplotlib
 - noise (for Perlin noise)
 
-The rest are dependencies. I recommand installing all but last one with `conda` (or `mamba` -- it's just faster) and the last one with `pip`. Or, if you like, you can use `environment.yml` to create your conda environment (although, depending on your machine, it might not work).
+The rest are dependencies. I recommand installing all but the last one with `conda` (or `mamba` -- it's just faster). Install `noise` with `pip`. Or, if you like, you can use `environment.yml` to create your conda environment (although depending on your machine, it might not work).
 
 ## How to run
 After setting up your environment, simply navigate to `anisonet/` and run the following command:
 
 ```python simulate.py```
 
-This makes the *Inhibitory Network* of the aforementioned paper, warms up the netowrk and stores the state in `results/data/`. It also visualizes landscape, in- and out-degrees, and the realized landscape, and saves these figures in `results` directory. Finally, it runs the network for 2.5 seconds (while saving the intermediate results), and finishes by making a cool animation of the network activity (which again, you can find in `results`). 
+This makes the *Inhibitory Network* of the aforementioned paper, warms up the netowrk and stores the state in the `results/data/` (will be created upon first run). It also visualizes landscape, in- and out-degrees, and the realized landscape, and saves these figures in the `results` directory. Finally, it runs the network for 2.5 seconds (while saving the intermediate results), and finishes by making a cool animation of the network activity (which again, you can find in `results`). 
 
-*Excitatory-Inhibitory Network* too can be initialized by setting `net_name="EI_net"`. However, bear in mind that the code is not fully tested.
+*Excitatory-Inhibitory Network*, too, can be initialized by setting `net_name="EI_net"`. However, bear in mind that the code is not fully tested for that setting.
 
 ## Important Note
-This implementation is work in progress and possibly contains bugs! Any feedback is welcomed.
+This implementation is work in progress and possibly contains bugs! Any feedback is welcome.
 
 
 ### Known issue
