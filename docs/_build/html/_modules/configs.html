@@ -1,0 +1,472 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>configs &mdash; anisonet 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> anisonet
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">anisonet</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../anisofy.html">anisofy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../configs.html">configs module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../configs.html#population-s-configuration">Population’s configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../configs.html#pathways-configuration">Pathways’ configuration</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../configs.html#profile">Profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configs.html#synapse">Synapse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configs.html#anisotropy">Anisotropy</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../equations.html">equations module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../equations.html#noise-scaling">Noise scaling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../equations.html#synaptic-model">Synaptic model</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../landscape.html">landscape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../simulate.html">simulate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils.html">utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../viz.html">viz module</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">anisonet</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Module code</a> &raquo;</li>
+        
+      <li>configs</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for configs</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Configs is a utility module that passes the default configurations according to</span>
+<span class="sd">the `[1]`_. Configurations are set-up in form of nested dictionaries whose </span>
+<span class="sd">structure is explained below. If you&#39;d  like to get the exact configurations as </span>
+<span class="sd">in `[1]`_, use the ``get_config`` utility below.</span>
+
+
+<span class="sd">==========================</span>
+<span class="sd">Population&#39;s configuration</span>
+<span class="sd">==========================</span>
+
+<span class="sd">Populations are identified by a single character name (like ``&quot;P&quot;``) and must </span>
+<span class="sd">have parameters in the following form:</span>
+
+<span class="sd">..  code-block:: python</span>
+<span class="sd">    </span>
+<span class="sd">    {&#39;gs&#39;: ..., </span>
+<span class="sd">     &#39;noise&#39;: {&#39;mu&#39;: ..., &#39;sigma&#39;: ...},</span>
+<span class="sd">     &#39;cell&#39;: {&#39;type&#39;: &#39;LIF&#39;, </span>
+<span class="sd">              &#39;thr&#39;: ..., &#39;ref&#39;: ..., &#39;rest&#39;: ...,</span>
+<span class="sd">              &#39;tau&#39;: ..., &#39;C&#39;: ...}</span>
+<span class="sd">     }</span>
+<span class="sd">    </span>
+
+<span class="sd">with </span>
+
+<span class="sd">#. ``gs``: grid size (int)</span>
+<span class="sd">#. ``mu`` and ``sigma``: the background current amplitude in standard deviation as Brian quantities with current unit</span>
+<span class="sd">#. ``type``: fixed -- for the moment only LIF neuron is possible</span>
+<span class="sd">#. ``thr`` and ``rest``: threhold and resting potentials as Brian quantities with voltage unit</span>
+<span class="sd">#. ``ref``: refractory period as a Brian quantity with time unit</span>
+<span class="sd">#. ``tau``: membrane time scale as a Brian quantity with time unit</span>
+<span class="sd">#. ``C``: membrane capacitance as a Brian quantity with capacitance unit</span>
+
+
+<span class="sd">=======================</span>
+<span class="sd">Pathways&#39; configuration</span>
+<span class="sd">=======================</span>
+
+<span class="sd">Pathways are identified by two-character names (like ``&quot;PQ&quot;``) that specifies </span>
+<span class="sd">the source (P) and target (Q) populations. Each pathway must have be configured</span>
+<span class="sd">similar to the following form:</span>
+
+<span class="sd">..  code-block:: python</span>
+
+<span class="sd">    {&#39;ncons&#39;: ..., &#39;self_link&#39;: False, </span>
+<span class="sd">     &#39;profile&#39;: {...}</span>
+<span class="sd">     &#39;anisotropy&#39;: {...}</span>
+<span class="sd">    }</span>
+
+
+<span class="sd">#. ``ncons``: number of connections from each source neuron to the target population (int)</span>
+<span class="sd">#. ``self_link``: if self-link is allowed; only important if source and target are the same object. In other words, pathway is recurrent. (bool)</span>
+
+<span class="sd">~~~~~~~</span>
+<span class="sd">Profile</span>
+<span class="sd">~~~~~~~</span>
+<span class="sd">Use either of the following structures for the value of ``profile`` key:</span>
+<span class="sd">    </span>
+<span class="sd">..  code-block:: python</span>
+
+<span class="sd">    {</span>
+<span class="sd">     &#39;profile&#39;: {&#39;type&#39;:&#39;Gamma&#39;, &#39;params&#39;: {&#39;theta&#39;: ..., &#39;kappa&#39;: ...} },  # this</span>
+<span class="sd">     &#39;profile&#39;: {&#39;type&#39;:&#39;Gaussian&#39;, &#39;params&#39;: {&#39;std&#39;: ...} }, # or this can be used</span>
+<span class="sd">    }</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">#. ``type``: either ``&quot;Gamma&quot;`` or ``&quot;Gaussian&quot;`` (str)</span>
+<span class="sd">#. ``params``: distribution parameters (float)</span>
+
+<span class="sd">~~~~~~~</span>
+<span class="sd">Synapse</span>
+<span class="sd">~~~~~~~</span>
+<span class="sd">Use either of the following structures for the value of ``profile`` key:</span>
+<span class="sd">    </span>
+<span class="sd">..  code-block:: python</span>
+
+<span class="sd">    {</span>
+<span class="sd">     &#39;synapse&#39;: {&#39;type&#39;:&#39;alpha_current&#39;, &#39;params&#39;: {&#39;J&#39;: ..., &#39;delay&#39;: ..., &#39;tau&#39;: ...}},</span>
+<span class="sd">     &#39;synapse&#39;: {&#39;type&#39;:&#39;alpha_conductance&#39;, &#39;params&#39;: {&#39;J&#39;: ..., &#39;delay&#39;: ..., &#39;tau&#39;: ..., &#39;Erev&#39;: ...}},</span>
+<span class="sd">     &#39;synapse&#39;: {&#39;type&#39;:&#39;alpha_voltage&#39;, &#39;params&#39;: {&#39;J&#39;: ..., &#39;delay&#39;:..., &#39;tau&#39;: ...}},</span>
+<span class="sd">    }</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">#. ``type``: either ``&quot;alpha_voltage&quot;, &quot;alpha_current&quot;`` or ``&quot;alpha_conductance&quot;`` (str) -- for now, only alpha profile is available</span>
+<span class="sd">#. ``params``: </span>
+<span class="sd">    * ``tau``: rise and decay time scales as a Brian time quantity</span>
+<span class="sd">    * ``delay``: synaptic delay  as a Brian time quantity</span>
+<span class="sd">    * ``J``: synaptic qunatal with unit volt, ampere, or siemens for synapses of type ``voltage, current`` or ``conductance``. Note that the sign will determine the polarity of the projection (inhibitory or excitatory).</span>
+<span class="sd">    * ``Erev``: the reversal potential for conductance-based synapse as a Brian quantity of unit volt</span>
+
+
+<span class="sd">~~~~~~~~~~</span>
+<span class="sd">Anisotropy</span>
+<span class="sd">~~~~~~~~~~</span>
+<span class="sd">Use either of the following structures for the value of ``profile`` key:</span>
+<span class="sd">    </span>
+<span class="sd">..  code-block:: python</span>
+
+<span class="sd">    {</span>
+<span class="sd">     &#39;anisotropy&#39;: {&#39;type&#39;: &#39;perlin&#39;, &#39;params&#39;: {&#39;r&#39;: ..., &#39;scale&#39;: ...}}</span>
+<span class="sd">     &#39;anisotropy&#39;: {&#39;type&#39;: &#39;homogeneous&#39;, &#39;params&#39;: {&#39;r&#39;: ..., &#39;phi&#39;: ...}}</span>
+<span class="sd">     &#39;anisotropy&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;params&#39;: {&#39;r&#39;:  ...,}}</span>
+<span class="sd">     &#39;anisotropy&#39;: {&#39;type&#39;: &#39;symmetric&#39;, &#39;params&#39;: {}}</span>
+<span class="sd">    }</span>
+<span class="sd">    </span>
+<span class="sd">#. ``type``: name of anisotropy profile. For now only one of the ``[&#39;perlin, homogeneous, random, symmetric&#39;]`` are possible. (str)</span>
+<span class="sd">#. ``params``:</span>
+<span class="sd">    * ``r``: displacement (float) -- not important for symmetric type,</span>
+<span class="sd">    * ``scale``: perlin scale if type is ``&quot;perlin&quot;`` (int)</span>
+<span class="sd">    * ``phi``: uniform anisotropic angle if type is ``&quot;homogeneous&quot;`` (float)</span>
+
+
+<span class="sd">.. _[1]: https://doi.org/10.1371/journal.pcbi.1007432</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">brian2.units</span> <span class="kn">import</span> <span class="n">pA</span><span class="p">,</span> <span class="n">mV</span><span class="p">,</span> <span class="n">ms</span><span class="p">,</span> <span class="n">pF</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_config"><a class="viewcode-back" href="../configs.html#configs.get_config">[docs]</a><span class="k">def</span> <span class="nf">get_config</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;EI_net&#39;</span><span class="p">,</span> <span class="n">scalar</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates the population and pathways config dictuinary only by providing </span>
+<span class="sd">    the name of the desired network.</span>
+<span class="sd">    </span>
+<span class="sd">    :param name: nework name. Either &quot;I_net&quot; or &quot;EI_net&quot;, defaults to &#39;EI_net&#39;</span>
+<span class="sd">    :type name: str, optional</span>
+<span class="sd">    :param scalar: scales down the network by a factor. The network must be </span>
+<span class="sd">        divisble to the factor. Number of connections, their strenghts, and the</span>
+<span class="sd">        connectivity profile will be scaled accordingly. defaults to 3</span>
+<span class="sd">    :type scalar: int, optional</span>
+<span class="sd">    :return: pops_cfg, conn_cfg </span>
+<span class="sd">    :rtype: tuple of dicts</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">name</span><span class="o">==</span><span class="s1">&#39;I_net&#39;</span><span class="p">:</span>
+        <span class="n">pops_cfg</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;I&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;gs&#39;</span><span class="p">:</span><span class="mi">100</span><span class="o">//</span><span class="n">scalar</span><span class="p">,</span> 
+                  <span class="s1">&#39;noise&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mi">700</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="o">*</span><span class="n">pA</span><span class="p">},</span>
+                  <span class="s1">&#39;cell&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;LIF&#39;</span><span class="p">,</span> 
+                           <span class="c1">#&#39;thr&#39;: -55*mV, &#39;ref&#39;: 10*ms, &#39;rest&#39;: -70*mV,</span>
+                           <span class="s1">&#39;thr&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">55</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span> <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;rest&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">70</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span>
+                           <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="mi">250</span><span class="o">*</span><span class="n">pF</span><span class="p">}</span>
+                  <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="n">conn_cfg</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;II&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="mi">1000</span><span class="o">//</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
+                   <span class="c1">#&#39;profile&#39;: {&#39;type&#39;:&#39;Gamma&#39;, &#39;params&#39;: {&#39;theta&#39;: 0.5, &#39;kappa&#39;: 8} },</span>
+                   <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gamma&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;theta&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="o">/</span><span class="n">scalar</span><span class="p">,</span> <span class="s1">&#39;kappa&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}</span> <span class="p">},</span>
+                   <span class="c1">#&#39;profile&#39;: {&#39;type&#39;:&#39;Gaussian&#39;, &#39;params&#39;: {&#39;std&#39;: 3} },</span>
+                   <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">10</span><span class="o">*</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}},</span>
+<span class="c1">#                   &#39;synapse&#39;: {&#39;type&#39;:&#39;alpha_voltage&#39;, &#39;params&#39;: {&#39;J&#39;: -0.221*mV, &#39;delay&#39;:1*ms, &#39;tau&#39;: 5*ms}},</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;perlin&#39;, &#39;params&#39;: {&#39;r&#39;: 1, &#39;scale&#39;:3}}</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;homogeneous&#39;, &#39;params&#39;: {&#39;r&#39;: 1, &#39;phi&#39;:np.pi/4.}}</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;params&#39;: {&#39;r&#39;: 1,}}</span>
+                   <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;symmetric&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{}}</span>
+                   <span class="p">},</span>
+        <span class="p">}</span>    
+    <span class="k">elif</span> <span class="n">name</span><span class="o">==</span><span class="s1">&#39;EI_net&#39;</span><span class="p">:</span>
+        <span class="c1"># pops_cfg = {</span>
+        <span class="c1">#     &#39;I&#39;: {&#39;gs&#39;:60, &#39;mu&#39;: 350*pA, &#39;sigma&#39;: 100*pA},</span>
+        <span class="c1">#     &#39;E&#39;: {&#39;gs&#39;:120, &#39;mu&#39;: 350*pA, &#39;sigma&#39;: 100*pA}</span>
+        <span class="c1"># }</span>
+
+        <span class="c1"># lscp_cfg = {</span>
+        <span class="c1">#     &#39;I&#39;: {&#39;type&#39;: &#39;perlin&#39;, &#39;params&#39;: {&#39;scale&#39;: 4, &#39;r&#39;:1} }</span>
+        <span class="c1"># }</span>
+
+        <span class="c1"># conn_cfg = {</span>
+        <span class="c1">#     &#39;EE&#39;: {&#39;type&#39;:&#39;Gaussian&#39;, &#39;self_link&#39;:False, &#39;params&#39;: {&#39;std&#39;: 9}},</span>
+        <span class="c1">#     &#39;EI&#39;: {&#39;type&#39;:&#39;Gaussian&#39;, &#39;self_link&#39;:False, &#39;params&#39;: {&#39;std&#39;: 12}},# EI means E -&gt; I</span>
+        <span class="c1">#     &#39;IE&#39;: {&#39;type&#39;:&#39;Gaussian&#39;, &#39;self_link&#39;:False, &#39;params&#39;: {&#39;std&#39;: 4.5}}, # IE means I -&gt; E</span>
+        <span class="c1">#     &#39;II&#39;: {&#39;type&#39;:&#39;Gaussian&#39;, &#39;self_link&#39;:False, &#39;params&#39;: {&#39;std&#39;: 6}}, </span>
+        <span class="c1"># }</span>
+
+        <span class="c1"># syns_cfg = { </span>
+        <span class="c1">#     &#39;EE&#39;: {&#39;synapse_dyn&#39;: &#39;alpha&#39;, &#39;ncons&#39;:720, &#39;J&#39;: 10*pA}, # note the sign</span>
+        <span class="c1">#     &#39;EI&#39;: {&#39;synapse_dyn&#39;: &#39;alpha&#39;, &#39;ncons&#39;:180, &#39;J&#39;: 10*pA}, # note the sign</span>
+        <span class="c1">#     &#39;IE&#39;: {&#39;synapse_dyn&#39;: &#39;alpha&#39;, &#39;ncons&#39;:720, &#39;J&#39;: -1.76*mV}, # note the sign</span>
+        <span class="c1">#     &#39;II&#39;: {&#39;synapse_dyn&#39;: &#39;alpha&#39;, &#39;ncons&#39;:180, &#39;J&#39;: -1.76*mV}, # note the sign</span>
+        <span class="c1"># }</span>
+        <span class="n">pops_cfg</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;I&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;gs&#39;</span><span class="p">:</span><span class="mi">60</span><span class="o">//</span><span class="n">scalar</span><span class="p">,</span> 
+                  <span class="s1">&#39;noise&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mi">350</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="o">*</span><span class="n">pA</span><span class="p">},</span>
+                  <span class="s1">&#39;cell&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;LIF&#39;</span><span class="p">,</span> 
+                           <span class="s1">&#39;thr&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">55</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span> <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;rest&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">70</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span>
+                           <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="mi">250</span><span class="o">*</span><span class="n">pF</span><span class="p">}</span>
+                  <span class="p">},</span>
+            
+            <span class="s1">&#39;E&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;gs&#39;</span><span class="p">:</span><span class="mi">120</span><span class="o">//</span><span class="n">scalar</span><span class="p">,</span> 
+                  <span class="s1">&#39;noise&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mi">350</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="o">*</span><span class="n">pA</span><span class="p">},</span>
+                  <span class="s1">&#39;cell&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;LIF&#39;</span><span class="p">,</span> 
+                           <span class="s1">&#39;thr&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">55</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span> <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;rest&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">70</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span>
+                           <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="mi">250</span><span class="o">*</span><span class="n">pF</span><span class="p">}</span>
+                  <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="n">conn_cfg</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;EE&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="mi">720</span><span class="o">//</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
+                  <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="mi">9</span><span class="o">/</span><span class="n">scalar</span><span class="p">}</span> <span class="p">},</span>
+                  <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}</span> <span class="p">},</span>
+                  <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;perlin&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;scale&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">}}</span>
+                  <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;homogeneous&#39;, &#39;params&#39;: {&#39;r&#39;: 1, &#39;phi&#39;:np.pi/4.}}</span>
+                  <span class="p">},</span>
+            
+            <span class="s1">&#39;EI&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="mi">180</span><span class="o">//</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
+                   <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="mi">12</span><span class="o">/</span><span class="n">scalar</span><span class="p">}},</span>
+                   <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}},</span>
+                   <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;symmetric&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{}}</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;homogeneous&#39;, &#39;params&#39;: {&#39;r&#39;: 1, &#39;phi&#39;:np.pi/4.}}</span>
+                   <span class="p">},</span>
+            
+            <span class="s1">&#39;IE&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="mi">720</span><span class="o">//</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
+                   <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="mf">4.5</span><span class="o">/</span><span class="n">scalar</span><span class="p">}},</span>
+                   <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">10</span><span class="o">*</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}},</span>
+                   <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;symmetric&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{}}</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;homogeneous&#39;, &#39;params&#39;: {&#39;r&#39;: 1, &#39;phi&#39;:np.pi}}</span>
+                   <span class="p">},</span>
+
+            <span class="s1">&#39;II&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="mi">180</span><span class="o">//</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
+                   <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="mi">6</span><span class="o">/</span><span class="n">scalar</span><span class="p">}},</span>
+                   <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">10</span><span class="o">*</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}},</span>
+                   <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;symmetric&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{}}</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;homogeneous&#39;, &#39;params&#39;: {&#39;r&#39;: 1, &#39;phi&#39;:np.pi/2.}}</span>
+                   <span class="p">},</span>
+        <span class="p">}</span>    
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span>
+    
+    <span class="k">return</span> <span class="n">pops_cfg</span><span class="p">,</span> <span class="n">conn_cfg</span></div>
+
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Arash Gol-Mohammadi.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,424 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>equations &mdash; anisonet 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> anisonet
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">anisonet</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../anisofy.html">anisofy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../configs.html">configs module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../configs.html#population-s-configuration">Population’s configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../configs.html#pathways-configuration">Pathways’ configuration</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../configs.html#profile">Profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configs.html#synapse">Synapse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configs.html#anisotropy">Anisotropy</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../equations.html">equations module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../equations.html#noise-scaling">Noise scaling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../equations.html#synaptic-model">Synaptic model</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../landscape.html">landscape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../simulate.html">simulate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils.html">utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../viz.html">viz module</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">anisonet</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Module code</a> &raquo;</li>
+        
+      <li>equations</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for equations</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">The equation module provides proper equation strings for both neuron and synapses. Note however, due</span>
+<span class="sd">to the existence of the stochastic background current, extra care must be paid when translating the</span>
+<span class="sd">code of NEST to Brian and vice versa.</span>
+
+
+<span class="sd">=============</span>
+<span class="sd">Noise scaling</span>
+<span class="sd">=============</span>
+
+<span class="sd">According to this `notebook`_ in NEST a Gaussian ``noise_generator`` adds a </span>
+<span class="sd">constant current :math:`I_j` for the inteval :math:`[t_j, t_j + \Delta t]` </span>
+<span class="sd">using a normal distribution:</span>
+
+<span class="sd">.. math: </span>
+<span class="sd">	I_j = \mu + \sigma N(0,1)</span>
+<span class="sd">	</span>
+<span class="sd">With such an input, the total charge injected until time :math:`t` is</span>
+
+<span class="sd">.. math::</span>
+<span class="sd">	q(t)_{NEST} = \int_0^t I dt&#39; = \mu t + \sigma \sum_{j=0}^n I_j \Delta t</span>
+
+<span class="sd">where we have used the Riemann sum. The mean and variance of total charge are</span>
+
+<span class="sd">.. math::</span>
+<span class="sd">	E[q(t)_{NEST}] = \mu t  \\\\</span>
+<span class="sd">	Var[q(t)_{NEST}] = 0 + \sigma^2 \Delta t^2 * n = (n\Delta t) \sigma^2 \Delta t =  t \sigma^2 \Delta t</span>
+
+<span class="sd">However, in Brian, the same stochastic current is modelled as Wiener processes</span>
+
+<span class="sd">.. math::</span>
+<span class="sd">	I_j = \mu + \sigma \zeta(t_j)</span>
+<span class="sd">	</span>
+
+<span class="sd">which gives rise to</span>
+
+<span class="sd">.. math::</span>
+<span class="sd">	q(t)_{Brian} = \int_0^t I dt&#39; = \mu t + \sigma \int_0^t \zeta(t&#39;) dt&#39; = \mu t + \sigma W(t) </span>
+
+<span class="sd">with :math:`W(t)` being a Brownian trajectory. Thus, the mean and variance are</span>
+
+<span class="sd">.. math:: </span>
+<span class="sd">	E[q(t)_{Brian}] = \mu t  \\\\</span>
+<span class="sd">	Var[q(t)_{Brian}] = 0 + t \sigma^2</span>
+
+<span class="sd">As a result, the variance of Brian and NEST are related in the following way:</span>
+
+<span class="sd">.. math:: </span>
+<span class="sd">	\sigma^2_{Brian} = \sigma^2_{NEST} \Delta t </span>
+<span class="sd"> </span>
+<span class="sd">==============</span>
+<span class="sd">Synaptic model</span>
+<span class="sd">==============</span>
+
+<span class="sd">There&#39;s a computational difference between current/conductance-based </span>
+<span class="sd">synapses from voltage-based ones in brian. The former show themselves </span>
+<span class="sd">in the cell equation in terms of ``I_syn``. Thus, they need to be </span>
+<span class="sd">evaluated on every single timestep. One the contrary, voltage-based </span>
+<span class="sd">synapses only add a particular amount of potential to the post-synapse</span>
+<span class="sd">voltage, and thus need to be updated once there&#39;s an event. Therefore,</span>
+<span class="sd">voltage-based synapse is computationally cheaper. From the </span>
+<span class="sd">implementation point of view, this means current/conductance-based </span>
+<span class="sd">synapses must have the ``(clock-driven)`` flag, whereas the </span>
+<span class="sd">voltage-based one ``(event-driven)``. Also look at (`Brian documentation`_).</span>
+
+
+<span class="sd">Another point to consider is that the neuron equation, too, depends on the synapse type.</span>
+<span class="sd">If current or conductance based models are used, the synaptic current will be added as </span>
+<span class="sd">a ``I_syn`` term to the neuron equation, whereas voltage-based synapses can be implemented</span>
+<span class="sd">by providing proper voltage jump in ``on_pre`` for each event.</span>
+
+
+<span class="sd">.. _Brian documentation: https://brian2.readthedocs.io/en/stable/user/synapses.html?highlight=event-driven#event-driven-updates</span>
+<span class="sd">.. _notebook: https://nest-simulator.readthedocs.io/en/v3.3/model_details/noise_generator.html</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">brian2</span> <span class="k">as</span> <span class="nn">b2</span>
+
+
+<div class="viewcode-block" id="get_nrn_eqs"><a class="viewcode-back" href="../equations.html#equations.get_nrn_eqs">[docs]</a><span class="k">def</span> <span class="nf">get_nrn_eqs</span><span class="p">(</span><span class="n">pop_name</span><span class="p">,</span> <span class="n">pops_cfg</span><span class="p">,</span> <span class="n">syn_base</span><span class="p">):</span>    
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    It matters how the synapse inputs are modeled. Seemingly, the one used in</span>
+<span class="sd">    NEST and the paper are using a &quot;current-alpha&quot;, as opposed to &quot;voltage-&quot; or</span>
+<span class="sd">    &quot;conductance-&quot;. Look at `source code`_ for more details.</span>
+<span class="sd">    </span>
+<span class="sd">    :param pop_name: population name</span>
+<span class="sd">    :type pop_name: str</span>
+<span class="sd">    :param pops_cfg: population configuration</span>
+<span class="sd">    :type pops_cfg: dict</span>
+<span class="sd">    :param syn_base: synapse model base (infered from the config dicts)</span>
+<span class="sd">    :type syn_base: str</span>
+<span class="sd">    :return: Brian Equation object for neuron</span>
+<span class="sd">    :rtype: Brian Equation object</span>
+
+<span class="sd">    </span>
+<span class="sd">    .. _source code: https://github.com/nest/nest-simulator/blob/d7b3c7671c5fcd9acf211b58012db9729607a1db/models/iaf_psc_alpha.h#L48</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">        mu: amp (shared)</span>
+<span class="s1">        sigma: amp (shared)</span>
+<span class="s1">        noise_pop = mu + sigma*sqrt(2*brian_dt)*xi_pop: amp </span>
+<span class="s1">        &#39;&#39;&#39;</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;brian_dt&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">b2</span><span class="o">.</span><span class="n">defaultclock</span><span class="o">.</span><span class="n">dt</span><span class="o">/</span><span class="n">b2</span><span class="o">.</span><span class="n">ms</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;*ms&#39;</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">syn_base</span><span class="o">!=</span><span class="s1">&#39;voltage&#39;</span><span class="p">:</span>
+        <span class="n">eqs_str</span><span class="o">=</span> <span class="n">tmp</span> <span class="o">+</span> <span class="s1">&#39;&#39;&#39;dv/dt = (E-v)/tau + (noise_pop + I_syn)/C : volt (unless refractory)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
+        <span class="n">eqs_str</span><span class="o">+=</span> <span class="s1">&#39;&#39;&#39;I_syn: amp </span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
+        
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">eqs_str</span><span class="o">=</span> <span class="n">tmp</span> <span class="o">+</span> <span class="s1">&#39;&#39;&#39;dv/dt = (E-v)/tau + noise_pop/C : volt (unless refractory)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
+        
+    <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">eqs_str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_pop&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="o">+</span><span class="n">pop_name</span><span class="p">)</span>
+    <span class="n">eqs</span> <span class="o">=</span> <span class="n">b2</span><span class="o">.</span><span class="n">Equations</span><span class="p">(</span><span class="n">eqs_str</span><span class="p">,</span> 
+                    <span class="n">C</span> <span class="o">=</span> <span class="n">pops_cfg</span><span class="p">[</span><span class="n">pop_name</span><span class="p">][</span><span class="s1">&#39;cell&#39;</span><span class="p">][</span><span class="s1">&#39;C&#39;</span><span class="p">],</span>
+                    <span class="n">E</span> <span class="o">=</span> <span class="n">pops_cfg</span><span class="p">[</span><span class="n">pop_name</span><span class="p">][</span><span class="s1">&#39;cell&#39;</span><span class="p">][</span><span class="s1">&#39;rest&#39;</span><span class="p">],</span>
+                    <span class="n">tau</span> <span class="o">=</span> <span class="n">pops_cfg</span><span class="p">[</span><span class="n">pop_name</span><span class="p">][</span><span class="s1">&#39;cell&#39;</span><span class="p">][</span><span class="s1">&#39;tau&#39;</span><span class="p">])</span>
+    
+    <span class="k">return</span> <span class="n">eqs</span></div>
+
+<div class="viewcode-block" id="get_syn_eqs"><a class="viewcode-back" href="../equations.html#equations.get_syn_eqs">[docs]</a><span class="k">def</span> <span class="nf">get_syn_eqs</span><span class="p">(</span><span class="n">conn_name</span><span class="p">,</span> <span class="n">conn_cfg</span><span class="p">,</span> <span class="n">syn_base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    It matters how the synapse inputs are modeled. Seemingly, the one used in</span>
+<span class="sd">    NEST and the paper are using a &quot;current-alpha&quot;, as opposed to &quot;voltage-&quot; or</span>
+<span class="sd">    &quot;conductance-&quot;: `nest repo`_.</span>
+<span class="sd">    </span>
+<span class="sd">    Nest normalizes its models according the the following rule (`nest docs`_):</span>
+<span class="sd">        </span>
+<span class="sd">        - `iaf_psc_alpha`: max current of unitary excitation/inhiition = 1 pA</span>
+<span class="sd">        - `iaf_cond_alpha`: max conductance of unitary excitation/inhiition = 1 nS</span>
+<span class="sd">        </span>
+<span class="sd">    In order to get the same behaviour in brian, we need to ascribe a weight to</span>
+<span class="sd">    our unitary events. (This weight happen to be exp(1).) In addition, the </span>
+<span class="sd">    parameter ``h`` is unbounded, and can be well beyond 1. </span>
+<span class="sd">    </span>
+<span class="sd">    #TODO: check if that&#39;s also the case in nest.</span>
+<span class="sd">     </span>
+
+<span class="sd">    .. _nest repo: https://github.com/nest/nest-simulator/blob/d7b3c7671c5fcd9acf211b58012db9729607a1db/models/iaf_psc_alpha.h#L48</span>
+<span class="sd">    .. _nest docs: https://nest-simulator.readthedocs.io/en/v2.20.1/models/neurons.html#classnest_1_1iaf__psc__alpha</span>
+
+
+<span class="sd">    :param conn_name: pathway name</span>
+<span class="sd">    :type conn_name: str</span>
+<span class="sd">    :param conn_cfg: population connections configurations</span>
+<span class="sd">    :type conn_cfg: dict</span>
+<span class="sd">    :param syn_base: synapse model base (infered from the config dicts)</span>
+<span class="sd">    :type syn_base: str</span>
+<span class="sd">    :return: tuple of (synapse equation, on_pre, on_post)</span>
+<span class="sd">    :rtype: (Brian Equation object, str, str)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">tmp</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">        dg/dt = (-g+h) / tau : 1 (clock-driven)</span>
+<span class="s1">        dh/dt = -h / tau : 1 (clock-driven)</span>
+<span class="s1">        &#39;&#39;&#39;</span>
+        
+    <span class="n">on_pre</span> <span class="o">=</span><span class="s1">&#39;&#39;&#39;h+=exp(1)&#39;&#39;&#39;</span>
+    <span class="n">on_post</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    
+    <span class="k">if</span> <span class="n">syn_base</span><span class="o">==</span><span class="s1">&#39;voltage&#39;</span><span class="p">:</span>
+        <span class="c1"># J is the post-synaptic voltage increment</span>
+        <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;clock-driven&#39;</span><span class="p">,</span> <span class="s1">&#39;event-driven&#39;</span><span class="p">)</span>
+        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;w = J*g: volt </span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
+        <span class="c1">#eqs_str += &#39;&#39;&#39;J = {}*mV: volt \n&#39;&#39;&#39;.format(J/mV)  </span>
+        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;J: volt (shared)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>  
+        <span class="n">on_pre</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;</span><span class="se">\n</span><span class="s1">v_post += w&#39;&#39;&#39;</span>
+        
+    <span class="k">elif</span> <span class="n">syn_base</span><span class="o">==</span><span class="s1">&#39;current&#39;</span><span class="p">:</span>
+        <span class="c1"># J is the post-synaptic current injection </span>
+        <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">tmp</span>
+        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;I_syn_post = J*g: amp (summed)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span> 
+        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;J : amp (shared)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
+        
+    <span class="k">elif</span> <span class="n">syn_base</span><span class="o">==</span><span class="s1">&#39;conductance&#39;</span><span class="p">:</span>
+        <span class="c1"># J is the maximum conductance</span>
+        <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">tmp</span>
+        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;I_syn_post = J*g*(v_post-Erev): amp </span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span> 
+        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;E : volt (shared)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
+        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;J : siemens (shared)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
+        <span class="c1">#eqs_str += &#39;&#39;&#39;J = {}*nS: siemens \n&#39;&#39;&#39;.format(J/nS)  </span>
+        <span class="c1">#E = conn_cfg[conn_name][&#39;synapse&#39;][&#39;params&#39;][&#39;E&#39;]/mV</span>
+        
+    <span class="n">eqs</span> <span class="o">=</span> <span class="n">b2</span><span class="o">.</span><span class="n">Equations</span><span class="p">(</span><span class="n">eqs_str</span><span class="p">,</span> 
+                    <span class="n">tau</span> <span class="o">=</span> <span class="n">conn_cfg</span><span class="p">[</span><span class="n">conn_name</span><span class="p">][</span><span class="s1">&#39;synapse&#39;</span><span class="p">][</span><span class="s1">&#39;params&#39;</span><span class="p">][</span><span class="s1">&#39;tau&#39;</span><span class="p">])</span>
+    
+    <span class="k">return</span> <span class="n">eqs</span><span class="p">,</span> <span class="n">on_pre</span><span class="p">,</span> <span class="n">on_post</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Arash Gol-Mohammadi.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>

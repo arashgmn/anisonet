@@ -1,0 +1,291 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>anisofy module &mdash; anisonet 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="configs module" href="configs.html" />
+    <link rel="prev" title="anisonet" href="modules.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> anisonet
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">anisonet</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">anisofy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configs.html">configs module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="configs.html#population-s-configuration">Population’s configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="configs.html#pathways-configuration">Pathways’ configuration</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="configs.html#profile">Profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="configs.html#synapse">Synapse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="configs.html#anisotropy">Anisotropy</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="equations.html">equations module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="equations.html#noise-scaling">Noise scaling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="equations.html#synaptic-model">Synaptic model</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulate.html">simulate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="viz.html">viz module</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">anisonet</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="modules.html">anisonet</a> &raquo;</li>
+        
+      <li>anisofy module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/anisofy.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="module-anisofy">
+<span id="anisofy-module"></span><h1>anisofy module<a class="headerlink" href="#module-anisofy" title="Permalink to this heading">¶</a></h1>
+<p>This module <cite>anisotropifies</cite> the network by sampling the post-synapses in an 
+specific manner defined in <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a>. I have seperated this utility, in case we 
+decided to develope other structural connectivities.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="anisofy.get_post_syns">
+<span class="sig-prename descclassname"><span class="pre">anisofy.</span></span><span class="sig-name descname"><span class="pre">get_post_syns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s_coord</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncons</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">srow</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trow</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tcol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">self_link</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recurrent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/anisofy.html#get_post_syns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anisofy.get_post_syns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Samples indices of the source neuron <cite>s_coord</cite> in the target network 
+according to a location-dependent profile. The profile by default is 
+localized on the location of the source neuron. Yet, it is possible to 
+shift to any location relative to the source neuron on the target network. 
+The location of the source neuron on the target network will be 
+interpolated if the size of source and target networks don’t match.</p>
+<p>Periodic boundary condition is applied.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>s_coord</strong> (<em>tuple</em>) – source coordinate index as a tuple of ints</p></li>
+<li><p><strong>srow</strong> (<em>int</em>) – number of rows in source network</p></li>
+<li><p><strong>scol</strong> (<em>int</em>) – number of columns in source network</p></li>
+<li><p><strong>trow</strong> (<em>int</em>) – number of rows in target network</p></li>
+<li><p><strong>tcol</strong> (<em>int</em>) – number of columns in target network</p></li>
+<li><p><strong>ncons</strong> (<em>int</em>) – number of out-links</p></li>
+<li><p><strong>profile</strong> (<em>dict</em>) – connectivity configuration. Read below for more info.</p></li>
+<li><p><strong>shift</strong> (<em>dict</em>) – shift configuration Read below for more info.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – If the weigh profiles is not Gaussian or Gamma</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>source and target coordinate indices (in target network coordinates)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="configs.html" class="btn btn-neutral float-right" title="configs module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="modules.html" class="btn btn-neutral" title="anisonet" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Arash Gol-Mohammadi.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/documentation_options.js"></script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>

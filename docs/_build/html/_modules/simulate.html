@@ -1,0 +1,733 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>simulate &mdash; anisonet 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> anisonet
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">anisonet</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../anisofy.html">anisofy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../configs.html">configs module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../configs.html#population-s-configuration">Population’s configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../configs.html#pathways-configuration">Pathways’ configuration</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../configs.html#profile">Profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configs.html#synapse">Synapse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configs.html#anisotropy">Anisotropy</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../equations.html">equations module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../equations.html#noise-scaling">Noise scaling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../equations.html#synaptic-model">Synaptic model</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../landscape.html">landscape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../simulate.html">simulate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils.html">utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../viz.html">viz module</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">anisonet</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Module code</a> &raquo;</li>
+        
+      <li>simulate</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for simulate</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This is the main module to set up and simulate an anisotropic network. Other </span>
+<span class="sd">modules are auxillary utilities used here. </span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">brian2</span> <span class="k">as</span> <span class="nn">b2</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">sparse</span>
+
+<span class="kn">from</span> <span class="nn">pdb</span> <span class="kn">import</span> <span class="n">set_trace</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">import</span> <span class="nn">viz</span>
+<span class="kn">import</span> <span class="nn">utils</span> 
+<span class="kn">import</span> <span class="nn">configs</span> <span class="c1"># default configurations</span>
+<span class="kn">import</span> <span class="nn">equations</span> <span class="k">as</span> <span class="nn">eq</span>
+<span class="kn">from</span> <span class="nn">landscape</span> <span class="kn">import</span> <span class="n">make_landscape</span>
+<span class="kn">from</span> <span class="nn">anisofy</span> <span class="kn">import</span> <span class="n">get_post_syns</span>
+
+
+<span class="n">root</span> <span class="o">=</span> <span class="s1">&#39;./&#39;</span>
+
+<div class="viewcode-block" id="Simulate"><a class="viewcode-back" href="../simulate.html#simulate.Simulate">[docs]</a><span class="k">class</span> <span class="nc">Simulate</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    High-level object for simulating an anisotropic network in Brian.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">net_name</span><span class="o">=</span><span class="s1">&#39;I_net&#39;</span><span class="p">,</span> <span class="n">load_connectivity</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="n">scalar</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the simulator object for the given network configuration. </span>
+<span class="sd">        By default, tries to load the connectivity matrix from disk, otherwise</span>
+<span class="sd">        will generate and save it. Also, prepares the net for a warmup phase </span>
+<span class="sd">        that can be executed via the ``warmup`` method.</span>
+<span class="sd">        </span>
+<span class="sd">        Upon initialization, a name is attributed to the object which is being</span>
+<span class="sd">        used for storing figures, connectivity matrices, and states. The name</span>
+<span class="sd">        has the following strucutre:</span>
+<span class="sd">            </span>
+<span class="sd">            ``&lt;anisotropy_type&gt;_&lt;profile_type&gt;_&lt;scaling_factor&gt;``</span>
+<span class="sd">            </span>
+<span class="sd">            </span>
+<span class="sd">        :param net_name: network configuration name, either &#39;IE_net&#39; or &#39;I_net&#39;</span>
+<span class="sd">            , defaults to &#39;I_net&#39;</span>
+<span class="sd">        :type net_name: str, optional</span>
+<span class="sd">        :param scalar: A scaling factor for downsizing the network, defaults to 1</span>
+<span class="sd">        :type scalar: int, optional    </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="c1"># making necessary folders</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;results&#39;</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s1">&#39;results&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;results/data&#39;</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s1">&#39;results/data&#39;</span><span class="p">)</span>
+        
+        
+        <span class="c1"># initialize with defaults</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pops_cfg</span> <span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span> <span class="o">=</span> <span class="n">configs</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="n">net_name</span><span class="p">,</span> <span class="n">scalar</span><span class="o">=</span><span class="n">scalar</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_synaptic_base</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_connectivity</span> <span class="o">=</span> <span class="n">load_connectivity</span>
+        
+        <span class="c1"># making a unique name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;anisotropy&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">+=</span> <span class="s1">&#39;_&#39;</span><span class="o">+</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">+=</span> <span class="s1">&#39;_&#39;</span><span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">scalar</span><span class="p">)</span>
+        
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">warmup_std</span> <span class="o">=</span> <span class="mi">500</span><span class="o">*</span><span class="n">b2</span><span class="o">.</span><span class="n">pA</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">warmup_dur</span> <span class="o">=</span> <span class="mi">500</span><span class="o">*</span><span class="n">b2</span><span class="o">.</span><span class="n">ms</span>
+        <span class="c1"># self.pops_cfg = deepcopy(configs.pops_cfg0)</span>
+        <span class="c1"># self.lscp_cfg = deepcopy(configs.lscp_cfg0)</span>
+        <span class="c1"># self.conn_cfg = deepcopy(configs.conn_cfg0)</span>
+        <span class="c1"># self.syns_cfg = deepcopy(configs.syns_cfg0)</span>
+        
+        <span class="c1"># if pops_cfg!=None:</span>
+        <span class="c1">#     self.pops_cfg= pops_cfg</span>
+        <span class="c1"># if lscp_cfg!=None:</span>
+        <span class="c1">#     self.lscp_cfg= lscp_cfg</span>
+        <span class="c1"># if conn_cfg!=None:</span>
+        <span class="c1">#     self.conn_cfg= conn_cfg</span>
+        <span class="c1"># if syns_cfg!=None:</span>
+        <span class="c1">#     self.syns_cfg= syns_cfg</span>
+
+<div class="viewcode-block" id="Simulate.get_synaptic_base"><a class="viewcode-back" href="../simulate.html#simulate.Simulate.get_synaptic_base">[docs]</a>    <span class="k">def</span> <span class="nf">get_synaptic_base</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Synaptic inputs can be defined in different ways. This method reads the</span>
+<span class="sd">        configuration keys and determines the used approach. It is important </span>
+<span class="sd">        when we define the governing equations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">syn_type</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;synapse&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="s1">&#39;current&#39;</span> <span class="ow">in</span> <span class="n">syn_type</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;current&#39;</span>            
+        <span class="k">elif</span> <span class="s1">&#39;voltage&#39;</span> <span class="ow">in</span> <span class="n">syn_type</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;voltage&#39;</span>
+        <span class="k">elif</span> <span class="s1">&#39;conductance&#39;</span> <span class="ow">in</span> <span class="n">syn_type</span><span class="p">:</span> 
+            <span class="k">return</span> <span class="s1">&#39;conductance&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span></div>
+        
+<div class="viewcode-block" id="Simulate.setup_net"><a class="viewcode-back" href="../simulate.html#simulate.Simulate.setup_net">[docs]</a>    <span class="k">def</span> <span class="nf">setup_net</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets up a network by the following steps:</span>
+<span class="sd">            #. defining the populations (``setup_pops``)</span>
+<span class="sd">            #. defining the landscape (``setup_landscape``)</span>
+<span class="sd">            #. defining the synapses (``setup_syns``)</span>
+<span class="sd">            #. configuring the spike monintors (``configure_monitors``)</span>
+<span class="sd">        </span>
+<span class="sd">        and adds them all to a Brian network object for simulation. Read their </span>
+<span class="sd">        description on each method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">b2</span><span class="o">.</span><span class="n">start_scope</span><span class="p">()</span>
+        
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Net setup started.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_pops</span><span class="p">()</span>
+        
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Landscape setup started.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_landscape</span><span class="p">()</span>
+        
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Connecting populations ...&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_syns</span><span class="p">()</span>
+        
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Configuring spike monitors.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">configure_monitors</span><span class="p">()</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span> <span class="o">=</span> <span class="n">b2</span><span class="o">.</span><span class="n">Network</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pops</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">syns</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mons</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Net set up.&#39;</span><span class="p">)</span></div>
+        
+    
+<div class="viewcode-block" id="Simulate.setup_pops"><a class="viewcode-back" href="../simulate.html#simulate.Simulate.setup_pops">[docs]</a>    <span class="k">def</span> <span class="nf">setup_pops</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Each population is set up from the ``pops_cfg`` which is a nested </span>
+<span class="sd">        dictionary. Look at ``configs`` module for further details. Neurons are</span>
+<span class="sd">        endowed with a ``coord`` attribute that encodes their ``(x,y)`` index</span>
+<span class="sd">        on the grid. All neurons are driven by a Gaussian background noise.</span>
+<span class="sd">        </span>
+<span class="sd">        Populations are accessible via the `pops` attribute of the ``Simulate``</span>
+<span class="sd">        object, in form of a dictionary keyed by the population&#39;s name.</span>
+<span class="sd">        </span>
+<span class="sd">        .. note:</span>
+<span class="sd">            First index (columns) indicate the `x`-coordinate and second one </span>
+<span class="sd">            (rows) the `y`-coordinate. It differs from array convention but </span>
+<span class="sd">            mathes the one of images.</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pops</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">pop_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pops_cfg</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">gs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pops_cfg</span><span class="p">[</span><span class="n">pop_name</span><span class="p">][</span><span class="s1">&#39;gs&#39;</span><span class="p">]</span> <span class="c1"># grid size</span>
+            <span class="n">cell_cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pops_cfg</span><span class="p">[</span><span class="n">pop_name</span><span class="p">][</span><span class="s1">&#39;cell&#39;</span><span class="p">]</span>
+            <span class="n">noise_cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pops_cfg</span><span class="p">[</span><span class="n">pop_name</span><span class="p">][</span><span class="s1">&#39;noise&#39;</span><span class="p">]</span>
+            
+            <span class="c1"># initialize population</span>
+            <span class="n">eqs</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">get_nrn_eqs</span><span class="p">(</span><span class="n">pop_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pops_cfg</span><span class="p">,</span> <span class="n">syn_base</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base</span><span class="p">)</span>
+            <span class="n">pop</span> <span class="o">=</span> <span class="n">b2</span><span class="o">.</span><span class="n">NeuronGroup</span><span class="p">(</span><span class="n">N</span> <span class="o">=</span> <span class="n">gs</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> 
+                                 <span class="n">name</span> <span class="o">=</span> <span class="n">pop_name</span><span class="p">,</span> 
+                                 <span class="n">model</span> <span class="o">=</span> <span class="n">eqs</span><span class="p">,</span> 
+                                 <span class="n">refractory</span> <span class="o">=</span> <span class="n">cell_cfg</span><span class="p">[</span><span class="s1">&#39;ref&#39;</span><span class="p">],</span> <span class="c1">#2*b2.ms, </span>
+                                 <span class="n">threshold</span><span class="o">=</span><span class="s1">&#39;v &gt; </span><span class="si">{}</span><span class="s1">*mV&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cell_cfg</span><span class="p">[</span><span class="s1">&#39;thr&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">b2</span><span class="o">.</span><span class="n">mV</span><span class="p">),</span>
+                                 <span class="n">reset</span><span class="o">=</span><span class="s1">&#39;v=</span><span class="si">{}</span><span class="s1">*mV&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cell_cfg</span><span class="p">[</span><span class="s1">&#39;rest&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">b2</span><span class="o">.</span><span class="n">mV</span><span class="p">),</span>
+                                 <span class="n">method</span><span class="o">=</span><span class="s1">&#39;euler&#39;</span>
+                                 <span class="p">)</span>
+            <span class="n">pop</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="n">noise_cfg</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span>
+            <span class="n">pop</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">noise_cfg</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">]</span>
+            <span class="n">pop</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">cell_cfg</span><span class="p">[</span><span class="s1">&#39;rest&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">b2</span><span class="o">.</span><span class="n">mV</span><span class="p">,</span>
+                                      <span class="n">cell_cfg</span><span class="p">[</span><span class="s1">&#39;thr&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">b2</span><span class="o">.</span><span class="n">mV</span><span class="p">,</span>
+                                      <span class="n">pop</span><span class="o">.</span><span class="n">N</span><span class="p">)</span> <span class="o">*</span><span class="n">b2</span><span class="o">.</span><span class="n">mV</span>
+
+            
+            <span class="c1"># add coordinates</span>
+            <span class="n">pop</span><span class="o">.</span><span class="n">add_attribute</span><span class="p">(</span><span class="s1">&#39;coord&#39;</span><span class="p">)</span>
+            <span class="n">y</span><span class="p">,</span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">indices</span><span class="p">((</span><span class="n">gs</span><span class="p">,</span><span class="n">gs</span><span class="p">))</span>
+            <span class="n">pop</span><span class="o">.</span><span class="n">coord</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span><span class="n">y</span><span class="o">.</span><span class="n">ravel</span><span class="p">()))</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">pops</span><span class="p">[</span><span class="n">pop_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pop</span>
+            <span class="k">del</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span> <span class="n">cell_cfg</span><span class="p">,</span> <span class="n">noise_cfg</span><span class="p">,</span> <span class="n">gs</span><span class="p">,</span> <span class="n">eqs</span></div>
+            
+    
+<div class="viewcode-block" id="Simulate.setup_landscape"><a class="viewcode-back" href="../simulate.html#simulate.Simulate.setup_landscape">[docs]</a>    <span class="k">def</span> <span class="nf">setup_landscape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates the requested landscape: A dictionary keyed by ``phi`` and </span>
+<span class="sd">        ``r`` that indicated the dominant angle of anisotropy and the </span>
+<span class="sd">        radial displacement for every neuron in form of flat arrays.</span>
+<span class="sd">        </span>
+<span class="sd">        Landscapes are accessible via the `lscp` attribute of the ``Simulate``</span>
+<span class="sd">        object, in form of a dictionary keyed by the population&#39;s name.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">lscp</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">conn_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">src</span><span class="p">,</span> <span class="n">trg</span> <span class="o">=</span> <span class="n">conn_name</span>
+            
+            <span class="n">lscp_cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="p">[</span><span class="n">conn_name</span><span class="p">][</span><span class="s1">&#39;anisotropy&#39;</span><span class="p">]</span>
+            <span class="n">gs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pops_cfg</span><span class="p">[</span><span class="n">src</span><span class="p">][</span><span class="s1">&#39;gs&#39;</span><span class="p">]</span> <span class="c1"># grid size</span>
+            
+            <span class="n">rs</span><span class="p">,</span> <span class="n">phis</span> <span class="o">=</span> <span class="n">make_landscape</span><span class="p">(</span><span class="n">gs</span><span class="o">=</span><span class="n">gs</span><span class="p">,</span>
+                                      <span class="n">ls_type</span> <span class="o">=</span> <span class="n">lscp_cfg</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span> 
+                                      <span class="n">ls_params</span> <span class="o">=</span> <span class="n">lscp_cfg</span><span class="p">[</span><span class="s1">&#39;params&#39;</span><span class="p">])</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">lscp</span><span class="p">[</span><span class="n">conn_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;phi&#39;</span> <span class="p">:</span> <span class="n">phis</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span> <span class="p">:</span><span class="n">rs</span><span class="p">}</span>
+            
+        
+        <span class="k">del</span> <span class="n">rs</span><span class="p">,</span> <span class="n">phis</span><span class="p">,</span> <span class="n">gs</span><span class="p">,</span> <span class="n">lscp_cfg</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">trg</span></div>
+        
+        
+<div class="viewcode-block" id="Simulate.setup_syns"><a class="viewcode-back" href="../simulate.html#simulate.Simulate.setup_syns">[docs]</a>    <span class="k">def</span> <span class="nf">setup_syns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">visualize</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets up the synapses of all pathways (keys) in ``conns_cfg``; a nested </span>
+<span class="sd">        dictionary whose detail is given in ``configs`` module. To understand </span>
+<span class="sd">        how the postsynpases are selected, particularly their radial profile </span>
+<span class="sd">        and the notion of anisotropy, please check `[1]`_.</span>
+<span class="sd">        </span>
+<span class="sd">        The connectivity matrix is saved as a sparse array (.npz) if it is not</span>
+<span class="sd">        saved already.</span>
+<span class="sd">       </span>
+<span class="sd">        Synaoses are accessible via the `syns` attribute of the ``Simulate``</span>
+<span class="sd">        object, in form of a list indexed by the sorted order of pathways.</span>
+<span class="sd">        </span>
+<span class="sd">        .. _[1]: https://doi.org/10.1371/journal.pcbi.1007432</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">syns</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="n">src</span><span class="p">,</span> <span class="n">trg</span> <span class="o">=</span> <span class="n">key</span>
+            
+            <span class="n">eqs</span><span class="p">,</span> <span class="n">on_pre</span><span class="p">,</span> <span class="n">on_post</span> <span class="o">=</span> <span class="n">eq</span><span class="o">.</span><span class="n">get_syn_eqs</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">base</span><span class="p">)</span>
+            <span class="n">ncons</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;ncons&#39;</span><span class="p">]</span>
+            <span class="n">spop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pops</span><span class="p">[</span><span class="n">src</span><span class="p">]</span>
+            <span class="n">tpop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pops</span><span class="p">[</span><span class="n">trg</span><span class="p">]</span>
+            
+            <span class="n">syn</span> <span class="o">=</span> <span class="n">b2</span><span class="o">.</span><span class="n">Synapses</span><span class="p">(</span><span class="n">spop</span><span class="p">,</span> <span class="n">tpop</span><span class="p">,</span> 
+                              <span class="n">model</span><span class="o">=</span><span class="n">eqs</span><span class="p">,</span> 
+                              <span class="n">on_pre</span><span class="o">=</span><span class="n">on_pre</span><span class="p">,</span>
+                              <span class="n">on_post</span><span class="o">=</span><span class="n">on_post</span><span class="p">,</span>
+                              <span class="n">delay</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;synapse&#39;</span><span class="p">][</span><span class="s1">&#39;params&#39;</span><span class="p">][</span><span class="s1">&#39;delay&#39;</span><span class="p">],</span>
+                              <span class="n">method</span><span class="o">=</span><span class="s1">&#39;exact&#39;</span>
+                              <span class="p">)</span>
+            <span class="c1"># load or save connectivity </span>
+            <span class="n">w_name</span> <span class="o">=</span> <span class="s1">&#39;w_&#39;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s1">&#39;_&#39;</span><span class="o">+</span><span class="n">key</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_connectivity</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">Loading connectivity matrix: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">w_name</span><span class="p">))</span>
+                    <span class="n">w</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">load_npz</span><span class="p">(</span><span class="n">root</span> <span class="o">+</span><span class="s1">&#39;results/data/&#39;</span><span class="o">+</span><span class="n">w_name</span><span class="o">+</span><span class="s1">&#39;.npz&#39;</span><span class="p">)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">Warning: Connecitivy file </span><span class="si">{}</span><span class="s1"> was not found.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">w_name</span><span class="p">))</span>                    
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">Warning: Computing connectivity from scratch.&#39;</span><span class="p">)</span>                    
+                    <span class="bp">self</span><span class="o">.</span><span class="n">load_connectivity</span><span class="o">=</span><span class="kc">False</span>
+                    
+            <span class="c1"># computing anisotropic post-synapses</span>
+            <span class="k">for</span> <span class="n">s_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">spop</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_connectivity</span><span class="p">:</span>
+                    <span class="n">t_idxs</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">col</span><span class="p">[</span><span class="n">w</span><span class="o">.</span><span class="n">row</span><span class="o">==</span><span class="n">s_idx</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">kws</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">s_coord</span> <span class="o">=</span> <span class="n">spop</span><span class="o">.</span><span class="n">coord</span><span class="p">[</span><span class="n">s_idx</span><span class="p">],</span>
+                               <span class="n">ncons</span> <span class="o">=</span> <span class="n">ncons</span><span class="p">,</span>
+                               <span class="n">srow</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">spop</span><span class="p">))),</span>
+                               <span class="n">scol</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">spop</span><span class="p">))),</span>
+                               <span class="n">trow</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tpop</span><span class="p">))),</span>
+                               <span class="n">tcol</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tpop</span><span class="p">))),</span>
+                               <span class="n">shift</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;phi&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">lscp</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;phi&#39;</span><span class="p">][</span><span class="n">s_idx</span><span class="p">],</span> 
+                                        <span class="s1">&#39;r&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">lscp</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;r&#39;</span><span class="p">][</span><span class="n">s_idx</span><span class="p">]},</span>
+                               <span class="n">profile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">],</span>
+                               <span class="n">self_link</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;self_link&#39;</span><span class="p">],</span>
+                               <span class="n">recurrent</span> <span class="o">=</span> <span class="n">trg</span><span class="o">==</span><span class="n">src</span>
+                               <span class="p">)</span>
+                    <span class="n">s_coord</span><span class="p">,</span> <span class="n">t_coords</span> <span class="o">=</span> <span class="n">get_post_syns</span><span class="p">(</span><span class="o">**</span><span class="n">kws</span><span class="p">)</span> <span class="c1"># projects s_coord</span>
+                    <span class="n">t_idxs</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">coord2idx</span><span class="p">(</span><span class="n">t_coords</span><span class="p">,</span> <span class="n">tpop</span><span class="p">)</span>
+                    
+                <span class="n">syn</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="n">s_idx</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">t_idxs</span><span class="p">)</span>
+            
+            <span class="c1"># set synaptic weight</span>
+            <span class="n">syn</span><span class="o">.</span><span class="n">J</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;synapse&#39;</span><span class="p">][</span><span class="s1">&#39;params&#39;</span><span class="p">][</span><span class="s1">&#39;J&#39;</span><span class="p">]</span>
+            
+            <span class="c1"># append to the class</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">syns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">syn</span><span class="p">)</span>
+            
+            <span class="c1"># save if not saved</span>
+            <span class="c1">#set_trace()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_connectivity</span><span class="p">:</span>
+                <span class="n">row_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">syn</span><span class="o">.</span><span class="n">i</span><span class="p">)</span>
+                <span class="n">col_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">syn</span><span class="o">.</span><span class="n">j</span><span class="p">)</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">row_idx</span><span class="p">)</span>
+                <span class="n">w</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">coo_matrix</span><span class="p">((</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="n">row_idx</span><span class="p">,</span> <span class="n">col_idx</span><span class="p">)))</span>
+                <span class="n">sparse</span><span class="o">.</span><span class="n">save_npz</span><span class="p">(</span><span class="n">root</span> <span class="o">+</span><span class="s1">&#39;results/data/&#39;</span><span class="o">+</span><span class="n">w_name</span><span class="o">+</span><span class="s1">&#39;.npz&#39;</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+                <span class="c1">#sim.w = w</span>
+                <span class="n">viz</span><span class="o">.</span><span class="n">plot_connectivity</span><span class="p">(</span><span class="n">root</span> <span class="o">+</span><span class="s1">&#39;results/data/&#39;</span><span class="o">+</span><span class="n">w_name</span><span class="o">+</span><span class="s1">&#39;.npz&#39;</span><span class="p">)</span>
+                
+                <span class="k">del</span> <span class="n">t_coords</span><span class="p">,</span> <span class="n">s_coord</span><span class="p">,</span> <span class="n">kws</span>
+        <span class="k">del</span> <span class="n">src</span><span class="p">,</span> <span class="n">trg</span><span class="p">,</span> <span class="n">eqs</span><span class="p">,</span> <span class="n">on_pre</span><span class="p">,</span> <span class="n">on_post</span><span class="p">,</span> <span class="n">ncons</span> 
+        <span class="k">del</span> <span class="n">spop</span><span class="p">,</span> <span class="n">tpop</span><span class="p">,</span> <span class="n">syn</span><span class="p">,</span> <span class="n">t_idxs</span><span class="p">,</span> <span class="n">w</span></div>
+     
+        
+<div class="viewcode-block" id="Simulate.configure_monitors"><a class="viewcode-back" href="../simulate.html#simulate.Simulate.configure_monitors">[docs]</a>    <span class="k">def</span> <span class="nf">configure_monitors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Defines a list of spike monitor called ``mon_&lt;population_name&gt;`` for </span>
+<span class="sd">        each population, and adds them to the ``Simulate`` object.</span>
+<span class="sd">        </span>
+<span class="sd">        The monitors are accessible via the `mons` attribute in form of a list </span>
+<span class="sd">        indexed by the sorted order of populations.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: DESCRIPTION</span>
+<span class="sd">        :rtype: TYPE</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mons</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">pop_name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pops</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="c1"># self.mons.append(b2.StateMonitor(self.pops[pop_name], </span>
+            <span class="c1">#                                  variables=&#39;v&#39;, </span>
+            <span class="c1">#                                  record=True))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b2</span><span class="o">.</span><span class="n">SpikeMonitor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pops</span><span class="p">[</span><span class="n">pop_name</span><span class="p">],</span> 
+                                             <span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;mon_&#39;</span><span class="o">+</span><span class="n">pop_name</span><span class="p">))</span></div>
+        
+<div class="viewcode-block" id="Simulate.warmup"><a class="viewcode-back" href="../simulate.html#simulate.Simulate.warmup">[docs]</a>    <span class="k">def</span> <span class="nf">warmup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Warms up the neurons for 500 ms. In the first half neurons receive no</span>
+<span class="sd">        input rather than a 500 pA (std) white noise. In the second half the</span>
+<span class="sd">        background activity (mean and std) will be adjusted to their simulation </span>
+<span class="sd">        values.</span>
+<span class="sd">        </span>
+<span class="sd">        After the each warm-up, the states is saved on the disk for restoration</span>
+<span class="sd">        for later simulations. </span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        .. note: </span>
+<span class="sd">            Previous warm-up states will be overwritten by the freshest </span>
+<span class="sd">            execution.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="c1"># resetting the time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">t_</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="c1"># we don&#39;t need to record warm-up activities        </span>
+        <span class="k">for</span> <span class="n">mon</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mons</span><span class="p">:</span>
+            <span class="n">mon</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">False</span>
+        
+        <span class="c1"># Let&#39;s save mu and sigma for later and swich them off for now</span>
+        <span class="n">mus</span> <span class="o">=</span><span class="p">{}</span>
+        <span class="n">stds</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">pop</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pops</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">mus</span><span class="p">[</span><span class="n">pop</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pop</span><span class="o">.</span><span class="n">mu</span><span class="o">/</span><span class="n">b2</span><span class="o">.</span><span class="n">pA</span>
+            <span class="n">stds</span><span class="p">[</span><span class="n">pop</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pop</span><span class="o">.</span><span class="n">sigma</span><span class="o">/</span><span class="n">b2</span><span class="o">.</span><span class="n">pA</span>
+            
+            <span class="n">pop</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="mi">0</span><span class="o">*</span><span class="n">b2</span><span class="o">.</span><span class="n">pA</span> <span class="c1"># turning background off</span>
+            <span class="n">pop</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">warmup_std</span> <span class="c1"># warm up noise</span>
+            
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Starting warm-up.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">warmup_dur</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">pop</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pops</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">pop</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="n">mus</span><span class="p">[</span><span class="n">pop</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">*</span><span class="n">b2</span><span class="o">.</span><span class="n">pA</span>
+            <span class="n">pop</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">stds</span><span class="p">[</span><span class="n">pop</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">*</span><span class="n">b2</span><span class="o">.</span><span class="n">pA</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">warmup_dur</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Finished warm up. Storing results.&#39;</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">name</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">root</span> <span class="o">+</span><span class="s1">&#39;results/data/warm-up_&#39;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        
+        <span class="c1"># switch on monitors        </span>
+        <span class="k">for</span> <span class="n">mon</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mons</span><span class="p">:</span>
+            <span class="n">mon</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">True</span>
+        
+        <span class="k">del</span> <span class="n">mus</span><span class="p">,</span> <span class="n">stds</span>            </div>
+    
+        
+<div class="viewcode-block" id="Simulate.start"><a class="viewcode-back" href="../simulate.html#simulate.Simulate.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">1000</span><span class="o">*</span><span class="n">b2</span><span class="o">.</span><span class="n">ms</span><span class="p">,</span> <span class="n">batch_dur</span><span class="o">=</span><span class="mi">200</span><span class="o">*</span><span class="n">b2</span><span class="o">.</span><span class="n">ms</span><span class="p">,</span> 
+              <span class="n">restore</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_rates</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Starts a long simulation by breaking it down to several batches. After</span>
+<span class="sd">        each ``batch_dur``, the monitors will be saved on disk, and simulation</span>
+<span class="sd">        monitors will be reset to combat memory consumption.</span>
+<span class="sd">        </span>
+<span class="sd">        :param duration: total duration of simualtion, excluding warm-up phase.</span>
+<span class="sd">            defaults to 1000*b2.ms</span>
+<span class="sd">        :type duration: Time quantitiy, optional</span>
+<span class="sd">        :param batch_dur: duration of simulation batches, defaults to 200*b2.ms</span>
+<span class="sd">        :type batch_dur: Time quantitiy, optional</span>
+<span class="sd">        :param restore: whether or not restore the warmed-up stete from disk,</span>
+<span class="sd">            defaults to True</span>
+<span class="sd">        :type restore: bool, optional</span>
+<span class="sd">        :param profile: whether or not profile the simulation (useful for </span>
+<span class="sd">            performance analysis), defaults to False</span>
+<span class="sd">        :type profile: bool, optional</span>
+<span class="sd">        :param plot_rates: whether or not plot the firing rate at the end of </span>
+<span class="sd">            each batch, defaults to True</span>
+<span class="sd">        :type plot_rates: bool, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="k">if</span> <span class="n">restore</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">restore</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> 
+                                 <span class="n">filename</span><span class="o">=</span><span class="n">root</span> <span class="o">+</span><span class="s1">&#39;results/data/warm-up_&#39;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Restored from warmed up state of </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+            
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span> 
+                <span class="nb">print</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Warning: Could not restore state from: warm-up_</span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">warmup</span><span class="p">()</span>
+        
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Starting simulation.&#39;</span><span class="p">)</span>
+        <span class="n">nbatch</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">duration</span><span class="o">/</span><span class="n">batch_dur</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">duration</span><span class="o">-</span><span class="n">nbatch</span><span class="o">*</span><span class="n">batch_dur</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">b2</span><span class="o">.</span><span class="n">defaultclock</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+            <span class="n">nbatch</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nbatch</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_monitors</span><span class="p">()</span>
+            
+            <span class="n">dur</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">batch_dur</span><span class="p">,</span> <span class="n">duration</span><span class="o">-</span><span class="n">n</span><span class="o">*</span><span class="n">batch_dur</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Starting batch number </span><span class="si">{}</span><span class="s1">/</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">nbatch</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">dur</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="n">profile</span><span class="p">)</span>
+            
+            <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">if</span> <span class="n">nbatch</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">:</span>
+                <span class="n">filename</span> <span class="o">+=</span> <span class="s1">&#39;_partial_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+            <span class="n">viz</span><span class="o">.</span><span class="n">plot_firing_rates</span><span class="p">(</span><span class="n">sim</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_monitors</span><span class="p">(</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span><span class="p">)</span></div>
+            
+    
+    <span class="c1"># def post_process(self):</span>
+    <span class="c1">#     print(&#39;Starting postprocessing ...&#39;)</span>
+    <span class="c1">#     fig, axs = plt.subplots(2,1, figsize=(12,8), sharex=True, sharey=True)</span>
+    <span class="c1">#     #set_trace()</span>
+    <span class="c1">#     for id_, pop in enumerate(self.pops.values()):</span>
+    <span class="c1">#         ax = axs[id_]        </span>
+    <span class="c1">#         mon = self.mons[id_]</span>
+    <span class="c1">#         for idx in range(pop.N):</span>
+    <span class="c1">#             ax.plot(mon.t, mon.v[idx])</span>
+                
+    <span class="c1">#     plt.savefig(root +&#39;results/LIF.png&#39;)</span>
+    
+<div class="viewcode-block" id="Simulate.save_monitors"><a class="viewcode-back" href="../simulate.html#simulate.Simulate.save_monitors">[docs]</a>    <span class="k">def</span> <span class="nf">save_monitors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">mon</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mons</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">mon</span><span class="o">.</span><span class="n">get_states</span><span class="p">()</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">root</span> <span class="o">+</span><span class="s1">&#39;results/data/&#39;</span><span class="o">+</span><span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_&#39;</span><span class="o">+</span><span class="n">mon</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s1">&#39;.dat&#39;</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+            
+        <span class="k">del</span> <span class="n">mon</span><span class="p">,</span> <span class="n">data</span></div>
+    
+<div class="viewcode-block" id="Simulate.make_txy"><a class="viewcode-back" href="../simulate.html#simulate.Simulate.make_txy">[docs]</a>    <span class="k">def</span> <span class="nf">make_txy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">glob</span>
+        
+        <span class="k">for</span> <span class="n">pop_name</span> <span class="ow">in</span> <span class="n">sim</span><span class="o">.</span><span class="n">pops</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">txy</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">files_list</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">root</span> <span class="o">+</span><span class="s1">&#39;results/data/mon_&#39;</span><span class="o">+</span><span class="n">pop_name</span><span class="o">+</span><span class="s1">&#39;*.dat&#39;</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files_list</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]:</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                
+                <span class="n">xy</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">idx2coords</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">],</span> <span class="n">sim</span><span class="o">.</span><span class="n">pops</span><span class="p">[</span><span class="n">pop_name</span><span class="p">])</span>
+                <span class="n">txy</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">xy</span><span class="p">)))</span>
+                <span class="k">del</span> <span class="n">data</span><span class="p">,</span><span class="n">xy</span>
+                
+            <span class="n">txy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">txy</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">txy</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">root</span> <span class="o">+</span><span class="s1">&#39;results/data/txy_&#39;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s1">&#39;_&#39;</span><span class="o">+</span><span class="n">pop_name</span><span class="o">+</span><span class="s1">&#39;.csv&#39;</span><span class="p">,</span> <span class="n">txy</span><span class="p">,</span> 
+                       <span class="n">fmt</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%f</span><span class="s1">, </span><span class="si">%d</span><span class="s1">, </span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">))</span></div>
+            
+<div class="viewcode-block" id="Simulate.reset_monitors"><a class="viewcode-back" href="../simulate.html#simulate.Simulate.reset_monitors">[docs]</a>    <span class="k">def</span> <span class="nf">reset_monitors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resets the monitors by removing them, redefining them, and adding them</span>
+<span class="sd">        to the network again. This is necessary in Brian (look here:</span>
+<span class="sd">        https://brian.discourse.group/t/how-to-reset-network-monitors/548)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mons</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">configure_monitors</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mons</span><span class="p">)</span></div></div>
+        
+<span class="k">if</span> <span class="vm">__name__</span><span class="o">==</span><span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="c1">#pops_cfg, conn_cfg = configs.get_config(&#39;I_net&#39;) </span>
+    <span class="n">sim</span> <span class="o">=</span> <span class="n">Simulate</span><span class="p">(</span><span class="s1">&#39;I_net&#39;</span><span class="p">,</span> <span class="n">scalar</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">load_connectivity</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">setup_net</span><span class="p">()</span>
+    
+    <span class="n">viz</span><span class="o">.</span><span class="n">plot_landscape</span><span class="p">(</span><span class="n">sim</span><span class="p">)</span>
+    <span class="n">viz</span><span class="o">.</span><span class="n">plot_in_out_deg</span><span class="p">(</span><span class="n">sim</span><span class="p">)</span>
+    <span class="c1">#viz.plot_periodicity(sim)</span>
+    <span class="n">viz</span><span class="o">.</span><span class="n">plot_realized_landscape</span><span class="p">(</span><span class="n">sim</span><span class="p">)</span>
+    
+    <span class="c1">#time.sleep(5)</span>
+    
+    <span class="c1">#gs = int(np.sqrt(sim.pops[&#39;I&#39;].N))</span>
+    <span class="c1">#monI = b2.StateMonitor(sim.pops[&#39;I&#39;], [&#39;v&#39;, &#39;noise_I&#39;], np.arange(gs)**2)</span>
+    <span class="c1">#sim.net.add(monI)</span>
+    <span class="c1">#sim.start()</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">warmup</span><span class="p">()</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="mi">2500</span><span class="o">*</span><span class="n">b2</span><span class="o">.</span><span class="n">ms</span><span class="p">,</span> <span class="n">batch_dur</span><span class="o">=</span><span class="mi">200</span><span class="o">*</span><span class="n">b2</span><span class="o">.</span><span class="n">ms</span><span class="p">,</span> 
+              <span class="n">restore</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1">#sim.plot_firing_rates()</span>
+    <span class="c1">#for i in range(monI.v.shape[0]):</span>
+    <span class="c1">#    plt.plot(monI.t, monI.v[i,:], alpha=0.1)</span>
+    <span class="n">viz</span><span class="o">.</span><span class="n">plot_animation</span><span class="p">(</span><span class="n">sim</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">gs</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">pops_cfg</span><span class="p">[</span><span class="s1">&#39;I&#39;</span><span class="p">][</span><span class="s1">&#39;gs&#39;</span><span class="p">])</span> 
+    <span class="c1">#sim.post_process()</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Arash Gol-Mohammadi.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>

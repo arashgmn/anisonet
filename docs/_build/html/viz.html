@@ -1,0 +1,380 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>viz module &mdash; anisonet 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="utils module" href="utils.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> anisonet
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">anisonet</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="anisofy.html">anisofy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configs.html">configs module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="configs.html#population-s-configuration">Population’s configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="configs.html#pathways-configuration">Pathways’ configuration</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="configs.html#profile">Profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="configs.html#synapse">Synapse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="configs.html#anisotropy">Anisotropy</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="equations.html">equations module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="equations.html#noise-scaling">Noise scaling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="equations.html#synaptic-model">Synaptic model</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulate.html">simulate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">utils module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">viz module</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">anisonet</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="modules.html">anisonet</a> &raquo;</li>
+        
+      <li>viz module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/viz.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="module-viz">
+<span id="viz-module"></span><h1>viz module<a class="headerlink" href="#module-viz" title="Permalink to this heading">¶</a></h1>
+<p>I have developed this module to either reproduce figures of <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a> and plot 
+interesting quantities. Figures are saved in the``results`` folder with proper
+name (inherited from the simulation object).</p>
+<p>The animiation function is copy-pasted from the repository of <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a>.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="viz.get_cax">
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">get_cax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#get_cax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.get_cax" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a human-like colorbar axis from a given ax, to be used with 
+matplotlib’s colorbar method.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="viz.imshow">
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">imshow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">im</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#imshow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.imshow" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>Note</strong>: This function is copy-pasted from the GitHub repo of <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a>.</p>
+<p>It prepares the field for an animation.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="viz.plot_animation">
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_animation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mon_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ss_dur</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_animation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_animation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aggregates the firing rate from disk and make an animation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mon_name</strong> (<em>str</em>) – name of the desired monitor</p></li>
+<li><p><strong>gs</strong> (<em>int</em>) – grid size of the population (length of one side!)</p></li>
+<li><p><strong>ss_dur</strong> (<em>int</em><em>, </em><em>optional</em>) – duration of each snapshot (frame) in animation in ms; 
+defaults to 100 (corresponding to 100 ms)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="viz.plot_connectivity">
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_connectivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_connectivity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_connectivity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots connectivity matrix of a given connectivity file and saves the figure
+in the <code class="docutils literal notranslate"><span class="pre">results</span></code> folder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – path to the connectivity file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="viz.plot_field">
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_field"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots a field; a landscape, firing rate, or any heatmap.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>field</strong> (<em>numpy array</em>) – field as a 2D array</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – saving name</p></li>
+<li><p><strong>vmin</strong> (<em>float</em><em>, </em><em>optional</em>) – minimum value of the field, defaults to None</p></li>
+<li><p><strong>vmax</strong> (<em>float</em><em>, </em><em>optional</em>) – maximum value of the field, defaults to None</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="viz.plot_firing_rates">
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_firing_rates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suffix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conv_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wl_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_score</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_firing_rates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_firing_rates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots the overal firing rates within the active monitors of the <code class="docutils literal notranslate"><span class="pre">sim</span></code>
+objects. The firing rate is also covolved with a 2D ricker kernel to show 
+the firing rate contrast better. It is also possibly to plot z-score of the
+firing rates as well.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sim</strong> (<em>object</em>) – <code class="docutils literal notranslate"><span class="pre">simulate</span></code> object</p></li>
+<li><p><strong>suffix</strong> (<em>str</em><em>, </em><em>optional</em>) – An optional suffix for saved figure name, defaults to ‘’</p></li>
+<li><p><strong>conv_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Ricker kernel size, defaults to 3</p></li>
+<li><p><strong>wl_size</strong> (<em>float</em><em>, </em><em>optional</em>) – wavelet size of Ricker kernel, defaults to 10</p></li>
+<li><p><strong>z_score</strong> (<em>book</em><em>, </em><em>optional</em>) – Whether or not to plot the z-score, defaults to False</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="viz.plot_firing_snapshots">
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_firing_snapshots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_firing_snapshots"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_firing_snapshots" title="Permalink to this definition">¶</a></dt>
+<dd><p>Similar to <code class="docutils literal notranslate"><span class="pre">plot_firing_rates</span></code> but plots the firing rates within an 
+arbitrary interval between <code class="docutils literal notranslate"><span class="pre">tmin</span></code> and <cite>tmax`</cite> as a scatter plot.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="viz.plot_in_out_deg">
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_in_out_deg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_in_out_deg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_in_out_deg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots both in- and out-degree of each population within the <code class="docutils literal notranslate"><span class="pre">sim</span></code> object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>sim</strong> (<em>object</em>) – <code class="docutils literal notranslate"><span class="pre">simulate</span></code> object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="viz.plot_landscape">
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_landscape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_landscape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_landscape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots the intended landscape (only <span class="math notranslate nohighlight">\(\phi\)</span>) for all the populations
+set in a simulation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>sim</strong> (<em>object</em>) – <code class="docutils literal notranslate"><span class="pre">simulate</span></code> object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="viz.plot_periodicity">
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_periodicity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_periodicity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_periodicity" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="viz.plot_realized_landscape">
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_realized_landscape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_realized_landscape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_realized_landscape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots the realized landscape (only <span class="math notranslate nohighlight">\(\phi\)</span>) for all the populations
+set in a simulation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>sim</strong> (<em>object</em>) – <code class="docutils literal notranslate"><span class="pre">simulate</span></code> object</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="utils.html" class="btn btn-neutral" title="utils module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Arash Gol-Mohammadi.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/documentation_options.js"></script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>

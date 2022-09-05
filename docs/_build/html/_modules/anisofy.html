@@ -1,0 +1,351 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>anisofy &mdash; anisonet 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> anisonet
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">anisonet</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../anisofy.html">anisofy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../configs.html">configs module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../configs.html#population-s-configuration">Population’s configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../configs.html#pathways-configuration">Pathways’ configuration</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../configs.html#profile">Profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configs.html#synapse">Synapse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configs.html#anisotropy">Anisotropy</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../equations.html">equations module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../equations.html#noise-scaling">Noise scaling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../equations.html#synaptic-model">Synaptic model</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../landscape.html">landscape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../simulate.html">simulate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils.html">utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../viz.html">viz module</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">anisonet</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Module code</a> &raquo;</li>
+        
+      <li>anisofy</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for anisofy</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module `anisotropifies` the network by sampling the post-synapses in an </span>
+<span class="sd">specific manner defined in `[1]`_. I have seperated this utility, in case we </span>
+<span class="sd">decided to develope other structural connectivities.</span>
+
+<span class="sd">.. _[1]: https://doi.org/10.1371/journal.pcbi.1007432</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<div class="viewcode-block" id="get_post_syns"><a class="viewcode-back" href="../anisofy.html#anisofy.get_post_syns">[docs]</a><span class="k">def</span> <span class="nf">get_post_syns</span><span class="p">(</span><span class="n">s_coord</span><span class="p">,</span> <span class="n">ncons</span><span class="p">,</span>
+                  <span class="n">srow</span><span class="p">,</span> <span class="n">scol</span><span class="p">,</span> <span class="n">trow</span><span class="p">,</span> <span class="n">tcol</span><span class="p">,</span> 
+                  <span class="n">profile</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="p">{},</span> 
+                  <span class="n">self_link</span><span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">recurrent</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Samples indices of the source neuron `s_coord` in the target network </span>
+<span class="sd">    according to a location-dependent profile. The profile by default is </span>
+<span class="sd">    localized on the location of the source neuron. Yet, it is possible to </span>
+<span class="sd">    shift to any location relative to the source neuron on the target network. </span>
+<span class="sd">    The location of the source neuron on the target network will be </span>
+<span class="sd">    interpolated if the size of source and target networks don&#39;t match.</span>
+
+<span class="sd">    Periodic boundary condition is applied.</span>
+
+<span class="sd">    :param s_coord: source coordinate index as a tuple of ints</span>
+<span class="sd">    :type s_coord: tuple</span>
+<span class="sd">    :type ncons: int</span>
+<span class="sd">    :param srow: number of rows in source network</span>
+<span class="sd">    :type srow: int</span>
+<span class="sd">    :param scol: number of columns in source network</span>
+<span class="sd">    :type scol: int</span>
+<span class="sd">    :param trow: number of rows in target network</span>
+<span class="sd">    :type trow: int</span>
+<span class="sd">    :param tcol: number of columns in target network</span>
+<span class="sd">    :type tcol: int</span>
+<span class="sd">    :param ncons: number of out-links</span>
+<span class="sd">    :param profile: connectivity configuration. Read below for more info.</span>
+<span class="sd">    :type profile: dict</span>
+<span class="sd">    :param shift: shift configuration Read below for more info.</span>
+<span class="sd">    :type shift: dict</span>
+<span class="sd">    :raises NotImplementedError: If the weigh profiles is not Gaussian or Gamma</span>
+<span class="sd">    :return: source and target coordinate indices (in target network coordinates) </span>
+<span class="sd">    :rtype: tuple</span>
+
+<span class="sd">    .. note:</span>
+<span class="sd">        Connectivity dictionary must have the following structure:</span>
+<span class="sd">        `profile = {&#39;type&#39;:&#39;Gaussian&#39;, &#39;params&#39;:{&#39;std&#39;: 10}, &#39;self_link&#39;:False}`</span>
+<span class="sd">        or </span>
+<span class="sd">        `profile = {&#39;type&#39;:&#39;Gamma&#39;, &#39;params&#39;:{&#39;k&#39;: 3, &#39;theta&#39;:4}, &#39;self_link&#39;:False}`</span>
+<span class="sd">        Types, other than `Gaussian` and `Gamma` are not accepted.</span>
+
+<span class="sd">    .. note:</span>
+<span class="sd">        A shift can be prescribed by a dictionary that follows this structure:</span>
+<span class="sd">        `shift_cfg = {&#39;r&#39;:5, &#39;phi&#39;:np.pi/4}`</span>
+<span class="sd">        This will move the targets location accordingly.        </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">wparams</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;params&#39;</span><span class="p">]</span>
+    <span class="n">wtype</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+    
+    
+    <span class="n">shift_x</span> <span class="o">=</span> <span class="n">shift</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">shift</span><span class="p">[</span><span class="s1">&#39;phi&#39;</span><span class="p">])</span> 
+    <span class="n">shift_y</span> <span class="o">=</span> <span class="n">shift</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">shift</span><span class="p">[</span><span class="s1">&#39;phi&#39;</span><span class="p">])</span>     
+    
+    <span class="c1"># source neuron location on the target net</span>
+    <span class="n">scale_x</span><span class="p">,</span> <span class="n">scale_y</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">*</span><span class="n">trow</span><span class="o">/</span><span class="n">srow</span><span class="p">,</span> <span class="mf">1.</span><span class="o">*</span><span class="n">tcol</span><span class="o">/</span><span class="n">scol</span>
+    <span class="n">s_coord</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">([</span><span class="n">s_coord</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">scale_x</span><span class="p">,</span> <span class="n">s_coord</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">scale_y</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> 
+    
+    <span class="c1"># here we draw (source-centered) components of targets. we assume </span>
+    <span class="c1"># self-links are not permitted, and draw as many links as needed</span>
+    <span class="c1"># until no self-link exist anymore. </span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">ncons</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">ncons</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    
+    <span class="n">redraw</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">y</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">while</span> <span class="nb">sum</span><span class="p">(</span><span class="n">redraw</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+        <span class="n">ncon</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">redraw</span><span class="p">)</span>
+        <span class="c1">#print(&#39;Sampling&#39;, ncon, &#39;targets.&#39;)</span>
+        
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">ncon</span><span class="p">)</span>
+        <span class="c1">#phi=shift[&#39;phi&#39;]</span>
+        <span class="k">if</span> <span class="n">wtype</span><span class="o">==</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">:</span>
+            <span class="n">radius</span> <span class="o">=</span> <span class="n">wparams</span><span class="p">[</span><span class="s1">&#39;std&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">ncon</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">wtype</span><span class="o">==</span><span class="s1">&#39;Gamma&#39;</span><span class="p">:</span>
+            <span class="n">radius</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+                <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">gamma</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span> <span class="n">wparams</span><span class="p">[</span><span class="s1">&#39;kappa&#39;</span><span class="p">],</span> 
+                                  <span class="n">scale</span><span class="o">=</span> <span class="n">wparams</span><span class="p">[</span><span class="s1">&#39;theta&#39;</span><span class="p">],</span> 
+                                  <span class="n">size</span><span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ncon</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)),</span>
+                <span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">gamma</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">wparams</span><span class="p">[</span><span class="s1">&#39;kappa&#39;</span><span class="p">],</span> 
+                                 <span class="n">scale</span><span class="o">=</span><span class="n">wparams</span><span class="p">[</span><span class="s1">&#39;theta&#39;</span><span class="p">],</span> 
+                                 <span class="n">size</span><span class="o">=</span><span class="n">ncon</span> <span class="o">-</span><span class="nb">int</span><span class="p">(</span><span class="n">ncon</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)))</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+        
+        <span class="c1">#print(redraw, s_coord, ncons)</span>
+        <span class="c1">#if len(redraw)==4:</span>
+        <span class="c1">#    set_trace()</span>
+        <span class="n">x_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">radius</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">+</span> <span class="n">shift_x</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">y_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">radius</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">+</span> <span class="n">shift_y</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        
+        <span class="n">x</span><span class="p">[</span><span class="n">redraw</span><span class="p">]</span> <span class="o">=</span> <span class="n">x_</span> <span class="o">%</span> <span class="n">trow</span>
+        <span class="n">y</span><span class="p">[</span><span class="n">redraw</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_</span> <span class="o">%</span> <span class="n">tcol</span>
+        
+        <span class="k">if</span> <span class="p">(</span><span class="n">recurrent</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">self_link</span><span class="p">):</span>
+            <span class="n">redraw</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">y</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">redraw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+            
+    <span class="c1"># adding the source index</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">s_coord</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">%</span> <span class="n">trow</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span> <span class="o">+</span> <span class="n">s_coord</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">%</span> <span class="n">tcol</span>
+    <span class="n">t_coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">])</span><span class="o">.</span><span class="n">T</span> 
+    
+    <span class="k">return</span> <span class="n">s_coord</span><span class="p">,</span> <span class="n">t_coords</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Arash Gol-Mohammadi.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>

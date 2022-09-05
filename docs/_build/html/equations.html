@@ -1,0 +1,357 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>equations module &mdash; anisonet 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="landscape module" href="landscape.html" />
+    <link rel="prev" title="configs module" href="configs.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> anisonet
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">anisonet</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="anisofy.html">anisofy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configs.html">configs module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="configs.html#population-s-configuration">Population’s configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="configs.html#pathways-configuration">Pathways’ configuration</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="configs.html#profile">Profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="configs.html#synapse">Synapse</a></li>
+<li class="toctree-l4"><a class="reference internal" href="configs.html#anisotropy">Anisotropy</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">equations module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#noise-scaling">Noise scaling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#synaptic-model">Synaptic model</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulate.html">simulate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="viz.html">viz module</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">anisonet</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="modules.html">anisonet</a> &raquo;</li>
+        
+      <li>equations module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/equations.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="module-equations">
+<span id="equations-module"></span><h1>equations module<a class="headerlink" href="#module-equations" title="Permalink to this heading">¶</a></h1>
+<p>The equation module provides proper equation strings for both neuron and synapses. Note however, due
+to the existence of the stochastic background current, extra care must be paid when translating the
+code of NEST to Brian and vice versa.</p>
+<section id="noise-scaling">
+<h2>Noise scaling<a class="headerlink" href="#noise-scaling" title="Permalink to this heading">¶</a></h2>
+<p>According to this <a class="reference external" href="https://nest-simulator.readthedocs.io/en/v3.3/model_details/noise_generator.html">notebook</a> in NEST a Gaussian <code class="docutils literal notranslate"><span class="pre">noise_generator</span></code> adds a 
+constant current <span class="math notranslate nohighlight">\(I_j\)</span> for the inteval <span class="math notranslate nohighlight">\([t_j, t_j + \Delta t]\)</span> 
+using a normal distribution:</p>
+<p>With such an input, the total charge injected until time <span class="math notranslate nohighlight">\(t\)</span> is</p>
+<div class="math notranslate nohighlight">
+\[q(t)_{NEST} = \int_0^t I dt' = \mu t + \sigma \sum_{j=0}^n I_j \Delta t\]</div>
+<p>where we have used the Riemann sum. The mean and variance of total charge are</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}E[q(t)_{NEST}] = \mu t  \\
+Var[q(t)_{NEST}] = 0 + \sigma^2 \Delta t^2 * n = (n\Delta t) \sigma^2 \Delta t =  t \sigma^2 \Delta t\end{split}\]</div>
+<p>However, in Brian, the same stochastic current is modelled as Wiener processes</p>
+<div class="math notranslate nohighlight">
+\[I_j = \mu + \sigma \zeta(t_j)\]</div>
+<p>which gives rise to</p>
+<div class="math notranslate nohighlight">
+\[q(t)_{Brian} = \int_0^t I dt' = \mu t + \sigma \int_0^t \zeta(t') dt' = \mu t + \sigma W(t) \]</div>
+<p>with <span class="math notranslate nohighlight">\(W(t)\)</span> being a Brownian trajectory. Thus, the mean and variance are</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}E[q(t)_{Brian}] = \mu t  \\
+Var[q(t)_{Brian}] = 0 + t \sigma^2\end{split}\]</div>
+<p>As a result, the variance of Brian and NEST are related in the following way:</p>
+<div class="math notranslate nohighlight">
+\[\sigma^2_{Brian} = \sigma^2_{NEST} \Delta t \]</div>
+</section>
+<section id="synaptic-model">
+<h2>Synaptic model<a class="headerlink" href="#synaptic-model" title="Permalink to this heading">¶</a></h2>
+<p>There’s a computational difference between current/conductance-based 
+synapses from voltage-based ones in brian. The former show themselves 
+in the cell equation in terms of <code class="docutils literal notranslate"><span class="pre">I_syn</span></code>. Thus, they need to be 
+evaluated on every single timestep. One the contrary, voltage-based 
+synapses only add a particular amount of potential to the post-synapse
+voltage, and thus need to be updated once there’s an event. Therefore,
+voltage-based synapse is computationally cheaper. From the 
+implementation point of view, this means current/conductance-based 
+synapses must have the <code class="docutils literal notranslate"><span class="pre">(clock-driven)</span></code> flag, whereas the 
+voltage-based one <code class="docutils literal notranslate"><span class="pre">(event-driven)</span></code>. Also look at (<a class="reference external" href="https://brian2.readthedocs.io/en/stable/user/synapses.html?highlight=event-driven#event-driven-updates">Brian documentation</a>).</p>
+<p>Another point to consider is that the neuron equation, too, depends on the synapse type.
+If current or conductance based models are used, the synaptic current will be added as 
+a <code class="docutils literal notranslate"><span class="pre">I_syn</span></code> term to the neuron equation, whereas voltage-based synapses can be implemented
+by providing proper voltage jump in <code class="docutils literal notranslate"><span class="pre">on_pre</span></code> for each event.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="equations.get_nrn_eqs">
+<span class="sig-prename descclassname"><span class="pre">equations.</span></span><span class="sig-name descname"><span class="pre">get_nrn_eqs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pop_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syn_base</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/equations.html#get_nrn_eqs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#equations.get_nrn_eqs" title="Permalink to this definition">¶</a></dt>
+<dd><p>It matters how the synapse inputs are modeled. Seemingly, the one used in
+NEST and the paper are using a “current-alpha”, as opposed to “voltage-” or
+“conductance-”. Look at <a class="reference external" href="https://github.com/nest/nest-simulator/blob/d7b3c7671c5fcd9acf211b58012db9729607a1db/models/iaf_psc_alpha.h#L48">source code</a> for more details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pop_name</strong> (<em>str</em>) – population name</p></li>
+<li><p><strong>pops_cfg</strong> (<em>dict</em>) – population configuration</p></li>
+<li><p><strong>syn_base</strong> (<em>str</em>) – synapse model base (infered from the config dicts)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Brian Equation object for neuron</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Brian Equation object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="equations.get_syn_eqs">
+<span class="sig-prename descclassname"><span class="pre">equations.</span></span><span class="sig-name descname"><span class="pre">get_syn_eqs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conn_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syn_base</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/equations.html#get_syn_eqs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#equations.get_syn_eqs" title="Permalink to this definition">¶</a></dt>
+<dd><p>It matters how the synapse inputs are modeled. Seemingly, the one used in
+NEST and the paper are using a “current-alpha”, as opposed to “voltage-” or
+“conductance-”: <a class="reference external" href="https://github.com/nest/nest-simulator/blob/d7b3c7671c5fcd9acf211b58012db9729607a1db/models/iaf_psc_alpha.h#L48">nest repo</a>.</p>
+<p>Nest normalizes its models according the the following rule (<a class="reference external" href="https://nest-simulator.readthedocs.io/en/v2.20.1/models/neurons.html#classnest_1_1iaf__psc__alpha">nest docs</a>):</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><cite>iaf_psc_alpha</cite>: max current of unitary excitation/inhiition = 1 pA</p></li>
+<li><p><cite>iaf_cond_alpha</cite>: max conductance of unitary excitation/inhiition = 1 nS</p></li>
+</ul>
+</div></blockquote>
+<p>In order to get the same behaviour in brian, we need to ascribe a weight to
+our unitary events. (This weight happen to be exp(1).) In addition, the 
+parameter <code class="docutils literal notranslate"><span class="pre">h</span></code> is unbounded, and can be well beyond 1.</p>
+<p>#TODO: check if that’s also the case in nest.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn_name</strong> (<em>str</em>) – pathway name</p></li>
+<li><p><strong>conn_cfg</strong> (<em>dict</em>) – population connections configurations</p></li>
+<li><p><strong>syn_base</strong> (<em>str</em>) – synapse model base (infered from the config dicts)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of (synapse equation, on_pre, on_post)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>(Brian Equation object, str, str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="landscape.html" class="btn btn-neutral float-right" title="landscape module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="configs.html" class="btn btn-neutral" title="configs module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Arash Gol-Mohammadi.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/documentation_options.js"></script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>
