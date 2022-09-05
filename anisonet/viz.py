@@ -7,6 +7,7 @@ name (inherited from the simulation object).
 
 The animiation function is copy-pasted from the repository of `[1]`_.
 
+.. _[1]: https://doi.org/10.1371/journal.pcbi.1007432 
 
 """
 
@@ -359,7 +360,6 @@ def imshow(fig, ax, im, h, ts_bins=[]):
     
     It prepares the field for an animation.
     
-    .. _[1]: https://doi.org/10.1371/journal.pcbi.1007432. 
     """
     if type(im) == list:
         frames = len(h[0])

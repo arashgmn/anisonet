@@ -6,14 +6,34 @@ the anisotropy angle $\phi$ and shift $r$ defined in `[1]`_. The followings are
 merely a reimplementation of ``connectivity_landscape.py`` file of `[1]`_, except
 a few assertion.
 
-.. _[1]: https://doi.org/10.1371/journal.pcbi.1007432. 
+.. _[1]: https://doi.org/10.1371/journal.pcbi.1007432
 """
 
 import numpy as np
 from noise import pnoise2 as perlin    
 
 def make_landscape(gs, ls_type='random', ls_params={}):
+    """
+    Makes a landscape according for neural network placed on a square grid of 
+    size ``gs``. The landscape has two components `rs` (the radial 
+    displacement) and `phis` (the anisotropic bias angle). `phis` are forced to
+    have a flat histogram. In other words, even if `phis` are not equal, their
+    frequency is the same over the grid. `phis` are always between -pi to pi.
     
+
+    :param gs: grid size
+    :type gs: int
+    :param ls_type: landscape name. Only ['random', 'perlin', 'symmetric', 'homogeneous'] 
+        are allowed., defaults to 'random'
+    :type ls_type: str, optional
+    :param ls_params: A dictionary specifying the parameters of the desired 
+        landsacepe., defaults to {}
+    :type ls_params: dict, optional
+    
+    :return: (rs, phis) as flattened arrays 
+    :rtype: tuple of np.array of floats
+
+    """
     if ls_type=='homogeneous':
         assert 'phi' in ls_params.keys(), "phi value is needed for landscape "+ls_type
         assert 'r' in ls_params.keys(), "r value is needed for landscape "+ls_type

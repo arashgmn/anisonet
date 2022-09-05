@@ -1,9 +1,79 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Aug  5 14:09:32 2022
+The equation module provides proper equation strings for both neuron and synapses. Note however, due
+to the existence of the stochastic background current, extra care must be paid when translating the
+code of NEST to Brian and vice versa.
 
-@author: arash
+
+=============
+Noise scaling
+=============
+
+According to this `notebook`_ in NEST a Gaussian ``noise_generator`` adds a 
+constant current :math:`I_j` for the inteval :math:`[t_j, t_j + \Delta t]` 
+using a normal distribution:
+
+.. math: 
+	I_j = \mu + \sigma N(0,1)
+	
+With such an input, the total charge injected until time :math:`t` is
+
+.. math::
+	q(t)_{NEST} = \int_0^t I dt' = \mu t + \sigma \sum_{j=0}^n I_j \Delta t
+
+where we have used the Riemann sum. The mean and variance of total charge are
+
+.. math::
+	E[q(t)_{NEST}] = \mu t  \\\\
+	Var[q(t)_{NEST}] = 0 + \sigma^2 \Delta t^2 * n = (n\Delta t) \sigma^2 \Delta t =  t \sigma^2 \Delta t
+
+However, in Brian, the same stochastic current is modelled as Wiener processes
+
+.. math::
+	I_j = \mu + \sigma \zeta(t_j)
+	
+
+which gives rise to
+
+.. math::
+	q(t)_{Brian} = \int_0^t I dt' = \mu t + \sigma \int_0^t \zeta(t') dt' = \mu t + \sigma W(t) 
+
+with :math:`W(t)` being a Brownian trajectory. Thus, the mean and variance are
+
+.. math:: 
+	E[q(t)_{Brian}] = \mu t  \\\\
+	Var[q(t)_{Brian}] = 0 + t \sigma^2
+
+As a result, the variance of Brian and NEST are related in the following way:
+
+.. math:: 
+	\sigma^2_{Brian} = \sigma^2_{NEST} \Delta t 
+ 
+==============
+Synaptic model
+==============
+
+There's a computational difference between current/conductance-based 
+synapses from voltage-based ones in brian. The former show themselves 
+in the cell equation in terms of ``I_syn``. Thus, they need to be 
+evaluated on every single timestep. One the contrary, voltage-based 
+synapses only add a particular amount of potential to the post-synapse
+voltage, and thus need to be updated once there's an event. Therefore,
+voltage-based synapse is computationally cheaper. From the 
+implementation point of view, this means current/conductance-based 
+synapses must have the ``(clock-driven)`` flag, whereas the 
+voltage-based one ``(event-driven)``. Also look at (`Brian documentation`_).
+
+
+Another point to consider is that the neuron equation, too, depends on the synapse type.
+If current or conductance based models are used, the synaptic current will be added as 
+a ``I_syn`` term to the neuron equation, whereas voltage-based synapses can be implemented
+by providing proper voltage jump in ``on_pre`` for each event.
+
+
+.. _Brian documentation: https://brian2.readthedocs.io/en/stable/user/synapses.html?highlight=event-driven#event-driven-updates
+.. _notebook: https://nest-simulator.readthedocs.io/en/v3.3/model_details/noise_generator.html
 """
 
 import brian2 as b2
@@ -13,18 +83,26 @@ def get_nrn_eqs(pop_name, pops_cfg, syn_base):
     """
     It matters how the synapse inputs are modeled. Seemingly, the one used in
     NEST and the paper are using a "current-alpha", as opposed to "voltage-" or
-    "conductance-": `source code`_.
+    "conductance-". Look at `source code`_ for more details.
+    
+    :param pop_name: population name
+    :type pop_name: str
+    :param pops_cfg: population configuration
+    :type pops_cfg: dict
+    :param syn_base: synapse model base (infered from the config dicts)
+    :type syn_base: str
+    :return: Brian Equation object for neuron
+    :rtype: Brian Equation object
+
     
     .. _source code: https://github.com/nest/nest-simulator/blob/d7b3c7671c5fcd9acf211b58012db9729607a1db/models/iaf_psc_alpha.h#L48
     """
-    
     tmp = '''
         mu: amp (shared)
         sigma: amp (shared)
-        noise_pop = mu + sigma*sqrt(1*ms)*xi_pop: amp 
-        #noise_pop = mu + sigma*sqrt(brian_dt)*xi_pop: amp # changed here      
+        noise_pop = mu + sigma*sqrt(2*brian_dt)*xi_pop: amp 
         '''
-    #tmp = tmp.replace('brian_dt', str(b2.defaultclock.dt/b2.ms)+'*ms')
+    tmp = tmp.replace('brian_dt', str(b2.defaultclock.dt/b2.ms)+'*ms')
     
     if syn_base!='voltage':
         eqs_str= tmp + '''dv/dt = (E-v)/tau + (noise_pop + I_syn)/C : volt (unless refractory)\n'''
@@ -57,35 +135,23 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
     parameter ``h`` is unbounded, and can be well beyond 1. 
     
     #TODO: check if that's also the case in nest.
-    
-    .. note:
-        There's a computational difference between current/conductance-based 
-        synapses from voltage-based ones in brian. The former show themselves 
-        in the cell equation in terms of ``I_syn``. Thus, they need to be 
-        evaluated on every single timestep. One the contrary, voltage-based 
-        synapses only add a particular amount of potential to the post-synapse
-        voltage, and thus need to be updated once there's an event. Therefore,
-        voltage-based synapse is computationally cheaper. From the 
-        implementation point of view, this means current/conductance-based 
-        synapses must have the ``(clock-driven)`` flag, whereas the 
-        voltage-based one ``(event-driven)``.
-    
+     
 
     .. _nest repo: https://github.com/nest/nest-simulator/blob/d7b3c7671c5fcd9acf211b58012db9729607a1db/models/iaf_psc_alpha.h#L48
     .. _nest docs: https://nest-simulator.readthedocs.io/en/v2.20.1/models/neurons.html#classnest_1_1iaf__psc__alpha
 
+
+    :param conn_name: pathway name
+    :type conn_name: str
+    :param conn_cfg: population connections configurations
+    :type conn_cfg: dict
+    :param syn_base: synapse model base (infered from the config dicts)
+    :type syn_base: str
+    :return: tuple of (synapse equation, on_pre, on_post)
+    :rtype: (Brian Equation object, str, str)
+
     """
     
-    # syn_type = conn_cfg[conn_cfg.keys()[0]]['synapse']
-    # if 'current' in syn_type:
-    #     base = 'current'            
-    # elif 'voltage' in syn_type:
-    #     base = 'voltage'
-    # elif 'conductance' in syn_type: 
-    #     base = 'conductance'
-    # else:
-    #     raise
-        
     tmp = '''
         dg/dt = (-g+h) / tau : 1 (clock-driven)
         dh/dt = -h / tau : 1 (clock-driven)
@@ -111,7 +177,7 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
     elif syn_base=='conductance':
         # J is the maximum conductance
         eqs_str = tmp
-        eqs_str += '''I_syn_post = J*g*(v_post-E): amp \n''' 
+        eqs_str += '''I_syn_post = J*g*(v_post-Erev): amp \n''' 
         eqs_str += '''E : volt (shared)\n'''
         eqs_str += '''J : siemens (shared)\n'''
         #eqs_str += '''J = {}*nS: siemens \n'''.format(J/nS)  
