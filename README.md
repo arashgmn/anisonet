@@ -38,4 +38,4 @@ This implementation is work in progress and possibly contains bugs! Any feedback
 
 
 ### Known issue
-There seem to by a discrepancy between the NEST implementation and Brian, specifically in the time-scaling of the stochastic noise term.
+There seem to by a discrepancy between the NEST implementation and Brian, specifically in the time-scaling of the stochastic noise term. 
