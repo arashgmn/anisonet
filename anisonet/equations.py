@@ -14,7 +14,7 @@ According to this `notebook`_ in NEST a Gaussian ``noise_generator`` adds a
 constant current :math:`I_j` for the inteval :math:`[t_j, t_j + \Delta t]` 
 using a normal distribution:
 
-.. math: 
+.. math::
 	I_j = \mu + \sigma N(0,1)
 	
 With such an input, the total charge injected until time :math:`t` is
@@ -28,12 +28,12 @@ where we have used the Riemann sum. The mean and variance of total charge are
 	E[q(t)_{NEST}] = \mu t  \\\\
 	Var[q(t)_{NEST}] = 0 + \sigma^2 \Delta t^2 * n = (n\Delta t) \sigma^2 \Delta t =  t \sigma^2 \Delta t
 
-However, in Brian, the same stochastic current is modelled as Wiener processes
+However, in Brian, the same stochastic current is modelled as Wiener processes (:math:`dW \~ N(0, dt)`) whose
+variance depends on the timestep `dt` (`[2]`_). Wrting the stochastic current in its `Langevin form`, we get:
 
 .. math::
 	I_j = \mu + \sigma \zeta(t_j)
 	
-
 which gives rise to
 
 .. math::
@@ -48,7 +48,7 @@ with :math:`W(t)` being a Brownian trajectory. Thus, the mean and variance are
 As a result, the variance of Brian and NEST are related in the following way:
 
 .. math:: 
-	\sigma^2_{Brian} = \sigma^2_{NEST} \Delta t 
+	\sigma^2_{Brian} = \sigma^2_{NEST} \Delta t_{NEST}
  
 ==============
 Synaptic model
@@ -74,6 +74,7 @@ by providing proper voltage jump in ``on_pre`` for each event.
 
 .. _Brian documentation: https://brian2.readthedocs.io/en/stable/user/synapses.html?highlight=event-driven#event-driven-updates
 .. _notebook: https://nest-simulator.readthedocs.io/en/v3.3/model_details/noise_generator.html
+.. _[2]: https://www.researchgate.net/publication/260254488_Equation-oriented_specification_of_neural_models_for_simulations
 """
 
 import brian2 as b2

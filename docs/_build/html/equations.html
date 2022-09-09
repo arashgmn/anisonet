@@ -184,6 +184,8 @@ code of NEST to Brian and vice versa.</p>
 <p>According to this <a class="reference external" href="https://nest-simulator.readthedocs.io/en/v3.3/model_details/noise_generator.html">notebook</a> in NEST a Gaussian <code class="docutils literal notranslate"><span class="pre">noise_generator</span></code> adds a 
 constant current <span class="math notranslate nohighlight">\(I_j\)</span> for the inteval <span class="math notranslate nohighlight">\([t_j, t_j + \Delta t]\)</span> 
 using a normal distribution:</p>
+<div class="math notranslate nohighlight">
+\[I_j = \mu + \sigma N(0,1)\]</div>
 <p>With such an input, the total charge injected until time <span class="math notranslate nohighlight">\(t\)</span> is</p>
 <div class="math notranslate nohighlight">
 \[q(t)_{NEST} = \int_0^t I dt' = \mu t + \sigma \sum_{j=0}^n I_j \Delta t\]</div>
@@ -191,7 +193,8 @@ using a normal distribution:</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}E[q(t)_{NEST}] = \mu t  \\
 Var[q(t)_{NEST}] = 0 + \sigma^2 \Delta t^2 * n = (n\Delta t) \sigma^2 \Delta t =  t \sigma^2 \Delta t\end{split}\]</div>
-<p>However, in Brian, the same stochastic current is modelled as Wiener processes</p>
+<p>However, in Brian, the same stochastic current is modelled as Wiener processes (<span class="math notranslate nohighlight">\(dW \~ N(0, dt)\)</span>) whose
+variance depends on the timestep <cite>dt</cite> (<a class="reference external" href="https://www.researchgate.net/publication/260254488_Equation-oriented_specification_of_neural_models_for_simulations">[2]</a>). Wrting the stochastic current in its <cite>Langevin form</cite>, we get:</p>
 <div class="math notranslate nohighlight">
 \[I_j = \mu + \sigma \zeta(t_j)\]</div>
 <p>which gives rise to</p>
@@ -203,7 +206,7 @@ Var[q(t)_{NEST}] = 0 + \sigma^2 \Delta t^2 * n = (n\Delta t) \sigma^2 \Delta t =
 Var[q(t)_{Brian}] = 0 + t \sigma^2\end{split}\]</div>
 <p>As a result, the variance of Brian and NEST are related in the following way:</p>
 <div class="math notranslate nohighlight">
-\[\sigma^2_{Brian} = \sigma^2_{NEST} \Delta t \]</div>
+\[\sigma^2_{Brian} = \sigma^2_{NEST} \Delta t_{NEST}\]</div>
 </section>
 <section id="synaptic-model">
 <h2>Synaptic model<a class="headerlink" href="#synaptic-model" title="Permalink to this heading">¶</a></h2>
