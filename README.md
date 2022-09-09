@@ -11,7 +11,8 @@ The code structure is simple. We have a main class called `Simulate` which sets 
 - `utils`: some useful utility functions
 - `viz`: a set of functions for visualizing results
 
-For further details check the documentation in `docs/index.html` (you need to clone the repo first).
+## Documentation
+For further details check the documentation here: [https://arashgmn.github.io/anisonet-brian](https://arashgmn.github.io/anisonet-brian)
 
 ## Setting up the environment
 You basically need five things:
