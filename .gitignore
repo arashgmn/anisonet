@@ -4,6 +4,7 @@ anisonet/old
 tests
 anisonet/tmp
 anisonet/results/
+anisonet/__init__.py # it intervenes the sphinx-apidoc locally
                                                                                                                                                                                                                                                                                                                                                                                             
 
 # Byte-compiled / optimized / DLL files
