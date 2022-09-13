@@ -21,7 +21,7 @@ root = './'
 
 def get_cax(ax):
     """
-    Returns a human-like colorbar axis from a given ax, to be used with 
+    Returns a human-friendly colorbar axis from a given ax, to be used with 
     matplotlib's colorbar method.
     """
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -50,19 +50,28 @@ def plot_in_out_deg(sim):
         in_deg = syn.N_incoming_post.reshape((gs_trg,gs_trg))
         out_deg = syn.N_outgoing_pre.reshape((gs_src,gs_src))
         
-        fig, axs = plt.subplots(1,2, figsize=(9,4), )
-        m = axs[0].pcolormesh(in_deg, shading='flat')
-        plt.colorbar(m, cax= get_cax(axs[0]))
+        fig, axs = plt.subplots(2,2, figsize=(7,4), constrained_layout=True,
+                                gridspec_kw={'height_ratios':[1,.5]})
         
-        m = axs[1].pcolormesh(out_deg, shading='flat')
-        plt.colorbar(m, cax= get_cax(axs[1]))
+        # field map & distribution of in-degrees
+        m = axs[0, 0].pcolormesh(in_deg, shading='flat')
+        plt.colorbar(m, cax= get_cax(axs[0,0]))
+        axs[1 , 0].hist(syn.N_incoming_post, bins=50, density=True)
         
-        axs[0].set_title('In-degree '+src.name+r'$\to$'+trg.name)
-        axs[1].set_title('out-degree '+src.name+r'$\to$'+trg.name)
+        # field map & distribution of out-degrees
+        m = axs[0, 1].pcolormesh(out_deg, shading='flat')
+        plt.colorbar(m, cax= get_cax(axs[0,1]))
+        axs[1 , 1].hist(syn.N_outgoing_pre, bins=50, density=True)
         
-        for ax in axs:
+        
+        axs[1,0].set_ylabel('Probability density')
+        axs[1,0].set_xlabel('In-degree '+src.name+r'$\to$'+trg.name)
+        axs[1,1].set_xlabel('out-degree '+src.name+r'$\to$'+trg.name)
+        
+        for ax in axs[0,:]:
             ax.set_aspect('equal')
             ax.get_yaxis().set_ticks([])
+        
         #plt.tight_layout()
         plt.savefig(root +'results/'+sim.name+'_degs_'+src.name+trg.name+'.png', 
                     dpi=200, bbox_inches='tight')
@@ -354,7 +363,31 @@ def plot_connectivity(path):
                 bbox_inches='tight', dpi=200)
     plt.close()
 
+def plot_firing_rates_dist(mon_name):
+    """
+    Plots the average firing rate density in log scale.
+    
+    :param mon_name: name pattern of the desired monitor (will be aggregated)
+    :type mon_name: str
+    """
+    from pandas import value_counts
+    title = mon_name.split('_')[0] # this is not a good choice for many pops
+    
+    idxs, ts = utils.aggregate_mons(mon_name)
+    T = (np.max(ts) - np.min(ts))/1000. # ts is in ms
+    rates = value_counts(idxs)/T
+    
+    rates.hist(bins=50, density=True)
+    
+    plt.yscale('log')
+    plt.xlabel('Firing rate [Hz]')
+    plt.ylabel('Probability density')
+    plt.title(title)
+    plt.savefig(root +'results/rates_desnsity_'+title+'.png',
+                bbox_inches='tight', dpi=200)
+    plt.close()
 
+    
 def imshow(fig, ax, im, h, ts_bins=[]):
     """
     **Note**: This function is copy-pasted from the GitHub repo of `[1]`_.
@@ -377,6 +410,9 @@ def imshow(fig, ax, im, h, ts_bins=[]):
             ax.set_title('%s ms' % ts_bins[ii])
         else:
             ax.set_title('%s' % ii)
+        
+        cax = get_cax(ax)
+        plt.colorbar(im, cax=cax)
         return im,
 
     # Call the animator.  blit=True means only re-draw the parts that have changed.
@@ -384,7 +420,7 @@ def imshow(fig, ax, im, h, ts_bins=[]):
 
     return anim
 
-def plot_animation(mon_name, gs, ss_dur=100):
+def plot_animation(mon_name, gs, ss_dur=50):
     """
     Aggregates the firing rate from disk and make an animation.
     
