@@ -271,9 +271,11 @@
     <span class="n">tmp</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
 <span class="s1">        mu: amp (shared)</span>
 <span class="s1">        sigma: amp (shared)</span>
-<span class="s1">        noise_pop = mu + sigma*sqrt(2*brian_dt)*xi_pop: amp </span>
+<span class="s1">        noise_pop = mu + sigma*sqrt(noise_dt)*xi_pop: amp </span>
 <span class="s1">        &#39;&#39;&#39;</span>
-    <span class="n">tmp</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;brian_dt&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">b2</span><span class="o">.</span><span class="n">defaultclock</span><span class="o">.</span><span class="n">dt</span><span class="o">/</span><span class="n">b2</span><span class="o">.</span><span class="n">ms</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;*ms&#39;</span><span class="p">)</span>
+        
+    <span class="n">noise_dt</span> <span class="o">=</span> <span class="n">pops_cfg</span><span class="p">[</span><span class="n">pop_name</span><span class="p">][</span><span class="s1">&#39;noise&#39;</span><span class="p">][</span><span class="s1">&#39;noise_dt&#39;</span><span class="p">]</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;noise_dt&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">noise_dt</span><span class="o">/</span><span class="n">b2</span><span class="o">.</span><span class="n">ms</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;*ms&#39;</span><span class="p">)</span>
     
     <span class="k">if</span> <span class="n">syn_base</span><span class="o">!=</span><span class="s1">&#39;voltage&#39;</span><span class="p">:</span>
         <span class="n">eqs_str</span><span class="o">=</span> <span class="n">tmp</span> <span class="o">+</span> <span class="s1">&#39;&#39;&#39;dv/dt = (E-v)/tau + (noise_pop + I_syn)/C : volt (unless refractory)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>

@@ -101,9 +101,11 @@ def get_nrn_eqs(pop_name, pops_cfg, syn_base):
     tmp = '''
         mu: amp (shared)
         sigma: amp (shared)
-        noise_pop = mu + sigma*sqrt(2*brian_dt)*xi_pop: amp 
+        noise_pop = mu + sigma*sqrt(noise_dt)*xi_pop: amp 
         '''
-    tmp = tmp.replace('brian_dt', str(b2.defaultclock.dt/b2.ms)+'*ms')
+        
+    noise_dt = pops_cfg[pop_name]['noise']['noise_dt']
+    tmp = tmp.replace('noise_dt', str(noise_dt/b2.ms)+'*ms')
     
     if syn_base!='voltage':
         eqs_str= tmp + '''dv/dt = (E-v)/tau + (noise_pop + I_syn)/C : volt (unless refractory)\n'''

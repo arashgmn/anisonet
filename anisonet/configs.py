@@ -17,7 +17,7 @@ have parameters in the following form:
 ..  code-block:: python
     
     {'gs': ..., 
-     'noise': {'mu': ..., 'sigma': ...},
+     'noise': {'mu': ..., 'sigma': ..., 'noise_dt': ...},
      'cell': {'type': 'LIF', 
               'thr': ..., 'ref': ..., 'rest': ...,
               'tau': ..., 'C': ...}
@@ -28,6 +28,7 @@ with
 
 #. ``gs``: grid size (int)
 #. ``mu`` and ``sigma``: the background current amplitude in standard deviation as Brian quantities with current unit
+#. ``noise_dt``: the time scaling of the Wiener process. Please refer to :ref:`equations:Noise scaling` for details.
 #. ``type``: fixed -- for the moment only LIF neuron is possible
 #. ``thr`` and ``rest``: threhold and resting potentials as Brian quantities with voltage unit
 #. ``ref``: refractory period as a Brian quantity with time unit
@@ -140,7 +141,7 @@ def get_config(name='EI_net', scalar=3):
     if name=='I_net':
         pops_cfg = {
             'I': {'gs':100//scalar, 
-                  'noise': {'mu': 700*pA, 'sigma': 100*pA},
+                  'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 0.1*ms},
                   'cell': {'type': 'LIF', 
                            #'thr': -55*mV, 'ref': 10*ms, 'rest': -70*mV,
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
@@ -186,14 +187,14 @@ def get_config(name='EI_net', scalar=3):
         # }
         pops_cfg = {
             'I': {'gs':60//scalar, 
-                  'noise': {'mu': 350*pA, 'sigma': 100*pA},
+                  'noise': {'mu': 350*pA, 'sigma': 100*pA, 'noise_dt': 0.1*ms},
                   'cell': {'type': 'LIF', 
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
                            'tau': 10*ms, 'C': 250*pF}
                   },
             
             'E': {'gs':120//scalar, 
-                  'noise': {'mu': 350*pA, 'sigma': 100*pA},
+                  'noise': {'mu': 350*pA, 'sigma': 100*pA, 'noise_dt': 0.1*ms},
                   'cell': {'type': 'LIF', 
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
                            'tau': 10*ms, 'C': 250*pF}

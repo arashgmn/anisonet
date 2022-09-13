@@ -292,23 +292,24 @@ def plot_realized_landscape(sim):
         src, trg = key
         spop = sim.pops[src]
         tpop = sim.pops[trg]
-        
-        phis = np.zeros(spop.N) # containts realized phi
-        gs = int(np.sqrt(tpop.N))
-        
+        gs_s = int(np.sqrt(spop.N)) # source pop grid size
+        gs_t = int(np.sqrt(tpop.N)) # target pop grid size
+
+        phis = np.zeros(spop.N) # containts realized phi        
         posts = sim.syns[id_].j.__array__()
         pres = sim.syns[id_].i.__array__()
-        for plot_id, s_idx in enumerate(sorted(set(pres))):
+        
+        for _, s_idx in enumerate(sorted(set(pres))):
             t_idxs = posts[pres==s_idx]
             t_coords = utils.idx2coords(t_idxs, tpop)
-            s_coord = utils.idx2coords(s_idx, spop)
+            s_coord = utils.idx2coords(s_idx, spop)*gs_t/gs_s
             
             post_cntr = (t_coords-s_coord).astype(float) # centers
-            post_cntr -= np.fix(post_cntr/(gs/2)) *gs # make periodic
+            post_cntr -= np.fix(post_cntr/(gs_t/2)) *gs_t # make periodic
             phis[s_idx] = np.arctan2(post_cntr[:,1].mean(), post_cntr[:,0].mean())
        
         name = sim.name + '_realized_phi_'+ key
-        plot_field(phis.reshape(gs,gs), name=name,
+        plot_field(phis.reshape(gs_s, gs_s), name=name,
                    vmin=-np.pi, vmax=np.pi)
         
         # density plot

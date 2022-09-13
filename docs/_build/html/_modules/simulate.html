@@ -644,7 +644,7 @@
         
 <span class="k">if</span> <span class="vm">__name__</span><span class="o">==</span><span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="c1">#pops_cfg, conn_cfg = configs.get_config(&#39;I_net&#39;) </span>
-    <span class="n">sim</span> <span class="o">=</span> <span class="n">Simulate</span><span class="p">(</span><span class="s1">&#39;I_net&#39;</span><span class="p">,</span> <span class="n">scalar</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">load_connectivity</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sim</span> <span class="o">=</span> <span class="n">Simulate</span><span class="p">(</span><span class="s1">&#39;I_net&#39;</span><span class="p">,</span> <span class="n">scalar</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">load_connectivity</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">sim</span><span class="o">.</span><span class="n">setup_net</span><span class="p">()</span>
     
     <span class="n">viz</span><span class="o">.</span><span class="n">plot_landscape</span><span class="p">(</span><span class="n">sim</span><span class="p">)</span>

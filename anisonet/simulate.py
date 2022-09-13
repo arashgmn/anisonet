@@ -474,7 +474,7 @@ class Simulate(object):
         
 if __name__=='__main__':
     #pops_cfg, conn_cfg = configs.get_config('I_net') 
-    sim = Simulate('I_net', scalar=1, load_connectivity=True)
+    sim = Simulate('I_net', scalar=1, load_connectivity=False)
     sim.setup_net()
     
     viz.plot_landscape(sim)
