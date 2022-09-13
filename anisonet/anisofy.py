@@ -100,8 +100,8 @@ def get_post_syns(s_coord, ncons,
         x_ = np.round(radius*np.cos(phi) + shift_x).astype(int)
         y_ = np.round(radius*np.sin(phi) + shift_y).astype(int)
         
-        x[redraw] = x_ % trow
-        y[redraw] = y_ % tcol
+        x[redraw] = x_ % tcol
+        y[redraw] = y_ % trow
         
         if (recurrent) and (not self_link):
             redraw = (x==0) & (y==0)
@@ -109,8 +109,77 @@ def get_post_syns(s_coord, ncons,
             redraw = np.zeros_like(x, dtype=bool)
             
     # adding the source index
-    x = (x + s_coord[0]) % trow
-    y = (y + s_coord[1]) % tcol
+    x = (x + s_coord[0]) % tcol
+    y = (y + s_coord[1]) % trow
+    t_coords = np.array([x,y]).T 
+    
+    return s_coord, t_coords.astype(int)
+
+
+
+def get_post_syns_spreizer(s_coord, ncons,
+                  srow, scol, trow, tcol, 
+                  profile, shift={}, 
+                  self_link= False, recurrent=True):
+    
+    wparams = profile['params']
+    wtype = profile['type']
+    
+    shift_x = shift['r'] * np.cos(shift['phi']) 
+    shift_y = shift['r'] * np.sin(shift['phi'])     
+    
+    # source neuron location on the target net
+    scale_x, scale_y = 1.*trow/srow, 1.*tcol/scol
+    s_coord = np.round([s_coord[0]*scale_x, s_coord[1]*scale_y]).astype(int) 
+    
+    # here we draw (source-centered) components of targets. we assume 
+    # self-links are not permitted, and draw as many links as needed
+    # until no self-link exist anymore. 
+    x = np.zeros(ncons, dtype=int)
+    y = np.zeros(ncons, dtype=int)
+    
+    redraw = (x==0) & (y==0)
+    while sum(redraw)>0:
+        ncon = sum(redraw)
+        #print('Sampling', ncon, 'targets.')
+        
+        phi = np.random.uniform(low=-np.pi, high=np.pi, size=ncon)
+        #phi=shift['phi']
+        if wtype=='Gaussian':
+            radius = wparams['std'] * np.random.randn(ncon)
+        elif wtype=='Gamma':
+            radius = np.concatenate(
+                (-np.random.gamma(shape= wparams['kappa'], 
+                                  scale= wparams['theta'], 
+                                  size= int(ncon // 2)),
+                +np.random.gamma(shape=wparams['kappa'], 
+                                 scale=wparams['theta'], 
+                                 size=ncon -int(ncon // 2)))
+                )
+        else:
+            raise NotImplementedError
+        
+        if not self_link:
+            radius[radius>=0] += 1
+            radius[radius<0] -= 1
+            
+        #print(redraw, s_coord, ncons)
+        #if len(redraw)==4:
+        #    set_trace()
+        x_ = np.round(radius*np.cos(phi) + shift_x).astype(int)
+        y_ = np.round(radius*np.sin(phi) + shift_y).astype(int)
+        
+        x[redraw] = x_ % tcol
+        y[redraw] = y_ % trow
+        
+        if (recurrent) and (not self_link):
+            redraw = (x==0) & (y==0)
+        else:
+            redraw = np.zeros_like(x, dtype=bool)
+            
+    # adding the source index
+    x = (x + s_coord[0]) % tcol
+    y = (y + s_coord[1]) % trow
     t_coords = np.array([x,y]).T 
     
     return s_coord, t_coords.astype(int)

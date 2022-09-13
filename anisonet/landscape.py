@@ -12,7 +12,7 @@ a few assertion.
 import numpy as np
 from noise import pnoise2 as perlin    
 
-def make_landscape(gs, ls_type='random', ls_params={}):
+def make_landscape(gs, ls_type='random', ls_params={}, digitize=False) :
     """
     Makes a landscape according for neural network placed on a square grid of 
     size ``gs``. The landscape has two components `rs` (the radial 
@@ -77,4 +77,8 @@ def make_landscape(gs, ls_type='random', ls_params={}):
     else:
         raise 'Landscape type not recognized!'
     
+    if digitize:
+        _, bins = np.histogram(phis, bins=8)
+        phis = bins[np.digitize(phis, bins, True)]
+        
     return rs, phis

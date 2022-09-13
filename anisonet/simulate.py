@@ -474,7 +474,7 @@ class Simulate(object):
         
 if __name__=='__main__':
     #pops_cfg, conn_cfg = configs.get_config('I_net') 
-    sim = Simulate('I_net', scalar=1, load_connectivity=False)
+    sim = Simulate('I_net', scalar=1, load_connectivity=True)
     sim.setup_net()
     
     viz.plot_landscape(sim)
@@ -488,11 +488,12 @@ if __name__=='__main__':
     #monI = b2.StateMonitor(sim.pops['I'], ['v', 'noise_I'], np.arange(gs)**2)
     #sim.net.add(monI)
     #sim.start()
-    sim.warmup()
-    sim.start(duration=2500*b2.ms, batch_dur=200*b2.ms, 
-              restore=True, profile=False)
+    #sim.warmup()
+    #sim.start(duration=1000*b2.ms, batch_dur=1000*b2.ms, 
+    #          restore=True, profile=False)
     #sim.plot_firing_rates()
     #for i in range(monI.v.shape[0]):
     #    plt.plot(monI.t, monI.v[i,:], alpha=0.1)
-    viz.plot_animation(sim.name, gs = sim.pops_cfg['I']['gs']) 
+    #viz.plot_animation(sim.name, gs = sim.pops_cfg['I']['gs']) 
+    #viz.plot_firing_rates_dist(sim.name)
     #sim.post_process()

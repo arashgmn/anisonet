@@ -141,7 +141,7 @@ def get_config(name='EI_net', scalar=3):
     if name=='I_net':
         pops_cfg = {
             'I': {'gs':100//scalar, 
-                  'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 0.1*ms},
+                  'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 2*0.1*ms},
                   'cell': {'type': 'LIF', 
                            #'thr': -55*mV, 'ref': 10*ms, 'rest': -70*mV,
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
@@ -157,9 +157,9 @@ def get_config(name='EI_net', scalar=3):
                    'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
 #                   'synapse': {'type':'alpha_voltage', 'params': {'J': -0.221*mV, 'delay':1*ms, 'tau': 5*ms}},
                    #'anisotropy': {'type': 'perlin', 'params': {'r': 1, 'scale':3}}
-                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/4.}}
+                   'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':np.pi/4.}}
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
-                   'anisotropy': {'type': 'symmetric', 'params': {}}
+                   #'anisotropy': {'type': 'symmetric', 'params': {}}
                    },
         }    
     elif name=='EI_net':
