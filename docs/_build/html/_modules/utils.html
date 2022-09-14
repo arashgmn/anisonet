@@ -175,6 +175,9 @@
 <span class="sd">back and forth. A useful little script to have.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="n">osjoin</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span> <span class="c1"># an alias for convenient</span>
+
 <span class="kn">import</span> <span class="nn">pickle</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">brian2</span> <span class="kn">import</span> <span class="n">Equations</span> 
@@ -188,10 +191,10 @@
 <span class="sd">    </span>
 <span class="sd">    :param coords: coordinates of n neuron </span>
 <span class="sd">    :type coords: numpy array of size (n,2)</span>
-<span class="sd">    :param pop: population object that is </span>
-<span class="sd">    :type pop: population object</span>
-<span class="sd">    :return: DESCRIPTION</span>
-<span class="sd">    :rtype: TYPE</span>
+<span class="sd">    :param pop: population object </span>
+<span class="sd">    :type pop: Brian&#39;s NetworkGroup object</span>
+<span class="sd">    :return: array of indicies of length N of type int</span>
+<span class="sd">    :rtype: numpy array </span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">gs</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pop</span><span class="p">)))</span> <span class="c1"># gridsize</span>
@@ -201,6 +204,17 @@
     <span class="k">return</span> <span class="n">idxs</span></div>
     
 <div class="viewcode-block" id="idx2coords"><a class="viewcode-back" href="../utils.html#utils.idx2coords">[docs]</a><span class="k">def</span> <span class="nf">idx2coords</span><span class="p">(</span><span class="n">idxs</span><span class="p">,</span> <span class="n">net</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Transforms the a list of indices of the given population to coordinates.</span>
+<span class="sd">    </span>
+<span class="sd">    :param idxs: list or array of coordinates. i.e., [(x1,y1), (x2,y2), ...]</span>
+<span class="sd">    :type idxs: list or numpy array</span>
+<span class="sd">    :param net: population object </span>
+<span class="sd">    :type net: Brian&#39;s NetworkGroup object</span>
+<span class="sd">    :return: array of coordinates of size (N,2) of type int</span>
+<span class="sd">    :rtype: numpy array</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">gs</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">net</span><span class="p">)))</span> <span class="c1"># gridsize</span>
     
     <span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">idxs</span><span class="p">)</span>
@@ -209,7 +223,7 @@
     <span class="k">return</span> <span class="n">coords</span></div>
 
 
-<div class="viewcode-block" id="aggregate_mons"><a class="viewcode-back" href="../utils.html#utils.aggregate_mons">[docs]</a><span class="k">def</span> <span class="nf">aggregate_mons</span><span class="p">(</span><span class="n">mon_name</span><span class="p">):</span>
+<div class="viewcode-block" id="aggregate_mons"><a class="viewcode-back" href="../utils.html#utils.aggregate_mons">[docs]</a><span class="k">def</span> <span class="nf">aggregate_mons</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">name_pattern</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Aggregates the indices and timings of the spiking events from disk.</span>
 <span class="sd">    </span>
@@ -220,7 +234,7 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     
-    <span class="n">files_list</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">root</span> <span class="o">+</span><span class="s1">&#39;results/data/&#39;</span><span class="o">+</span><span class="n">mon_name</span><span class="o">+</span><span class="s1">&#39;*.dat&#39;</span><span class="p">))</span>
+    <span class="n">files_list</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span> <span class="n">osjoin</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">name_pattern</span><span class="o">+</span><span class="s1">&#39;*&#39;</span><span class="p">)))</span>
     <span class="n">idxs</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">ts</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">files_list</span><span class="p">):</span>
@@ -231,6 +245,8 @@
     
     <span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">idxs</span><span class="p">)</span>
     <span class="n">ts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span>
+    
+    <span class="k">del</span> <span class="n">files_list</span>
     <span class="k">return</span> <span class="n">idxs</span><span class="p">,</span> <span class="n">ts</span></div>
 
 <span class="c1"># if __name__==&#39;__main__&#39;:</span>

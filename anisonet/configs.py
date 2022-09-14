@@ -79,9 +79,9 @@ Use either of the following structures for the value of ``profile`` key:
 ..  code-block:: python
 
     {
-     'synapse': {'type':'alpha_current', 'params': {'J': ..., 'delay': ..., 'tau': ...}},
-     'synapse': {'type':'alpha_conductance', 'params': {'J': ..., 'delay': ..., 'tau': ..., 'Erev': ...}},
+     'synapse': {'type':'alpha_current', 'params': {'J': ..., 'delay': ..., 'tau': ...}}, # usually we use this
      'synapse': {'type':'alpha_voltage', 'params': {'J': ..., 'delay':..., 'tau': ...}},
+     'synapse': {'type':'alpha_conductance', 'params': {'J': ..., 'delay': ..., 'tau': ..., 'Erev': ...}},
     }
     
     
@@ -120,7 +120,7 @@ Use either of the following structures for the value of ``profile`` key:
 from brian2.units import pA, mV, ms, pF
 import numpy as np
 
-np.random.seed(8)
+#np.random.seed(8)
 
 
 def get_config(name='EI_net', scalar=3):
@@ -140,26 +140,24 @@ def get_config(name='EI_net', scalar=3):
     """
     if name=='I_net':
         pops_cfg = {
-            'I': {'gs':100//scalar, 
-                  'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 0.1*ms},
+            'I': {'gs': round(100/scalar), 
+                  'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
                   'cell': {'type': 'LIF', 
-                           #'thr': -55*mV, 'ref': 10*ms, 'rest': -70*mV,
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
                            'tau': 10*ms, 'C': 250*pF}
                   }
         }
 
         conn_cfg = {
-            'II': {'ncons': 1000//(scalar**2), 'self_link':False, 
-                   #'profile': {'type':'Gamma', 'params': {'theta': 0.5, 'kappa': 8} },
+            'II': {'ncons': round(1000/(scalar**2)), 'self_link':False, 
                    'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
                    #'profile': {'type':'Gaussian', 'params': {'std': 3} },
                    'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
 #                   'synapse': {'type':'alpha_voltage', 'params': {'J': -0.221*mV, 'delay':1*ms, 'tau': 5*ms}},
                    #'anisotropy': {'type': 'perlin', 'params': {'r': 1, 'scale':3}}
-                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/4.}}
-                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
-                   'anisotropy': {'type': 'symmetric', 'params': {}}
+                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':0*np.pi/4.}}
+                   'anisotropy': {'type': 'random', 'params': {'r': 1,}}
+                   #'anisotropy': {'type': 'symmetric', 'params': {}}
                    },
         }    
     elif name=='EI_net':
@@ -186,15 +184,15 @@ def get_config(name='EI_net', scalar=3):
         #     'II': {'synapse_dyn': 'alpha', 'ncons':180, 'J': -1.76*mV}, # note the sign
         # }
         pops_cfg = {
-            'I': {'gs':60//scalar, 
-                  'noise': {'mu': 350*pA, 'sigma': 100*pA, 'noise_dt': 0.1*ms},
+            'I': {'gs': round(60/scalar), 
+                  'noise': {'mu': 350*pA, 'sigma': 100*pA, 'noise_dt': 1*ms},
                   'cell': {'type': 'LIF', 
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
                            'tau': 10*ms, 'C': 250*pF}
                   },
             
-            'E': {'gs':120//scalar, 
-                  'noise': {'mu': 350*pA, 'sigma': 100*pA, 'noise_dt': 0.1*ms},
+            'E': {'gs': round(120/scalar), 
+                  'noise': {'mu': 350*pA, 'sigma': 100*pA, 'noise_dt': 1*ms},
                   'cell': {'type': 'LIF', 
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
                            'tau': 10*ms, 'C': 250*pF}
@@ -202,30 +200,30 @@ def get_config(name='EI_net', scalar=3):
         }
 
         conn_cfg = {
-            'EE': {'ncons': 720//(scalar**2), 'self_link':False, 
+            'EE': {'ncons': round(720/(scalar**2)), 'self_link':False, 
                   'profile': {'type':'Gaussian', 'params': {'std': 9/scalar} },
                   'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms} },
                   'anisotropy': {'type': 'perlin', 'params': {'scale': 3, 'r':1}}
                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/4.}}
                   },
             
-            'EI': {'ncons': 180//(scalar**2), 'self_link':False, 
+            'EI': {'ncons': round(180/(scalar**2)), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 12/scalar}},
                    'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
                    'anisotropy': {'type': 'symmetric', 'params': {}}
                    #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/4.}}
                    },
             
-            'IE': {'ncons': 720//(scalar**2), 'self_link':False, 
+            'IE': {'ncons': round(720/(scalar**2)), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 4.5/scalar}},
-                   'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
                    'anisotropy': {'type': 'symmetric', 'params': {}}
                    #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi}}
                    },
 
-            'II': {'ncons': 180//(scalar**2), 'self_link':False, 
+            'II': {'ncons': round(180/(scalar**2)), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 6/scalar}},
-                   'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
                    'anisotropy': {'type': 'symmetric', 'params': {}}
                    #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/2.}}
                    },

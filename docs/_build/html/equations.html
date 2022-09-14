@@ -176,9 +176,10 @@
             
   <section id="module-equations">
 <span id="equations-module"></span><h1>equations module<a class="headerlink" href="#module-equations" title="Permalink to this heading">¶</a></h1>
-<p>The equation module provides proper equation strings for both neuron and synapses. Note however, due
-to the existence of the stochastic background current, extra care must be paid when translating the
-code of NEST to Brian and vice versa.</p>
+<p>The equation module provides proper equation strings for both neuron and 
+synapses. Note however, due to the existence of the stochastic background 
+current, extra care must be paid when translating the code of NEST to Brian 
+and vice versa.</p>
 <section id="noise-scaling">
 <h2>Noise scaling<a class="headerlink" href="#noise-scaling" title="Permalink to this heading">¶</a></h2>
 <p>According to this <a class="reference external" href="https://nest-simulator.readthedocs.io/en/v3.3/model_details/noise_generator.html">notebook</a> in NEST a Gaussian <code class="docutils literal notranslate"><span class="pre">noise_generator</span></code> adds a 
@@ -220,9 +221,9 @@ voltage-based synapse is computationally cheaper. From the
 implementation point of view, this means current/conductance-based 
 synapses must have the <code class="docutils literal notranslate"><span class="pre">(clock-driven)</span></code> flag, whereas the 
 voltage-based one <code class="docutils literal notranslate"><span class="pre">(event-driven)</span></code>. Also look at (<a class="reference external" href="https://brian2.readthedocs.io/en/stable/user/synapses.html?highlight=event-driven#event-driven-updates">Brian documentation</a>).</p>
-<p>Another point to consider is that the neuron equation, too, depends on the synapse type.
-If current or conductance based models are used, the synaptic current will be added as 
-a <code class="docutils literal notranslate"><span class="pre">I_syn</span></code> term to the neuron equation, whereas voltage-based synapses can be implemented
+<p>Neuron equation, too, depends on the synapse type. Thus, if current or 
+conductance based models are used, the synaptic current will be added as a 
+<code class="docutils literal notranslate"><span class="pre">I_syn</span></code> term to the neuron equation. Voltage-based synapses can be implemented
 by providing proper voltage jump in <code class="docutils literal notranslate"><span class="pre">on_pre</span></code> for each event.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="equations.get_nrn_eqs">

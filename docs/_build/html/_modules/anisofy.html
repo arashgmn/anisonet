@@ -180,10 +180,10 @@
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-<div class="viewcode-block" id="get_post_syns"><a class="viewcode-back" href="../anisofy.html#anisofy.get_post_syns">[docs]</a><span class="k">def</span> <span class="nf">get_post_syns</span><span class="p">(</span><span class="n">s_coord</span><span class="p">,</span> <span class="n">ncons</span><span class="p">,</span>
+<div class="viewcode-block" id="draw_post_syns"><a class="viewcode-back" href="../anisofy.html#anisofy.draw_post_syns">[docs]</a><span class="k">def</span> <span class="nf">draw_post_syns</span><span class="p">(</span><span class="n">s_coord</span><span class="p">,</span> <span class="n">ncons</span><span class="p">,</span>
                   <span class="n">srow</span><span class="p">,</span> <span class="n">scol</span><span class="p">,</span> <span class="n">trow</span><span class="p">,</span> <span class="n">tcol</span><span class="p">,</span> 
                   <span class="n">profile</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="p">{},</span> 
-                  <span class="n">self_link</span><span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">recurrent</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                  <span class="n">self_link</span><span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">recurrent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">gap</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Samples indices of the source neuron `s_coord` in the target network </span>
 <span class="sd">    according to a location-dependent profile. The profile by default is </span>
 <span class="sd">    localized on the location of the source neuron. Yet, it is possible to </span>
@@ -195,6 +195,7 @@
 
 <span class="sd">    :param s_coord: source coordinate index as a tuple of ints</span>
 <span class="sd">    :type s_coord: tuple</span>
+<span class="sd">    :param ncons: number of out-links</span>
 <span class="sd">    :type ncons: int</span>
 <span class="sd">    :param srow: number of rows in source network</span>
 <span class="sd">    :type srow: int</span>
@@ -204,94 +205,116 @@
 <span class="sd">    :type trow: int</span>
 <span class="sd">    :param tcol: number of columns in target network</span>
 <span class="sd">    :type tcol: int</span>
-<span class="sd">    :param ncons: number of out-links</span>
-<span class="sd">    :param profile: connectivity configuration. Read below for more info.</span>
+<span class="sd">    :param profile: connectivity configuration. Please refer to </span>
+<span class="sd">        :ref:`configs:Profile` for details.</span>
 <span class="sd">    :type profile: dict</span>
-<span class="sd">    :param shift: shift configuration Read below for more info.</span>
+<span class="sd">    :param shift: shift configuration Please refer to </span>
+<span class="sd">        :ref:`configs:Anisotropy` for details.</span>
 <span class="sd">    :type shift: dict</span>
+<span class="sd">    :param self_link: Is self-link permitted; Matter only if source and target</span>
+<span class="sd">        populations are the same.</span>
+<span class="sd">    :type self_link: bool</span>
+<span class="sd">    :param recurrent: Whether or not the pathway is a recurent one</span>
+<span class="sd">    :type recurrent: bool</span>
+<span class="sd">    :param gap: The gap between the pre and post neurons. Look below for </span>
+<span class="sd">        details.</span>
+<span class="sd">    :type gap: int</span>
+<span class="sd">    </span>
 <span class="sd">    :raises NotImplementedError: If the weigh profiles is not Gaussian or Gamma</span>
 <span class="sd">    :return: source and target coordinate indices (in target network coordinates) </span>
 <span class="sd">    :rtype: tuple</span>
 
-<span class="sd">    .. note:</span>
-<span class="sd">        Connectivity dictionary must have the following structure:</span>
-<span class="sd">        `profile = {&#39;type&#39;:&#39;Gaussian&#39;, &#39;params&#39;:{&#39;std&#39;: 10}, &#39;self_link&#39;:False}`</span>
-<span class="sd">        or </span>
-<span class="sd">        `profile = {&#39;type&#39;:&#39;Gamma&#39;, &#39;params&#39;:{&#39;k&#39;: 3, &#39;theta&#39;:4}, &#39;self_link&#39;:False}`</span>
-<span class="sd">        Types, other than `Gaussian` and `Gamma` are not accepted.</span>
-
-<span class="sd">    .. note:</span>
-<span class="sd">        A shift can be prescribed by a dictionary that follows this structure:</span>
-<span class="sd">        `shift_cfg = {&#39;r&#39;:5, &#39;phi&#39;:np.pi/4}`</span>
-<span class="sd">        This will move the targets location accordingly.        </span>
+<span class="sd">    .. note::</span>
+<span class="sd">        Locally connected random networks (LCRNs) exhibit a minimum distance of</span>
+<span class="sd">        1 between the pre- and post-neuron. In other words, no self-connection</span>
+<span class="sd">        is permitted by default in the LCRN (`[3]`_). However, anisotropic </span>
+<span class="sd">        nets, due to the manual displacement of the targets&#39; cloud center, are</span>
+<span class="sd">        capable of exhiiting a self-link.</span>
+<span class="sd">        </span>
+<span class="sd">        Following `[1]`_, we considered a minimum distance of 2 between the </span>
+<span class="sd">        source and targets when initializing the network. Existence of such a </span>
+<span class="sd">        gap, ensures non-monotonicity in the connectivity profile, which in </span>
+<span class="sd">        turn leads to stable bumps of activation in random networks, for </span>
+<span class="sd">        instance (`[3]`_). In genral, the interplay between the gap and the </span>
+<span class="sd">        connectivity profile (Gaussian or Gamma) determines to bump&#39;s pattern,</span>
+<span class="sd">        robustness, and movement (`[4]`_).</span>
+<span class="sd">        </span>
+<span class="sd">    .. _[3]: https://doi.org/10.1523/ENEURO.0348-16.2017</span>
+<span class="sd">    .. _[4]: http://epubs.siam.org/doi/10.1137/030600040</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     
-    <span class="n">wparams</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;params&#39;</span><span class="p">]</span>
-    <span class="n">wtype</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+    <span class="c1"># just for convenience</span>
+    <span class="n">p_param</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;params&#39;</span><span class="p">]</span>
+    <span class="n">w_type</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
     
-    
+    <span class="c1"># dispalcement can be anything, but it will be rounded to the grid points</span>
     <span class="n">shift_x</span> <span class="o">=</span> <span class="n">shift</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">shift</span><span class="p">[</span><span class="s1">&#39;phi&#39;</span><span class="p">])</span> 
     <span class="n">shift_y</span> <span class="o">=</span> <span class="n">shift</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">shift</span><span class="p">[</span><span class="s1">&#39;phi&#39;</span><span class="p">])</span>     
     
-    <span class="c1"># source neuron location on the target net</span>
+    <span class="c1"># source neuron&#39;s location on the target population</span>
     <span class="n">scale_x</span><span class="p">,</span> <span class="n">scale_y</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">*</span><span class="n">trow</span><span class="o">/</span><span class="n">srow</span><span class="p">,</span> <span class="mf">1.</span><span class="o">*</span><span class="n">tcol</span><span class="o">/</span><span class="n">scol</span>
     <span class="n">s_coord</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">([</span><span class="n">s_coord</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">scale_x</span><span class="p">,</span> <span class="n">s_coord</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">scale_y</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> 
     
-    <span class="c1"># here we draw (source-centered) components of targets. we assume </span>
-    <span class="c1"># self-links are not permitted, and draw as many links as needed</span>
-    <span class="c1"># until no self-link exist anymore. </span>
+    <span class="c1"># here we draw source-centeric components of target cells, and shift them</span>
+    <span class="c1"># according to the desired displacement vector. If the source and target </span>
+    <span class="c1"># populations are the same, i.e., connection is recurrent, and some of the</span>
+    <span class="c1"># drawn targets land on the source, we draw ignore them, redraw again and </span>
+    <span class="c1"># again until none of the targets terminate on the source. If self-link is</span>
+    <span class="c1"># permitted, we don&#39;t perform this iterative step and all initially drawn</span>
+    <span class="c1"># (and displaced) targets will be accepted.</span>
+    
+    
     <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">ncons</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
     <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">ncons</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">redraw</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">y</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># index of those who must be redrawn. Now, all.</span>
     
-    <span class="n">redraw</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">y</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
     <span class="k">while</span> <span class="nb">sum</span><span class="p">(</span><span class="n">redraw</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
         <span class="n">ncon</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">redraw</span><span class="p">)</span>
-        <span class="c1">#print(&#39;Sampling&#39;, ncon, &#39;targets.&#39;)</span>
+
+        <span class="c1"># angle        </span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">ncon</span><span class="p">)</span>
         
-        <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">ncon</span><span class="p">)</span>
-        <span class="c1">#phi=shift[&#39;phi&#39;]</span>
-        <span class="k">if</span> <span class="n">wtype</span><span class="o">==</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">:</span>
-            <span class="n">radius</span> <span class="o">=</span> <span class="n">wparams</span><span class="p">[</span><span class="s1">&#39;std&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">ncon</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">wtype</span><span class="o">==</span><span class="s1">&#39;Gamma&#39;</span><span class="p">:</span>
+        <span class="c1"># radius</span>
+        <span class="k">if</span> <span class="n">w_type</span><span class="o">==</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">:</span>
+            <span class="n">radius</span> <span class="o">=</span> <span class="n">p_param</span><span class="p">[</span><span class="s1">&#39;std&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">ncon</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">w_type</span><span class="o">==</span><span class="s1">&#39;Gamma&#39;</span><span class="p">:</span>
             <span class="n">radius</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
-                <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">gamma</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span> <span class="n">wparams</span><span class="p">[</span><span class="s1">&#39;kappa&#39;</span><span class="p">],</span> 
-                                  <span class="n">scale</span><span class="o">=</span> <span class="n">wparams</span><span class="p">[</span><span class="s1">&#39;theta&#39;</span><span class="p">],</span> 
+                <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">gamma</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span> <span class="n">p_param</span><span class="p">[</span><span class="s1">&#39;kappa&#39;</span><span class="p">],</span> 
+                                  <span class="n">scale</span><span class="o">=</span> <span class="n">p_param</span><span class="p">[</span><span class="s1">&#39;theta&#39;</span><span class="p">],</span> 
                                   <span class="n">size</span><span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ncon</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)),</span>
-                <span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">gamma</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">wparams</span><span class="p">[</span><span class="s1">&#39;kappa&#39;</span><span class="p">],</span> 
-                                 <span class="n">scale</span><span class="o">=</span><span class="n">wparams</span><span class="p">[</span><span class="s1">&#39;theta&#39;</span><span class="p">],</span> 
+                <span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">gamma</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">p_param</span><span class="p">[</span><span class="s1">&#39;kappa&#39;</span><span class="p">],</span> 
+                                 <span class="n">scale</span><span class="o">=</span><span class="n">p_param</span><span class="p">[</span><span class="s1">&#39;theta&#39;</span><span class="p">],</span> 
                                  <span class="n">size</span><span class="o">=</span><span class="n">ncon</span> <span class="o">-</span><span class="nb">int</span><span class="p">(</span><span class="n">ncon</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)))</span>
                 <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+        <span class="c1"># LCRN network has a minimum gap of 1 between source and targets.</span>
+        <span class="c1"># If these lines don&#39;t exist, the bumps won&#39;t be pronounced. Also look</span>
+        <span class="c1"># at our refernce [1].</span>
+        <span class="n">radius</span><span class="p">[</span><span class="n">radius</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">]</span> <span class="o">-=</span> <span class="n">gap</span>
+        <span class="n">radius</span><span class="p">[</span><span class="n">radius</span><span class="o">&gt;=</span><span class="mi">0</span><span class="p">]</span><span class="o">+=</span> <span class="n">gap</span>
         
-        <span class="c1">#print(redraw, s_coord, ncons)</span>
-        <span class="c1">#if len(redraw)==4:</span>
-        <span class="c1">#    set_trace()</span>
-        <span class="n">x_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">radius</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">+</span> <span class="n">shift_x</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">y_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">radius</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">+</span> <span class="n">shift_y</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="c1"># draw coordinates</span>
+        <span class="n">x_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">radius</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="o">+</span> <span class="n">shift_x</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">y_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">radius</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="o">+</span> <span class="n">shift_y</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
         
-        <span class="n">x</span><span class="p">[</span><span class="n">redraw</span><span class="p">]</span> <span class="o">=</span> <span class="n">x_</span> <span class="o">%</span> <span class="n">trow</span>
-        <span class="n">y</span><span class="p">[</span><span class="n">redraw</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_</span> <span class="o">%</span> <span class="n">tcol</span>
+        <span class="c1"># make periodic</span>
+        <span class="n">x</span><span class="p">[</span><span class="n">redraw</span><span class="p">]</span> <span class="o">=</span> <span class="n">x_</span> <span class="o">%</span> <span class="n">tcol</span>
+        <span class="n">y</span><span class="p">[</span><span class="n">redraw</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_</span> <span class="o">%</span> <span class="n">trow</span>
         
+        <span class="c1"># mark those self links for redraw, if necessary</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">recurrent</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">self_link</span><span class="p">):</span>
             <span class="n">redraw</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">y</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">redraw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
             
-    <span class="c1"># adding the source index</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">s_coord</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">%</span> <span class="n">trow</span>
-    <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span> <span class="o">+</span> <span class="n">s_coord</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">%</span> <span class="n">tcol</span>
+    <span class="c1"># translating the coordinates w.r.t. source coordinates</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">s_coord</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">%</span> <span class="n">tcol</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span> <span class="o">+</span> <span class="n">s_coord</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">%</span> <span class="n">trow</span>
     <span class="n">t_coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">])</span><span class="o">.</span><span class="n">T</span> 
     
     <span class="k">return</span> <span class="n">s_coord</span><span class="p">,</span> <span class="n">t_coords</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span></div>
-    
-    
-<div class="viewcode-block" id="get_post_syns_paper"><a class="viewcode-back" href="../anisofy.html#anisofy.get_post_syns_paper">[docs]</a><span class="k">def</span> <span class="nf">get_post_syns_paper</span><span class="p">(</span><span class="n">s_coord</span><span class="p">,</span> <span class="n">ncons</span><span class="p">,</span>
-                  <span class="n">srow</span><span class="p">,</span> <span class="n">scol</span><span class="p">,</span> <span class="n">trow</span><span class="p">,</span> <span class="n">tcol</span><span class="p">,</span> 
-                  <span class="n">profile</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="p">{},</span> 
-                  <span class="n">self_link</span><span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">recurrent</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-    <span class="k">pass</span></div>
-    
 </pre></div>
 
            </div>

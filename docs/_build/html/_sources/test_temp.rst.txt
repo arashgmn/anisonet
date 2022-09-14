@@ -1,0 +1,7 @@
+test\_temp module
+=================
+
+.. automodule:: test_temp
+   :members:
+   :undoc-members:
+   :show-inheritance:

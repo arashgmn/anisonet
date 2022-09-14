@@ -1,0 +1,7 @@
+generation module
+=================
+
+.. automodule:: generation
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -178,32 +178,33 @@
 <p>I have developed this module to either reproduce figures of <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a> and plot 
 interesting quantities. Figures are saved in the``results`` folder with proper
 name (inherited from the simulation object).</p>
-<p>The animiation function is copy-pasted from the repository of <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a>.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="viz.animator">
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">animator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imgs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#animator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.animator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes the firing rate animation.</p>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="viz.get_cax">
 <span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">get_cax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#get_cax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.get_cax" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a human-like colorbar axis from a given ax, to be used with 
+<dd><p>Returns a human-friendly colorbar axis from a given ax, to be used with 
 matplotlib’s colorbar method.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="viz.imshow">
-<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">imshow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">im</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#imshow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.imshow" title="Permalink to this definition">¶</a></dt>
-<dd><p><strong>Note</strong>: This function is copy-pasted from the GitHub repo of <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a>.</p>
-<p>It prepares the field for an animation.</p>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="viz.plot_animation">
-<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_animation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mon_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ss_dur</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_animation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_animation" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_animation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ss_dur</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_animation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_animation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Aggregates the firing rate from disk and make an animation.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function is inspired by the GitHub repo of <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a>.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mon_name</strong> (<em>str</em>) – name of the desired monitor</p></li>
-<li><p><strong>gs</strong> (<em>int</em>) – grid size of the population (length of one side!)</p></li>
+<li><p><strong>sim</strong> (<em>object</em>) – <code class="docutils literal notranslate"><span class="pre">simulate</span></code> object</p></li>
 <li><p><strong>ss_dur</strong> (<em>int</em><em>, </em><em>optional</em>) – duration of each snapshot (frame) in animation in ms; 
-defaults to 100 (corresponding to 100 ms)</p></li>
+defaults to 50 (corresponding to 50 ms)</p></li>
 </ul>
 </dd>
 </dl>
@@ -211,19 +212,19 @@ defaults to 100 (corresponding to 100 ms)</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="viz.plot_connectivity">
-<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_connectivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_connectivity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_connectivity" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_connectivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_connectivity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_connectivity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plots connectivity matrix of a given connectivity file and saves the figure
 in the <code class="docutils literal notranslate"><span class="pre">results</span></code> folder.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – path to the connectivity file</p>
+<dd class="field-odd"><p><strong>sim</strong> (<em>object</em>) – <code class="docutils literal notranslate"><span class="pre">simulate</span></code> object</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="viz.plot_field">
-<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_field"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_field" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_field"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_field" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plots a field; a landscape, firing rate, or any heatmap.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -253,6 +254,17 @@ firing rates as well.</p>
 <li><p><strong>wl_size</strong> (<em>float</em><em>, </em><em>optional</em>) – wavelet size of Ricker kernel, defaults to 10</p></li>
 <li><p><strong>z_score</strong> (<em>book</em><em>, </em><em>optional</em>) – Whether or not to plot the z-score, defaults to False</p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="viz.plot_firing_rates_dist">
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_firing_rates_dist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_firing_rates_dist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_firing_rates_dist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots the average firing rate density in log scale.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>sim</strong> (<em>object</em>) – <code class="docutils literal notranslate"><span class="pre">simulate</span></code> object</p>
 </dd>
 </dl>
 </dd></dl>
