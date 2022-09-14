@@ -5,8 +5,6 @@ I have developed this module to either reproduce figures of `[1]`_ and plot
 interesting quantities. Figures are saved in the``results`` folder with proper
 name (inherited from the simulation object). 
 
-The animiation function is copy-pasted from the repository of `[1]`_.
-
 .. _[1]: https://doi.org/10.1371/journal.pcbi.1007432 
 
 """
@@ -17,7 +15,8 @@ import numpy as np
 from brian2.units import ms
 import utils 
 
-root = './'
+import os
+osjoin = os.path.join # an alias for convenient
 
 def get_cax(ax):
     """
@@ -73,8 +72,8 @@ def plot_in_out_deg(sim):
             ax.get_yaxis().set_ticks([])
         
         #plt.tight_layout()
-        plt.savefig(root +'results/'+sim.name+'_degs_'+src.name+trg.name+'.png', 
-                    dpi=200, bbox_inches='tight')
+        path = osjoin(sim.res_path, sim.name+'_degs_'+src.name+trg.name+'.png')
+        plt.savefig(path, dpi=200, bbox_inches='tight')
         plt.close()
         
         
@@ -142,9 +141,8 @@ def plot_firing_rates(sim, suffix='',
             ax.set_aspect('equal')
             ax.get_yaxis().set_ticks([])
             
-    #plt.tight_layout()
-    plt.savefig(root +'results/'+sim.name+'_rates'+suffix+'.png', 
-                dpi=200, bbox_inches='tight')
+    path = osjoin(sim.res_path, sim.name+'_rates'+suffix+'.png')
+    plt.savefig(path, dpi=200, bbox_inches='tight')
     plt.close()
     
 
@@ -177,13 +175,13 @@ def plot_firing_snapshots(sim, tmin=None, tmax=None, alpha=0.1):
                       ', '+str(tmax/ms)+'] | '+mon.source.name)    
         
         #plt.tight_layout()
-        plt.savefig(root +'results/'+sim.name+'_snapshot_'+mon.source.name+'.png', 
-                    dpi=200, bbox_inches='tight')
+        path = osjoin(sim.res_path, sim.name+'_snapshot_'+mon.source.name+'.png')
+        plt.savefig(path, dpi=200, bbox_inches='tight')
         plt.close()
         
         
 
-def plot_field(field, name, vmin=None, vmax=None):
+def plot_field(field, figpath, vmin=None, vmax=None):
     """
     Plots a field; a landscape, firing rate, or any heatmap.
     
@@ -201,8 +199,7 @@ def plot_field(field, name, vmin=None, vmax=None):
     ax=plt.gca()
     ax.set_aspect('equal')
     plt.colorbar(m)
-    plt.savefig(root +'results/'+name+'.png', dpi=200, 
-                bbox_inches='tight')
+    plt.savefig(figpath, dpi=200, bbox_inches='tight')
     plt.close()
     
     
@@ -265,13 +262,12 @@ def plot_periodicity(sim, N=10):
             axs[0].set_title(str(s_idx)+' Before '+src+r'$\to$'+trg)
             axs[1].set_title(str(s_idx)+' After '+src+r'$\to$'+trg)
             
-            
-            plt.savefig(root +'results/'+sim.name+'_periodicity_'+ key + '_'+
-                        str(plot_id+1)+'.png', bbox_inches='tight',
-                        dpi=200)
+            path = osjoin(sim.res_path, sim.name+'_periodicity_'+ key + '_'+ 
+                                        str(plot_id+1)+'.png'
+                                        )
+            plt.savefig(path, bbox_inches='tight', dpi=200)
             plt.close()
             plot_id += 1
-            #set_trace()
         del post_cntr, pres, posts
         
 def plot_landscape(sim):
@@ -285,8 +281,8 @@ def plot_landscape(sim):
     for id_, key in enumerate(sim.conn_cfg.keys()):
         phis = sim.lscp[key]['phi']
         phis = phis.reshape((int(np.sqrt(len(phis))), -1))
-        name = sim.name+'_gen_phi_'+key
-        plot_field(phis, name, vmin=-np.pi, vmax = np.pi)
+        figpath = osjoin(sim.res_path, sim.name+'_gen_phi_'+key+'.png')
+        plot_field(phis, figpath, vmin=-np.pi, vmax = np.pi)
 
 
 def plot_realized_landscape(sim):
@@ -317,9 +313,9 @@ def plot_realized_landscape(sim):
             post_cntr -= np.fix(post_cntr/(gs_t/2)) *gs_t # make periodic
             phis[s_idx] = np.arctan2(post_cntr[:,1].mean(), post_cntr[:,0].mean())
        
-        name = sim.name + '_realized_phi_'+ key
-        plot_field(phis.reshape(gs_s, gs_s), name=name,
-                   vmin=-np.pi, vmax=np.pi)
+        
+        figpath = osjoin(sim.res_path, sim.name + '_realized_phi_'+ key+'.png')
+        plot_field(phis.reshape(gs_s, gs_s), figpath=figpath, vmin=-np.pi, vmax=np.pi)
         
         # density plot
         plt.hist(phis, bins=50, density =True)
@@ -329,123 +325,127 @@ def plot_realized_landscape(sim):
         plt.tight_layout()
         plt.xlim(-np.pi, np.pi)
         
-        name = sim.name + '_realized_phi_density_'+ key
-        plt.savefig(root +'results/'+name+'.png',
-                    bbox_inches='tight', dpi=200)
+        figpath = osjoin(sim.res_path, sim.name + '_realized_phi_density_'+ key+'.png')
+        plt.savefig(figpath, bbox_inches='tight', dpi=200)
         plt.close()
         del post_cntr, pres, posts
         
-def plot_connectivity(path):
+def plot_connectivity(sim):
     """
     Plots connectivity matrix of a given connectivity file and saves the figure
     in the ``results`` folder.
     
-    :param path: path to the connectivity file
-    :type path: str
+    :param sim: ``simulate`` object
+    :type sim: object
     """
     from scipy import sparse
-
-    if '.npz' not in path:
-        path+='.npz'
+    
+    for pathway in sim.conn_cfg.keys():
+        path = osjoin(sim.data_path, 'w_'+sim.name+'_'+pathway+'.npz')
+        w = sparse.load_npz(path).toarray()
+    
+        plt.figure()
+        plt.spy(w, origin='lower', rasterized=True,)
+        plt.xlabel('targets (post-synapse)')
+        plt.ylabel('sources (pre-synapse)')
+        plt.title(' '.join(sim.name.split('_')[:2]))
         
-    w = sparse.load_npz(path).toarray()
-    plt.figure()
-    plt.spy(w, origin='lower', rasterized=True,)
-    plt.xlabel('targets (post-synapse)')
-    plt.ylabel('sources (pre-synapse)')
-    
-    filename = path.split('/')[-1]
-    filename = filename.split('.')[0]
-    filename = filename[2:]
-    plt.title(filename)
-    
-    plt.savefig(root +'results/connectivity_mat_'+filename+'.png',
-                bbox_inches='tight', dpi=200)
-    plt.close()
+        figpath = osjoin(sim.res_path, 'w_'+sim.name+'_'+pathway+'.png')
+        plt.savefig(figpath, bbox_inches='tight', dpi=200)
+        plt.close()
 
-def plot_firing_rates_dist(mon_name):
+def plot_firing_rates_dist(sim):
     """
     Plots the average firing rate density in log scale.
     
-    :param mon_name: name pattern of the desired monitor (will be aggregated)
-    :type mon_name: str
+    :param sim: ``simulate`` object
+    :type sim: object
     """
     from pandas import value_counts
-    title = mon_name.split('_')[0] # this is not a good choice for many pops
+    fig, axs = plt.subplots(1, len(sim.pops))
+    if len(sim.pops)==1:
+        axs = [axs]
     
-    idxs, ts = utils.aggregate_mons(mon_name)
-    T = (np.max(ts) - np.min(ts))/1000. # ts is in ms
-    rates = value_counts(idxs)/T
+    for id_, mon in enumerate(sim.mons):
+        idxs, ts = utils.aggregate_mons(sim.data_path, mon.name+'_*.dat')
+        T = (np.max(ts) - np.min(ts))/1000. # ts is in ms
+        rates = value_counts(idxs)/T
+        axs[id_].hist(rates, bins=50, density=True,)
+        axs[id_].set_xlabel('Firing rate [Hz]')
+        axs[id_].set_title('Population '+mon.name[-1])
+        
+    for ax in axs:
+        ax.set_yscale('log')
     
-    rates.hist(bins=50, density=True)
+    axs[0].set_ylabel('Probability density')
     
-    plt.yscale('log')
-    plt.xlabel('Firing rate [Hz]')
-    plt.ylabel('Probability density')
-    plt.title(title)
-    plt.savefig(root +'results/rates_desnsity_'+title+'.png',
-                bbox_inches='tight', dpi=200)
+    path = osjoin(sim.res_path, 'rates_desnsity_'+sim.name+'.png')
+    plt.savefig(path,bbox_inches='tight', dpi=200)
     plt.close()
 
     
-def imshow(fig, ax, im, h, ts_bins=[]):
+def animator(fig, axs, imgs, vals, ts_bins=[]):
     """
-    **Note**: This function is copy-pasted from the GitHub repo of `[1]`_.
-    
-    It prepares the field for an animation.
-    
+    Makes the firing rate animation.
     """
-    if type(im) == list:
-        frames = len(h[0])
-    else:
-        frames = len(h)
-
-    def animate(ii):
-        if type(im) == list:
-            for idx in range(len(im)):
-                im[idx].set_array(h[idx][ii])
+    n_frames = len(vals[0]) # total number of frames
+    
+    def animate(frame_id):
+        if len(imgs)>1:
+            for pop_idx in range(len(imgs)):
+                imgs[pop_idx].set_array(vals[pop_idx][frame_id])
         else:
-            im.set_array(h[ii])
+            imgs[0].set_array(vals[0][frame_id])
+            
         if len(ts_bins) > 0:
-            ax.set_title('%s ms' % ts_bins[ii])
+            fig.suptitle('%s ms' % ts_bins[frame_id])
         else:
-            ax.set_title('%s' % ii)
+            fig.suptitle('%s' % frame_id)
         
-        cax = get_cax(ax)
-        plt.colorbar(im, cax=cax)
-        return im,
+        return *imgs,
 
     # Call the animator.  blit=True means only re-draw the parts that have changed.
-    anim = animation.FuncAnimation(fig, animate, frames=frames, interval=50, blit=True)
+    anim = animation.FuncAnimation(fig, animate, frames=n_frames, interval=50, blit=True)
 
     return anim
 
-def plot_animation(mon_name, gs, ss_dur=50):
+def plot_animation(sim, ss_dur=50):
     """
     Aggregates the firing rate from disk and make an animation.
     
-    :param mon_name: name of the desired monitor
-    :type mon_name: str
-    :param gs: grid size of the population (length of one side!)
-    :type gs: int
+    .. note:: 
+        This function is inspired by the GitHub repo of `[1]`_.
+    
+    :param sim: ``simulate`` object
+    :type sim: object
     :param ss_dur: duration of each snapshot (frame) in animation in ms; 
-        defaults to 100 (corresponding to 100 ms)
+        defaults to 50 (corresponding to 50 ms)
     :type ss_dur: int, optional
-    
     """
-    idxs, ts = utils.aggregate_mons(mon_name)
+    fig, axs = plt.subplots(1, len(sim.pops))
+    if  len(sim.pops)==1:
+        axs = [axs]
     
-    ts_bins = np.arange(0, np.max(ts), ss_dur)
-    h = np.histogram2d(ts, idxs, bins=[ts_bins, range(gs**2 + 1)])[0]
-    hh = h.reshape(-1, gs, gs)
+    ts_bins = np.arange(0, sim.net.t/ms + 1, ss_dur)
     
-    fig, ax = plt.subplots(1)
-    im = ax.imshow(hh[0], vmin=0, vmax=np.max(hh))
-    
-    anim = imshow(fig, ax, im, hh, ts_bins)
+    field_imgs = []
+    field_vals = []
+    for id_, mon in enumerate(sim.mons):
+        idxs, ts = utils.aggregate_mons(sim.data_path, mon.name+'_*.dat')
+        gs = int(np.sqrt(sim.pops[mon.name[-1]].N))
+        
+        h = np.histogram2d(ts, idxs, bins=[ts_bins, range(gs**2 + 1)])[0]
+        field_val = h.reshape(-1, gs, gs)
+        field_img = axs[id_].imshow(field_val[0], vmin=0, vmax=np.max(field_val))
+        axs[id_].set_title('Population '+mon.name[-1])
+        
+        field_vals.append(field_val)
+        field_imgs.append(field_img)
+        
+    anim = animator(fig, axs, field_imgs, field_vals, ts_bins)
     
     writergif = animation.PillowWriter(fps=10) 
-    anim.save('results/animation.gif', writer=writergif)
-
-if __name__=='__main__':
-    plot_animation('homogeneous_Gamma_1_partial_',gs=100, ss_dur=50)
+    path = osjoin(sim.res_path, 'animation_rate.gif')
+    anim.save(path , writer=writergif)
+    plt.close()
+    

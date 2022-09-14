@@ -1,0 +1,7 @@
+test\_xi module
+===============
+
+.. automodule:: test_xi
+   :members:
+   :undoc-members:
+   :show-inheritance:

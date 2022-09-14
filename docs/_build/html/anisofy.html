@@ -180,8 +180,8 @@
 specific manner defined in <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a>. I have seperated this utility, in case we 
 decided to develope other structural connectivities.</p>
 <dl class="py function">
-<dt class="sig sig-object py" id="anisofy.get_post_syns">
-<span class="sig-prename descclassname"><span class="pre">anisofy.</span></span><span class="sig-name descname"><span class="pre">get_post_syns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s_coord</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncons</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">srow</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trow</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tcol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">self_link</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recurrent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/anisofy.html#get_post_syns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anisofy.get_post_syns" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="anisofy.draw_post_syns">
+<span class="sig-prename descclassname"><span class="pre">anisofy.</span></span><span class="sig-name descname"><span class="pre">draw_post_syns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s_coord</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncons</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">srow</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trow</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tcol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">self_link</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recurrent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/anisofy.html#draw_post_syns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anisofy.draw_post_syns" title="Permalink to this definition">¶</a></dt>
 <dd><p>Samples indices of the source neuron <cite>s_coord</cite> in the target network 
 according to a location-dependent profile. The profile by default is 
 localized on the location of the source neuron. Yet, it is possible to 
@@ -193,13 +193,20 @@ interpolated if the size of source and target networks don’t match.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>s_coord</strong> (<em>tuple</em>) – source coordinate index as a tuple of ints</p></li>
+<li><p><strong>ncons</strong> (<em>int</em>) – number of out-links</p></li>
 <li><p><strong>srow</strong> (<em>int</em>) – number of rows in source network</p></li>
 <li><p><strong>scol</strong> (<em>int</em>) – number of columns in source network</p></li>
 <li><p><strong>trow</strong> (<em>int</em>) – number of rows in target network</p></li>
 <li><p><strong>tcol</strong> (<em>int</em>) – number of columns in target network</p></li>
-<li><p><strong>ncons</strong> (<em>int</em>) – number of out-links</p></li>
-<li><p><strong>profile</strong> (<em>dict</em>) – connectivity configuration. Read below for more info.</p></li>
-<li><p><strong>shift</strong> (<em>dict</em>) – shift configuration Read below for more info.</p></li>
+<li><p><strong>profile</strong> (<em>dict</em>) – connectivity configuration. Please refer to 
+<a class="reference internal" href="configs.html#profile"><span class="std std-ref">Profile</span></a> for details.</p></li>
+<li><p><strong>shift</strong> (<em>dict</em>) – shift configuration Please refer to 
+<a class="reference internal" href="configs.html#anisotropy"><span class="std std-ref">Anisotropy</span></a> for details.</p></li>
+<li><p><strong>self_link</strong> (<em>bool</em>) – Is self-link permitted; Matter only if source and target
+populations are the same.</p></li>
+<li><p><strong>recurrent</strong> (<em>bool</em>) – Whether or not the pathway is a recurent one</p></li>
+<li><p><strong>gap</strong> (<em>int</em>) – The gap between the pre and post neurons. Look below for 
+details.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
@@ -212,12 +219,22 @@ interpolated if the size of source and target networks don’t match.</p>
 <dd class="field-even"><p>tuple</p>
 </dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Locally connected random networks (LCRNs) exhibit a minimum distance of
+1 between the pre- and post-neuron. In other words, no self-connection
+is permitted by default in the LCRN (<a class="reference external" href="https://doi.org/10.1523/ENEURO.0348-16.2017">[3]</a>). However, anisotropic 
+nets, due to the manual displacement of the targets’ cloud center, are
+capable of exhiiting a self-link.</p>
+<p>Following <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a>, we considered a minimum distance of 2 between the 
+source and targets when initializing the network. Existence of such a 
+gap, ensures non-monotonicity in the connectivity profile, which in 
+turn leads to stable bumps of activation in random networks, for 
+instance (<a class="reference external" href="https://doi.org/10.1523/ENEURO.0348-16.2017">[3]</a>). In genral, the interplay between the gap and the 
+connectivity profile (Gaussian or Gamma) determines to bump’s pattern,
+robustness, and movement (<a class="reference external" href="http://epubs.siam.org/doi/10.1137/030600040">[4]</a>).</p>
+</div>
 </dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="anisofy.get_post_syns_paper">
-<span class="sig-prename descclassname"><span class="pre">anisofy.</span></span><span class="sig-name descname"><span class="pre">get_post_syns_paper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s_coord</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncons</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">srow</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trow</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tcol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">self_link</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recurrent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/anisofy.html#get_post_syns_paper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anisofy.get_post_syns_paper" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 </section>
 

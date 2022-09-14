@@ -180,7 +180,7 @@
 modules are auxillary utilities used here.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="simulate.Simulate">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">simulate.</span></span><span class="sig-name descname"><span class="pre">Simulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">net_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'I_net'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_connectivity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scalar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">simulate.</span></span><span class="sig-name descname"><span class="pre">Simulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">net_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'I_net'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_connectivity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scalar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>High-level object for simulating an anisotropic network in Brian.</p>
 <p>Initializes the simulator object for the given network configuration. 
@@ -233,6 +233,11 @@ when we define the governing equations.</p>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="simulate.Simulate.post_process">
+<span class="sig-name descname"><span class="pre">post_process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.post_process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.post_process" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="simulate.Simulate.reset_monitors">
 <span class="sig-name descname"><span class="pre">reset_monitors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.reset_monitors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.reset_monitors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resets the monitors by removing them, redefining them, and adding them
@@ -242,7 +247,7 @@ to the network again. This is necessary in Brian (look here:
 
 <dl class="py method">
 <dt class="sig sig-object py" id="simulate.Simulate.save_monitors">
-<span class="sig-name descname"><span class="pre">save_monitors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.save_monitors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.save_monitors" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">save_monitors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">number</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.save_monitors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.save_monitors" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -280,6 +285,12 @@ endowed with a <code class="docutils literal notranslate"><span class="pre">coor
 on the grid. All neurons are driven by a Gaussian background noise.</p>
 <p>Populations are accessible via the <cite>pops</cite> attribute of the <code class="docutils literal notranslate"><span class="pre">Simulate</span></code>
 object, in form of a dictionary keyed by the population’s name.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>First index (columns) indicate the <cite>x</cite>-coordinate and second one 
+(rows) the <cite>y</cite>-coordinate. It differs from array convention but 
+mathes the one of images.</p>
+</div>
 </dd></dl>
 
 <dl class="py method">
@@ -297,7 +308,7 @@ object, in form of a list indexed by the sorted order of pathways.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="simulate.Simulate.start">
-<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.</span> <span class="pre">*</span> <span class="pre">second</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dur</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200.</span> <span class="pre">*</span> <span class="pre">msecond</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">restore</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_rates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.start" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.</span> <span class="pre">*</span> <span class="pre">second</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dur</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200.</span> <span class="pre">*</span> <span class="pre">msecond</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">restore</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_snapshots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Starts a long simulation by breaking it down to several batches. After
 each <code class="docutils literal notranslate"><span class="pre">batch_dur</span></code>, the monitors will be saved on disk, and simulation
 monitors will be reset to combat memory consumption.</p>
@@ -311,7 +322,7 @@ defaults to 1000*b2.ms</p></li>
 defaults to True</p></li>
 <li><p><strong>profile</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether or not profile the simulation (useful for 
 performance analysis), defaults to False</p></li>
-<li><p><strong>plot_rates</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether or not plot the firing rate at the end of 
+<li><p><strong>plot_snapshots</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether or not plot the firing rate at the end of 
 each batch, defaults to True</p></li>
 </ul>
 </dd>
@@ -327,6 +338,11 @@ background activity (mean and std) will be adjusted to their simulation
 values.</p>
 <p>After the each warm-up, the states is saved on the disk for restoration
 for later simulations.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Previous warm-up states will be overwritten by the freshest 
+execution.</p>
+</div>
 </dd></dl>
 
 </dd></dl>

@@ -1,9 +1,10 @@
 anisonet/__pycache__/
 anisonet/.ipynb_checkpoints
-anisonet/old
 tests
 anisonet/tmp
 anisonet/results/
+anisonet/EI_net/
+anisonet/I_net/
 anisonet/__init__.py # it intervenes the sphinx-apidoc locally
                                                                                                                                                                                                                                                                                                                                                                                             
 

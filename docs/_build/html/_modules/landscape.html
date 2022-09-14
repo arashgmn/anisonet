@@ -182,7 +182,7 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">noise</span> <span class="kn">import</span> <span class="n">pnoise2</span> <span class="k">as</span> <span class="n">perlin</span>    
 
-<div class="viewcode-block" id="make_landscape"><a class="viewcode-back" href="../landscape.html#landscape.make_landscape">[docs]</a><span class="k">def</span> <span class="nf">make_landscape</span><span class="p">(</span><span class="n">gs</span><span class="p">,</span> <span class="n">ls_type</span><span class="o">=</span><span class="s1">&#39;random&#39;</span><span class="p">,</span> <span class="n">ls_params</span><span class="o">=</span><span class="p">{}):</span>
+<div class="viewcode-block" id="make_landscape"><a class="viewcode-back" href="../landscape.html#landscape.make_landscape">[docs]</a><span class="k">def</span> <span class="nf">make_landscape</span><span class="p">(</span><span class="n">gs</span><span class="p">,</span> <span class="n">ls_type</span><span class="o">=</span><span class="s1">&#39;random&#39;</span><span class="p">,</span> <span class="n">ls_params</span><span class="o">=</span><span class="p">{},</span> <span class="n">digitize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Makes a landscape according for neural network placed on a square grid of </span>
 <span class="sd">    size ``gs``. The landscape has two components `rs` (the radial </span>
@@ -190,7 +190,6 @@
 <span class="sd">    have a flat histogram. In other words, even if `phis` are not equal, their</span>
 <span class="sd">    frequency is the same over the grid. `phis` are always between -pi to pi.</span>
 <span class="sd">    </span>
-
 <span class="sd">    :param gs: grid size</span>
 <span class="sd">    :type gs: int</span>
 <span class="sd">    :param ls_type: landscape name. Only [&#39;random&#39;, &#39;perlin&#39;, &#39;symmetric&#39;, &#39;homogeneous&#39;] </span>
@@ -203,6 +202,11 @@
 <span class="sd">    :return: (rs, phis) as flattened arrays </span>
 <span class="sd">    :rtype: tuple of np.array of floats</span>
 
+<span class="sd">    .. note::</span>
+<span class="sd">        Perlin noise package, by default doesn&#39;t provide a balanced landscape. i.e., some</span>
+<span class="sd">        angles are more frequent than others. To have a landscape comparable with the </span>
+<span class="sd">        symmetric and random cases, similar to `[1]`_ we flatten the disribution before </span>
+<span class="sd">        passing the landscape field to the network.  </span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">ls_type</span><span class="o">==</span><span class="s1">&#39;homogeneous&#39;</span><span class="p">:</span>
         <span class="k">assert</span> <span class="s1">&#39;phi&#39;</span> <span class="ow">in</span> <span class="n">ls_params</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="s2">&quot;phi value is needed for landscape &quot;</span><span class="o">+</span><span class="n">ls_type</span>
@@ -247,6 +251,10 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="s1">&#39;Landscape type not recognized!&#39;</span>
     
+    <span class="k">if</span> <span class="n">digitize</span><span class="p">:</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">phis</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+        <span class="n">phis</span> <span class="o">=</span> <span class="n">bins</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">phis</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span> <span class="kc">True</span><span class="p">)]</span>
+        
     <span class="k">return</span> <span class="n">rs</span><span class="p">,</span> <span class="n">phis</span></div>
 </pre></div>
 

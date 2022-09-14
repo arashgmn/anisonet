@@ -5,14 +5,14 @@ This is the main module to set up and simulate an anisotropic network. Other
 modules are auxillary utilities used here. 
 """
 
-import os
+import os 
+osjoin = os.path.join # an alias for convenient
+
 import pickle
 import numpy as np
-import matplotlib.pyplot as plt
 import brian2 as b2
 from scipy import sparse
 
-from pdb import set_trace
 import time
 
 import viz
@@ -20,17 +20,16 @@ import utils
 import configs # default configurations
 import equations as eq
 from landscape import make_landscape
-from anisofy import get_post_syns
+from anisofy import draw_post_syns
 
-
-root = './'
 
 class Simulate(object):
     """
     High-level object for simulating an anisotropic network in Brian.
     """
     
-    def __init__(self, net_name='I_net', load_connectivity=True,  scalar=1):
+    def __init__(self, net_name='I_net', load_connectivity=True,  scalar=1,
+                 result_path=None):
         """
         Initializes the simulator object for the given network configuration. 
         By default, tries to load the connectivity matrix from disk, otherwise
@@ -51,12 +50,18 @@ class Simulate(object):
         :type scalar: int, optional    
         """
         
-        # making necessary folders
-        if not os.path.exists('results'):
-            os.makedirs('results')
-        if not os.path.exists('results/data'):
-            os.makedirs('results/data')
+        if result_path==None:
+            result_path = os.getcwd()
+        root = osjoin(result_path, net_name)
         
+        self.res_path = osjoin(root,'results')
+        self.data_path = osjoin(root,'data')
+        
+        # making necessary folders
+        if not os.path.exists(self.res_path):
+            os.makedirs(self.res_path)
+        if not os.path.exists(self.data_path):
+            os.makedirs(self.data_path)
         
         # initialize with defaults
         self.pops_cfg , self.conn_cfg = configs.get_config(net_name, scalar=scalar)
@@ -68,23 +73,11 @@ class Simulate(object):
         self.name+= '_'+list(self.conn_cfg.values())[0]['profile']['type'] 
         self.name+= '_'+ str(scalar)
         
-        
+        # warm-up settings
         self.warmup_std = 500*b2.pA
         self.warmup_dur = 500*b2.ms
-        # self.pops_cfg = deepcopy(configs.pops_cfg0)
-        # self.lscp_cfg = deepcopy(configs.lscp_cfg0)
-        # self.conn_cfg = deepcopy(configs.conn_cfg0)
-        # self.syns_cfg = deepcopy(configs.syns_cfg0)
         
-        # if pops_cfg!=None:
-        #     self.pops_cfg= pops_cfg
-        # if lscp_cfg!=None:
-        #     self.lscp_cfg= lscp_cfg
-        # if conn_cfg!=None:
-        #     self.conn_cfg= conn_cfg
-        # if syns_cfg!=None:
-        #     self.syns_cfg= syns_cfg
-
+        
     def get_synaptic_base(self):
         """
         Synaptic inputs can be defined in different ways. This method reads the
@@ -145,7 +138,7 @@ class Simulate(object):
         Populations are accessible via the `pops` attribute of the ``Simulate``
         object, in form of a dictionary keyed by the population's name.
         
-        .. note:
+        .. note::
             First index (columns) indicate the `x`-coordinate and second one 
             (rows) the `y`-coordinate. It differs from array convention but 
             mathes the one of images.
@@ -248,11 +241,11 @@ class Simulate(object):
             if self.load_connectivity:
                 try:
                     print('\tLoading connectivity matrix: {}'.format(w_name))
-                    w = sparse.load_npz(root +'results/data/'+w_name+'.npz')
+                    w = sparse.load_npz(osjoin(self.data_path, w_name+'.npz'))
                 except:
                     print('\tWarning: Connecitivy file {} was not found.'.format(w_name))                    
                     print('\tWarning: Computing connectivity from scratch.')                    
-                    self.load_connectivity=False
+                    self.load_connectivity = False
                     
             # computing anisotropic post-synapses
             for s_idx in range(len(spop)):
@@ -271,7 +264,7 @@ class Simulate(object):
                                self_link = self.conn_cfg[key]['self_link'],
                                recurrent = trg==src
                                )
-                    s_coord, t_coords = get_post_syns(**kws) # projects s_coord
+                    s_coord, t_coords = draw_post_syns(**kws) # projects s_coord
                     t_idxs = utils.coord2idx(t_coords, tpop)
                     
                 syn.connect(i = s_idx, j = t_idxs)
@@ -283,17 +276,14 @@ class Simulate(object):
             self.syns.append(syn)
             
             # save if not saved
-            #set_trace()
             if not self.load_connectivity:
-                row_idx = np.array(syn.i)
-                col_idx = np.array(syn.j)
+                row_idx = np.array(syn.i) # pre
+                col_idx = np.array(syn.j) # post
                 data = np.ones_like(row_idx)
                 w = sparse.coo_matrix((data, (row_idx, col_idx)))
-                sparse.save_npz(root +'results/data/'+w_name+'.npz', w)
-                #sim.w = w
-                viz.plot_connectivity(root +'results/data/'+w_name+'.npz')
-                
-                del t_coords, s_coord, kws
+                sparse.save_npz(osjoin(self.data_path, w_name+'.npz'), w)
+                                
+                del t_coords, s_coord, kws, row_idx, col_idx, data
         del src, trg, eqs, on_pre, on_post, ncons 
         del spop, tpop, syn, t_idxs, w
      
@@ -329,7 +319,7 @@ class Simulate(object):
         for later simulations. 
         
         
-        .. note: 
+        .. note::
             Previous warm-up states will be overwritten by the freshest 
             execution.
         """
@@ -359,7 +349,8 @@ class Simulate(object):
         self.net.run(self.warmup_dur/2)
         print('Finished warm up. Storing results.')
         
-        self.net.store(name= self.name, filename=root +'results/data/warm-up_'+self.name)
+        self.net.store(name= self.name, 
+                       filename= osjoin(self.data_path,'warm-up_'+self.name))
         
         # switch on monitors        
         for mon in self.mons:
@@ -369,7 +360,7 @@ class Simulate(object):
     
         
     def start(self, duration=1000*b2.ms, batch_dur=200*b2.ms, 
-              restore=True, profile=False, plot_rates=True):
+              restore=True, profile=False, plot_snapshots=True):
         """
         Starts a long simulation by breaking it down to several batches. After
         each ``batch_dur``, the monitors will be saved on disk, and simulation
@@ -386,16 +377,16 @@ class Simulate(object):
         :param profile: whether or not profile the simulation (useful for 
             performance analysis), defaults to False
         :type profile: bool, optional
-        :param plot_rates: whether or not plot the firing rate at the end of 
+        :param plot_snapshots: whether or not plot the firing rate at the end of 
             each batch, defaults to True
-        :type plot_rates: bool, optional
+        :type plot_snapshots: bool, optional
         """
         
         if restore:
             try:
                 self.net.restore(name = self.name, 
-                                 filename=root +'results/data/warm-up_'+self.name)
-                print('Restored from warmed up state of {}'.format(self.name))
+                                 filename= osjoin(self.data_path,'warm-up_'+self.name))
+                print('Restored state from warmed-up state: {}'.format(self.name))
             
             except Exception as e: 
                 print(str(e))
@@ -411,35 +402,20 @@ class Simulate(object):
             self.reset_monitors()
             
             dur = min(batch_dur, duration-n*batch_dur)
-            print('Starting batch number {}/{}'.format(n+1, nbatch))
+            print('Starting simulation part {}/{}'.format(n+1, nbatch))
             self.net.run(dur, profile=profile)
+
+            if plot_snapshots:
+                viz.plot_firing_rates(sim=self, suffix='_'+str(n))
             
-            filename = self.name
-            if nbatch>1:
-                filename += '_partial_{}'.format(n)
-            viz.plot_firing_rates(sim=self, suffix='_'+str(n))
-            
-            self.save_monitors(filename = filename)
+            self.save_monitors(n)
             
     
-    # def post_process(self):
-    #     print('Starting postprocessing ...')
-    #     fig, axs = plt.subplots(2,1, figsize=(12,8), sharex=True, sharey=True)
-    #     #set_trace()
-    #     for id_, pop in enumerate(self.pops.values()):
-    #         ax = axs[id_]        
-    #         mon = self.mons[id_]
-    #         for idx in range(pop.N):
-    #             ax.plot(mon.t, mon.v[idx])
-                
-    #     plt.savefig(root +'results/LIF.png')
-    
-    def save_monitors(self, filename):
+    def save_monitors(self, number):
         for mon in self.mons:
             data = mon.get_states()
-            with open(root +'results/data/'+filename+'_'+mon.name+'.dat', 'wb') as f:
+            with open (osjoin(self.data_path, mon.name+'_'+str(number+1)+'.dat'), 'wb') as f:
                 pickle.dump(data, f)
-            
         del mon, data
     
     def make_txy(self):
@@ -447,7 +423,7 @@ class Simulate(object):
         
         for pop_name in sim.pops.keys():
             txy = []
-            files_list = sorted(glob.glob(root +'results/data/mon_'+pop_name+'*.dat'))
+            files_list = sorted(glob.glob(osjoin(self.data_path, 'mon_'+pop_name+'*.dat')))
             for file in files_list[-2:]:
                 f = open(file, 'rb')
                 f = f.read()
@@ -458,9 +434,10 @@ class Simulate(object):
                 del data,xy
                 
             txy = np.concatenate(txy)
-            print(txy.shape)
-            np.savetxt(root +'results/data/txy_'+self.name+'_'+pop_name+'.csv', txy, 
-                       fmt=('%f, %d, %d'))
+            np.savetxt(osjoin(self.data_path, 'txy_'+self.name+'_'+pop_name+'.csv'),
+                       txy, fmt=('%f, %d, %d'))
+            
+            del txy, files_list
             
     def reset_monitors(self):
         """
@@ -472,28 +449,30 @@ class Simulate(object):
         self.configure_monitors()
         self.net.add(self.mons)
         
+    
+    def post_process(self):
+        viz.plot_landscape(sim)
+        viz.plot_in_out_deg(sim)
+        viz.plot_realized_landscape(sim)
+        viz.plot_connectivity(sim)
+        viz.plot_firing_rates_dist(sim)
+        viz.plot_animation(sim) 
+        
+        
 if __name__=='__main__':
-    #pops_cfg, conn_cfg = configs.get_config('I_net') 
-    sim = Simulate('I_net', scalar=1, load_connectivity=True)
+
+    # I_net
+    sim = Simulate('I_net', scalar=10./6, load_connectivity=True)
     sim.setup_net()
-    
-    viz.plot_landscape(sim)
-    viz.plot_in_out_deg(sim)
-    #viz.plot_periodicity(sim)
-    viz.plot_realized_landscape(sim)
-    
-    #time.sleep(5)
-    
-    #gs = int(np.sqrt(sim.pops['I'].N))
-    #monI = b2.StateMonitor(sim.pops['I'], ['v', 'noise_I'], np.arange(gs)**2)
-    #sim.net.add(monI)
-    #sim.start()
-    #sim.warmup()
-    #sim.start(duration=1000*b2.ms, batch_dur=1000*b2.ms, 
-    #          restore=True, profile=False)
-    #sim.plot_firing_rates()
-    #for i in range(monI.v.shape[0]):
-    #    plt.plot(monI.t, monI.v[i,:], alpha=0.1)
-    #viz.plot_animation(sim.name, gs = sim.pops_cfg['I']['gs']) 
-    #viz.plot_firing_rates_dist(sim.name)
-    #sim.post_process()
+    sim.warmup()
+    sim.start(duration=1000*b2.ms, batch_dur=1000*b2.ms, 
+              restore=True, profile=False)
+    sim.post_process()
+
+    # EI_net
+    sim = Simulate('EI_net', scalar=10./6, load_connectivity=True)
+    sim.setup_net()
+    sim.warmup()
+    sim.start(duration=1000*b2.ms, batch_dur=1000*b2.ms, 
+              restore=True, profile=False)
+    sim.post_process()

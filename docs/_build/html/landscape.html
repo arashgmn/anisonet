@@ -182,7 +182,7 @@ merely a reimplementation of <code class="docutils literal notranslate"><span cl
 a few assertion.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="landscape.make_landscape">
-<span class="sig-prename descclassname"><span class="pre">landscape.</span></span><span class="sig-name descname"><span class="pre">make_landscape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'random'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/landscape.html#make_landscape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#landscape.make_landscape" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">landscape.</span></span><span class="sig-name descname"><span class="pre">make_landscape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'random'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digitize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/landscape.html#make_landscape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#landscape.make_landscape" title="Permalink to this definition">¶</a></dt>
 <dd><p>Makes a landscape according for neural network placed on a square grid of 
 size <code class="docutils literal notranslate"><span class="pre">gs</span></code>. The landscape has two components <cite>rs</cite> (the radial 
 displacement) and <cite>phis</cite> (the anisotropic bias angle). <cite>phis</cite> are forced to
@@ -205,6 +205,13 @@ landsacepe., defaults to {}</p></li>
 <dd class="field-odd"><p>tuple of np.array of floats</p>
 </dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Perlin noise package, by default doesn’t provide a balanced landscape. i.e., some
+angles are more frequent than others. To have a landscape comparable with the 
+symmetric and random cases, similar to <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a> we flatten the disribution before 
+passing the landscape field to the network.</p>
+</div>
 </dd></dl>
 
 </section>

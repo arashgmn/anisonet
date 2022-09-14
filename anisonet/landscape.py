@@ -12,7 +12,7 @@ a few assertion.
 import numpy as np
 from noise import pnoise2 as perlin    
 
-def make_landscape(gs, ls_type='random', ls_params={}, digitize=False) :
+def make_landscape(gs, ls_type='random', ls_params={}, digitize=True) :
     """
     Makes a landscape according for neural network placed on a square grid of 
     size ``gs``. The landscape has two components `rs` (the radial 
@@ -20,7 +20,6 @@ def make_landscape(gs, ls_type='random', ls_params={}, digitize=False) :
     have a flat histogram. In other words, even if `phis` are not equal, their
     frequency is the same over the grid. `phis` are always between -pi to pi.
     
-
     :param gs: grid size
     :type gs: int
     :param ls_type: landscape name. Only ['random', 'perlin', 'symmetric', 'homogeneous'] 
@@ -33,6 +32,11 @@ def make_landscape(gs, ls_type='random', ls_params={}, digitize=False) :
     :return: (rs, phis) as flattened arrays 
     :rtype: tuple of np.array of floats
 
+    .. note::
+        Perlin noise package, by default doesn't provide a balanced landscape. i.e., some
+        angles are more frequent than others. To have a landscape comparable with the 
+        symmetric and random cases, similar to `[1]`_ we flatten the disribution before 
+        passing the landscape field to the network.  
     """
     if ls_type=='homogeneous':
         assert 'phi' in ls_params.keys(), "phi value is needed for landscape "+ls_type

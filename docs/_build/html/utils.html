@@ -180,7 +180,7 @@
 back and forth. A useful little script to have.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="utils.aggregate_mons">
-<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">aggregate_mons</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mon_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#aggregate_mons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.aggregate_mons" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">aggregate_mons</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_pattern</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#aggregate_mons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.aggregate_mons" title="Permalink to this definition">¶</a></dt>
 <dd><p>Aggregates the indices and timings of the spiking events from disk.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -203,14 +203,14 @@ back and forth. A useful little script to have.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>coords</strong> (<em>numpy array of size</em><em> (</em><em>n</em><em>,</em><em>2</em><em>)</em>) – coordinates of n neuron</p></li>
-<li><p><strong>pop</strong> (<em>population object</em>) – population object that is</p></li>
+<li><p><strong>pop</strong> (<em>Brian's NetworkGroup object</em>) – population object</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>DESCRIPTION</p>
+<dd class="field-even"><p>array of indicies of length N of type int</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>TYPE</p>
+<dd class="field-odd"><p>numpy array</p>
 </dd>
 </dl>
 </dd></dl>
@@ -218,7 +218,22 @@ back and forth. A useful little script to have.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="utils.idx2coords">
 <span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">idx2coords</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idxs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">net</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#idx2coords"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.idx2coords" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Transforms the a list of indices of the given population to coordinates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>idxs</strong> (<em>list</em><em> or </em><em>numpy array</em>) – list or array of coordinates. i.e., [(x1,y1), (x2,y2), …]</p></li>
+<li><p><strong>net</strong> (<em>Brian's NetworkGroup object</em>) – population object</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>array of coordinates of size (N,2) of type int</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy array</p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 

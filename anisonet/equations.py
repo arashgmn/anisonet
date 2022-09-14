@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-The equation module provides proper equation strings for both neuron and synapses. Note however, due
-to the existence of the stochastic background current, extra care must be paid when translating the
-code of NEST to Brian and vice versa.
+The equation module provides proper equation strings for both neuron and 
+synapses. Note however, due to the existence of the stochastic background 
+current, extra care must be paid when translating the code of NEST to Brian 
+and vice versa.
 
 
 =============
@@ -66,10 +67,11 @@ synapses must have the ``(clock-driven)`` flag, whereas the
 voltage-based one ``(event-driven)``. Also look at (`Brian documentation`_).
 
 
-Another point to consider is that the neuron equation, too, depends on the synapse type.
-If current or conductance based models are used, the synaptic current will be added as 
-a ``I_syn`` term to the neuron equation, whereas voltage-based synapses can be implemented
+Neuron equation, too, depends on the synapse type. Thus, if current or 
+conductance based models are used, the synaptic current will be added as a 
+``I_syn`` term to the neuron equation. Voltage-based synapses can be implemented
 by providing proper voltage jump in ``on_pre`` for each event.
+
 
 
 .. _Brian documentation: https://brian2.readthedocs.io/en/stable/user/synapses.html?highlight=event-driven#event-driven-updates
@@ -109,7 +111,11 @@ def get_nrn_eqs(pop_name, pops_cfg, syn_base):
     
     if syn_base!='voltage':
         eqs_str= tmp + '''dv/dt = (E-v)/tau + (noise_pop + I_syn)/C : volt (unless refractory)\n'''
-        eqs_str+= '''I_syn: amp \n'''
+        I_syn_components = []
+        for src_name in pops_cfg.keys():
+            eqs_str+= '''I_syn_{}: amp \n'''.format(src_name)
+            I_syn_components.append('I_syn_'+src_name)
+        eqs_str+= 'I_syn = '+ '+'.join(I_syn_components) +': amp \n'''
         
     else:
         eqs_str= tmp + '''dv/dt = (E-v)/tau + noise_pop/C : volt (unless refractory)\n'''
@@ -174,14 +180,14 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
     elif syn_base=='current':
         # J is the post-synaptic current injection 
         eqs_str = tmp
-        eqs_str += '''I_syn_post = J*g: amp (summed)\n''' 
+        eqs_str += '''I_syn_{}_post = J*g: amp (summed)\n'''.format(conn_name[0])
         eqs_str += '''J : amp (shared)\n'''
         
     elif syn_base=='conductance':
         # J is the maximum conductance
         eqs_str = tmp
-        eqs_str += '''I_syn_post = J*g*(v_post-Erev): amp \n''' 
-        eqs_str += '''E : volt (shared)\n'''
+        eqs_str += '''I_syn_{}_post = J*g*(v_post-Erev): amp \n'''.format(conn_name[0])
+        eqs_str += '''Erev : volt (shared)\n'''
         eqs_str += '''J : siemens (shared)\n'''
         #eqs_str += '''J = {}*nS: siemens \n'''.format(J/nS)  
         #E = conn_cfg[conn_name]['synapse']['params']['E']/mV

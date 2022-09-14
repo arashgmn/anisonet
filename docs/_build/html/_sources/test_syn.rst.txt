@@ -1,0 +1,7 @@
+test\_syn module
+================
+
+.. automodule:: test_syn
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -5,6 +5,9 @@ These utilitiy functions transform the indicies of neurons to their coordinates
 back and forth. A useful little script to have.
 """
 import glob
+import os
+osjoin = os.path.join # an alias for convenient
+
 import pickle
 import numpy as np
 from brian2 import Equations 
@@ -18,10 +21,10 @@ def coord2idx(coords, pop):
     
     :param coords: coordinates of n neuron 
     :type coords: numpy array of size (n,2)
-    :param pop: population object that is 
-    :type pop: population object
-    :return: DESCRIPTION
-    :rtype: TYPE
+    :param pop: population object 
+    :type pop: Brian's NetworkGroup object
+    :return: array of indicies of length N of type int
+    :rtype: numpy array 
 
     """
     gs = int(np.sqrt(len(pop))) # gridsize
@@ -31,6 +34,17 @@ def coord2idx(coords, pop):
     return idxs
     
 def idx2coords(idxs, net):
+    """
+    Transforms the a list of indices of the given population to coordinates.
+    
+    :param idxs: list or array of coordinates. i.e., [(x1,y1), (x2,y2), ...]
+    :type idxs: list or numpy array
+    :param net: population object 
+    :type net: Brian's NetworkGroup object
+    :return: array of coordinates of size (N,2) of type int
+    :rtype: numpy array
+
+    """
     gs = int(np.sqrt(len(net))) # gridsize
     
     idxs = np.asarray(idxs)
@@ -39,7 +53,7 @@ def idx2coords(idxs, net):
     return coords
 
 
-def aggregate_mons(mon_name):
+def aggregate_mons(data_path, name_pattern):
     """
     Aggregates the indices and timings of the spiking events from disk.
     
@@ -50,7 +64,7 @@ def aggregate_mons(mon_name):
 
     """
     
-    files_list = sorted(glob.glob(root +'results/data/'+mon_name+'*.dat'))
+    files_list = sorted(glob.glob( osjoin(data_path, name_pattern+'*')))
     idxs = []
     ts = []
     for file in sorted(files_list):
@@ -61,6 +75,8 @@ def aggregate_mons(mon_name):
     
     idxs = np.concatenate(idxs)
     ts = np.concatenate(ts)
+    
+    del files_list
     return idxs, ts
 
 # if __name__=='__main__':
