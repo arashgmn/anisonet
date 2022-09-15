@@ -195,7 +195,8 @@ def plot_field(field, figpath, vmin=None, vmax=None):
     :type vmax: float, optional
     """
     
-    m = plt.pcolormesh(field, vmin=vmin, vmax=vmax, shading='flat')
+    m = plt.pcolormesh(field, vmin=vmin, vmax=vmax, shading='flat', 
+                       cmap='twilight_shifted')
     ax=plt.gca()
     ax.set_aspect('equal')
     plt.colorbar(m)

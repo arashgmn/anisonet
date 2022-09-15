@@ -211,20 +211,60 @@ Var[q(t)_{Brian}] = 0 + t \sigma^2\end{split}\]</div>
 </section>
 <section id="synaptic-model">
 <h2>Synaptic model<a class="headerlink" href="#synaptic-model" title="Permalink to this heading">¶</a></h2>
-<p>There’s a computational difference between current/conductance-based 
-synapses from voltage-based ones in brian. The former show themselves 
-in the cell equation in terms of <code class="docutils literal notranslate"><span class="pre">I_syn</span></code>. Thus, they need to be 
-evaluated on every single timestep. One the contrary, voltage-based 
-synapses only add a particular amount of potential to the post-synapse
-voltage, and thus need to be updated once there’s an event. Therefore,
-voltage-based synapse is computationally cheaper. From the 
-implementation point of view, this means current/conductance-based 
-synapses must have the <code class="docutils literal notranslate"><span class="pre">(clock-driven)</span></code> flag, whereas the 
-voltage-based one <code class="docutils literal notranslate"><span class="pre">(event-driven)</span></code>. Also look at (<a class="reference external" href="https://brian2.readthedocs.io/en/stable/user/synapses.html?highlight=event-driven#event-driven-updates">Brian documentation</a>).</p>
-<p>Neuron equation, too, depends on the synapse type. Thus, if current or 
-conductance based models are used, the synaptic current will be added as a 
-<code class="docutils literal notranslate"><span class="pre">I_syn</span></code> term to the neuron equation. Voltage-based synapses can be implemented
-by providing proper voltage jump in <code class="docutils literal notranslate"><span class="pre">on_pre</span></code> for each event.</p>
+<p>There are three different conventional models for synapses:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>conductance-based,</p></li>
+<li><p>current-based, and</p></li>
+<li><p>voltage-based</p></li>
+</ol>
+</div></blockquote>
+<p>which, from the both mathematical and implementation perspective have 
+differences. From mathematical point of view, a conductance based synapse 
+is governed by:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}I_{syn} = g_{max} g(t) (V_{post} - V_{pre})\\g(t) = \int_{-\infty}^t \sum_k f(t-t') \delta(t'-t_k) dt' = \sum_k f(t-t_k)\end{aligned}\end{align} \]</div>
+<p>A current-based synapse, on the other hand, describes the synaptic current as:</p>
+<div class="math notranslate nohighlight">
+\[I_{syn} = I_{max} \int_{-\infty}^t \sum_k f(t-t') \delta(t'-t_k) dt' = I_{max} \sum_k f(t-t_k)\]</div>
+<p>Finally, in voltage-based formulation we don’t describe the injected current, 
+but directly the increment in the membrane voltage:</p>
+<div class="math notranslate nohighlight">
+\[\Delta V_{syn} = V_{max} \int_{-\infty}^t \sum_k f(t') \delta(t'-t_k) dt' =  V_{max} \sum_k f(t-t_k)\]</div>
+<p>In all these formulations <span class="math notranslate nohighlight">\(f(t)\)</span> is a filter, often replaced by an 
+exponential, bi-exponential (with rise and decay time <span class="math notranslate nohighlight">\(\tau_r\)</span> and 
+<span class="math notranslate nohighlight">\(\tau_d\)</span>), and alpha function (equal rise and decay time), scaled by the
+<span class="math notranslate nohighlight">\(_{max}\)</span> qunatites. <span class="math notranslate nohighlight">\(\sum \delta(.)\)</span> is the incoming spike train. 
+Here we use the alpha function – scaled to a maximum of one – with the 
+following system:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">dg/dt = -(g+h)/tau : 1</span>
+<span class="sd">dh/dt = -h/tau :1</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="o">...</span>
+
+<span class="n">on_pre</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;h += exp(1)&#39;&#39;&#39;</span>  <span class="c1"># takes care of the max-normalizing to 1</span>
+</pre></div>
+</div>
+<p>Computationally, in Brian the first two require a <code class="docutils literal notranslate"><span class="pre">I_syn</span></code> term in the neuronal
+equations that needs to be evaluated on every single timestep. One the 
+contrary, voltage-based synapses only manipulate the potential of the 
+post-synapse upon arrival of the presynaptic spike. Therefore, voltage-based 
+synapse is computationally cheaper, immensely. In Brian, current/conductance-based 
+synapses must be handled as <code class="docutils literal notranslate"><span class="pre">(clock-driven)</span></code> states whereas the voltage-based 
+one can be computed in a <code class="docutils literal notranslate"><span class="pre">(event-driven)</span></code> fashion. Also look at 
+(<a class="reference external" href="https://brian2.readthedocs.io/en/stable/user/synapses.html?highlight=event-driven#event-driven-updates">Brian documentation</a>) for more detail.</p>
+<p>It’s however possible to transfer the current-based synapse to the voltage-based
+one with the following assumption:</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><strong>Asumption</strong>: The total current injected to the cell via a single spike 
+leads to a  certain voltage increament. Setting <span class="math notranslate nohighlight">\(V_{max}\)</span> equal to 
+this increment, we can make an voltage-based synapse from the current-based 
+one.</p>
+</div>
+<p>This assumption leads to the scaling <span class="math notranslate nohighlight">\(V_{max} = \frac{I_{max} \tau}{C} e\)</span>.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="equations.get_nrn_eqs">
 <span class="sig-prename descclassname"><span class="pre">equations.</span></span><span class="sig-name descname"><span class="pre">get_nrn_eqs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pop_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syn_base</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/equations.html#get_nrn_eqs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#equations.get_nrn_eqs" title="Permalink to this definition">¶</a></dt>

@@ -12,7 +12,7 @@ a few assertion.
 import numpy as np
 from noise import pnoise2 as perlin    
 
-def make_landscape(gs, ls_type='random', ls_params={}, digitize=True) :
+def make_landscape(gs, ls_type='random', ls_params={}, digitize=False) :
     """
     Makes a landscape according for neural network placed on a square grid of 
     size ``gs``. The landscape has two components `rs` (the radial 

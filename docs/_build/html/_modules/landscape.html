@@ -182,7 +182,7 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">noise</span> <span class="kn">import</span> <span class="n">pnoise2</span> <span class="k">as</span> <span class="n">perlin</span>    
 
-<div class="viewcode-block" id="make_landscape"><a class="viewcode-back" href="../landscape.html#landscape.make_landscape">[docs]</a><span class="k">def</span> <span class="nf">make_landscape</span><span class="p">(</span><span class="n">gs</span><span class="p">,</span> <span class="n">ls_type</span><span class="o">=</span><span class="s1">&#39;random&#39;</span><span class="p">,</span> <span class="n">ls_params</span><span class="o">=</span><span class="p">{},</span> <span class="n">digitize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="p">:</span>
+<div class="viewcode-block" id="make_landscape"><a class="viewcode-back" href="../landscape.html#landscape.make_landscape">[docs]</a><span class="k">def</span> <span class="nf">make_landscape</span><span class="p">(</span><span class="n">gs</span><span class="p">,</span> <span class="n">ls_type</span><span class="o">=</span><span class="s1">&#39;random&#39;</span><span class="p">,</span> <span class="n">ls_params</span><span class="o">=</span><span class="p">{},</span> <span class="n">digitize</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Makes a landscape according for neural network placed on a square grid of </span>
 <span class="sd">    size ``gs``. The landscape has two components `rs` (the radial </span>

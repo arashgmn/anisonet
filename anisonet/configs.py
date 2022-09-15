@@ -122,7 +122,7 @@ Use either of the following structures for the value of ``profile`` key:
 from brian2.units import pA, mV, ms, pF
 import numpy as np
 
-#np.random.seed(8)
+np.random.seed(8)
 
 
 def get_config(name='EI_net', scalar=3):
@@ -155,36 +155,14 @@ def get_config(name='EI_net', scalar=3):
                    'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
                    #'profile': {'type':'Gaussian', 'params': {'std': 3} },
                    'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-#                   'synapse': {'type':'alpha_voltage', 'params': {'J': -0.221*mV, 'delay':1*ms, 'tau': 5*ms}},
-                   #'anisotropy': {'type': 'perlin', 'params': {'r': 1, 'scale':3}}
+                   #'synapse': {'type':'alpha_voltage', 'params': {'J': -(10*pA*5*ms/(250*pF))*(scalar**2)*np.exp(1), 'delay':1*ms, 'tau': 5*ms}},
+                   'anisotropy': {'type': 'perlin', 'params': {'r': 1, 'scale':3}}
                    #'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':0*np.pi/4.}}
-                   'anisotropy': {'type': 'random', 'params': {'r': 1,}}
+                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    #'anisotropy': {'type': 'symmetric', 'params': {}}
                    },
         }    
     elif name=='EI_net':
-        # pops_cfg = {
-        #     'I': {'gs':60, 'mu': 350*pA, 'sigma': 100*pA},
-        #     'E': {'gs':120, 'mu': 350*pA, 'sigma': 100*pA}
-        # }
-
-        # lscp_cfg = {
-        #     'I': {'type': 'perlin', 'params': {'scale': 4, 'r':1} }
-        # }
-
-        # conn_cfg = {
-        #     'EE': {'type':'Gaussian', 'self_link':False, 'params': {'std': 9}},
-        #     'EI': {'type':'Gaussian', 'self_link':False, 'params': {'std': 12}},# EI means E -> I
-        #     'IE': {'type':'Gaussian', 'self_link':False, 'params': {'std': 4.5}}, # IE means I -> E
-        #     'II': {'type':'Gaussian', 'self_link':False, 'params': {'std': 6}}, 
-        # }
-
-        # syns_cfg = { 
-        #     'EE': {'synapse_dyn': 'alpha', 'ncons':720, 'J': 10*pA}, # note the sign
-        #     'EI': {'synapse_dyn': 'alpha', 'ncons':180, 'J': 10*pA}, # note the sign
-        #     'IE': {'synapse_dyn': 'alpha', 'ncons':720, 'J': -1.76*mV}, # note the sign
-        #     'II': {'synapse_dyn': 'alpha', 'ncons':180, 'J': -1.76*mV}, # note the sign
-        # }
         pops_cfg = {
             'I': {'gs': round(60/scalar), 
                   'noise': {'mu': 350*pA, 'sigma': 100*pA, 'noise_dt': 1*ms},
@@ -205,29 +183,29 @@ def get_config(name='EI_net', scalar=3):
             'EE': {'ncons': round(720/(scalar**2)), 'self_link':False, 
                   'profile': {'type':'Gaussian', 'params': {'std': 9/scalar} },
                   'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms} },
+                  #'synapse': {'type':'alpha_voltage', 'params': {'J': (10*pA*5*ms/(250*pF))*(scalar**2)*np.exp(1), 'delay':1*ms, 'tau': 5*ms}},
                   'anisotropy': {'type': 'perlin', 'params': {'scale': 3, 'r':1}}
-                  #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/4.}}
                   },
             
             'EI': {'ncons': round(180/(scalar**2)), 'self_link':False, 
-                   'profile': {'type':'Gaussian', 'params': {'std': 12/scalar}},
+                   'profile': {'type':'Gaussian', 'params': {'std': 4.5/scalar}},
                    'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   #'synapse': {'type':'alpha_voltage', 'params': {'J': (10*pA*5*ms/(250*pF))*(scalar**2)*np.exp(1), 'delay':1*ms, 'tau': 5*ms}},
                    'anisotropy': {'type': 'symmetric', 'params': {}}
-                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/4.}}
                    },
             
             'IE': {'ncons': round(720/(scalar**2)), 'self_link':False, 
-                   'profile': {'type':'Gaussian', 'params': {'std': 4.5/scalar}},
+                   'profile': {'type':'Gaussian', 'params': {'std': 12/scalar}},
                    'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   #'synapse': {'type':'alpha_voltage', 'params': {'J': -8*(10*pA*5*ms/(250*pF))*(scalar**2)*np.exp(1), 'delay':1*ms, 'tau': 5*ms}},
                    'anisotropy': {'type': 'symmetric', 'params': {}}
-                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi}}
                    },
 
             'II': {'ncons': round(180/(scalar**2)), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 6/scalar}},
                    'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   #'synapse': {'type':'alpha_voltage', 'params': {'J': -8*(10*pA*5*ms/(250*pF))*(scalar**2)*np.exp(1), 'delay':1*ms, 'tau': 5*ms}},
                    'anisotropy': {'type': 'symmetric', 'params': {}}
-                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/2.}}
                    },
         }    
     else:

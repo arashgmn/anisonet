@@ -224,24 +224,71 @@
 <span class="sd">==============</span>
 <span class="sd">Synaptic model</span>
 <span class="sd">==============</span>
+<span class="sd">There are three different conventional models for synapses:</span>
+<span class="sd">    </span>
+<span class="sd">    #. conductance-based,</span>
+<span class="sd">    #. current-based, and</span>
+<span class="sd">    #. voltage-based</span>
+<span class="sd">    </span>
+<span class="sd">which, from the both mathematical and implementation perspective have </span>
+<span class="sd">differences. From mathematical point of view, a conductance based synapse </span>
+<span class="sd">is governed by:</span>
+<span class="sd">    </span>
+<span class="sd">.. math:: </span>
+<span class="sd">	I_{syn} = g_{max} g(t) (V_{post} - V_{pre})\n</span>
+<span class="sd">    g(t) = \int_{-\infty}^t \sum_k f(t-t&#39;) \delta(t&#39;-t_k) dt&#39; = \sum_k f(t-t_k)</span>
 
-<span class="sd">There&#39;s a computational difference between current/conductance-based </span>
-<span class="sd">synapses from voltage-based ones in brian. The former show themselves </span>
-<span class="sd">in the cell equation in terms of ``I_syn``. Thus, they need to be </span>
-<span class="sd">evaluated on every single timestep. One the contrary, voltage-based </span>
-<span class="sd">synapses only add a particular amount of potential to the post-synapse</span>
-<span class="sd">voltage, and thus need to be updated once there&#39;s an event. Therefore,</span>
-<span class="sd">voltage-based synapse is computationally cheaper. From the </span>
-<span class="sd">implementation point of view, this means current/conductance-based </span>
-<span class="sd">synapses must have the ``(clock-driven)`` flag, whereas the </span>
-<span class="sd">voltage-based one ``(event-driven)``. Also look at (`Brian documentation`_).</span>
+<span class="sd">A current-based synapse, on the other hand, describes the synaptic current as:</span>
+
+<span class="sd">.. math::</span>
+<span class="sd">	I_{syn} = I_{max} \int_{-\infty}^t \sum_k f(t-t&#39;) \delta(t&#39;-t_k) dt&#39; = I_{max} \sum_k f(t-t_k)</span>
+<span class="sd">    </span>
+<span class="sd">Finally, in voltage-based formulation we don&#39;t describe the injected current, </span>
+<span class="sd">but directly the increment in the membrane voltage:</span>
+<span class="sd">    </span>
+<span class="sd">.. math::</span>
+<span class="sd">    \Delta V_{syn} = V_{max} \int_{-\infty}^t \sum_k f(t&#39;) \delta(t&#39;-t_k) dt&#39; =  V_{max} \sum_k f(t-t_k)</span>
+
+<span class="sd">In all these formulations :math:`f(t)` is a filter, often replaced by an </span>
+<span class="sd">exponential, bi-exponential (with rise and decay time :math:`\\tau_r` and </span>
+<span class="sd">:math:`\\tau_d`), and alpha function (equal rise and decay time), scaled by the</span>
+<span class="sd">:math:`_{max}` qunatites. :math:`\sum \delta(.)` is the incoming spike train. </span>
+<span class="sd">Here we use the alpha function -- scaled to a maximum of one -- with the </span>
+<span class="sd">following system:</span>
+
+<span class="sd">..  code-block:: python</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    dg/dt = -(g+h)/tau : 1</span>
+<span class="sd">    dh/dt = -h/tau :1</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">     </span>
+<span class="sd">    ...</span>
+<span class="sd">    </span>
+<span class="sd">    on_pre = &#39;&#39;&#39;h += exp(1)&#39;&#39;&#39;  # takes care of the max-normalizing to 1</span>
+<span class="sd">    </span>
 
 
-<span class="sd">Neuron equation, too, depends on the synapse type. Thus, if current or </span>
-<span class="sd">conductance based models are used, the synaptic current will be added as a </span>
-<span class="sd">``I_syn`` term to the neuron equation. Voltage-based synapses can be implemented</span>
-<span class="sd">by providing proper voltage jump in ``on_pre`` for each event.</span>
+<span class="sd">Computationally, in Brian the first two require a ``I_syn`` term in the neuronal</span>
+<span class="sd">equations that needs to be evaluated on every single timestep. One the </span>
+<span class="sd">contrary, voltage-based synapses only manipulate the potential of the </span>
+<span class="sd">post-synapse upon arrival of the presynaptic spike. Therefore, voltage-based </span>
+<span class="sd">synapse is computationally cheaper, immensely. In Brian, current/conductance-based </span>
+<span class="sd">synapses must be handled as ``(clock-driven)`` states whereas the voltage-based </span>
+<span class="sd">one can be computed in a ``(event-driven)`` fashion. Also look at </span>
+<span class="sd">(`Brian documentation`_) for more detail.</span>
 
+
+<span class="sd">It&#39;s however possible to transfer the current-based synapse to the voltage-based</span>
+<span class="sd">one with the following assumption:</span>
+<span class="sd">    </span>
+<span class="sd">.. warning::</span>
+<span class="sd">    **Asumption**: The total current injected to the cell via a single spike </span>
+<span class="sd">    leads to a  certain voltage increament. Setting :math:`V_{max}` equal to </span>
+<span class="sd">    this increment, we can make an voltage-based synapse from the current-based </span>
+<span class="sd">    one.</span>
+<span class="sd">    </span>
+<span class="sd">This assumption leads to the scaling :math:`V_{max} = \\frac{I_{max} \\tau}{C} e`.</span>
 
 
 <span class="sd">.. _Brian documentation: https://brian2.readthedocs.io/en/stable/user/synapses.html?highlight=event-driven#event-driven-updates</span>

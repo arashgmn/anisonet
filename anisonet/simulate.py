@@ -11,6 +11,7 @@ osjoin = os.path.join # an alias for convenient
 import pickle
 import numpy as np
 import brian2 as b2
+from brian2 import profiling_summary
 from scipy import sparse
 
 import time
@@ -300,6 +301,9 @@ class Simulate(object):
         :rtype: TYPE
 
         """
+        if hasattr(self, 'mons'):
+            del self.mons
+            
         self.mons = []
         for pop_name in sorted(self.pops.keys()):
             # self.mons.append(b2.StateMonitor(self.pops[pop_name], 
@@ -402,9 +406,12 @@ class Simulate(object):
             self.reset_monitors()
             
             dur = min(batch_dur, duration-n*batch_dur)
-            print('Starting simulation part {}/{}'.format(n+1, nbatch))
+            print('{} -- Starting simulation part {}/{}'.format(time.ctime(), n+1, nbatch))
             self.net.run(dur, profile=profile)
-
+            
+            if profile:
+                print(profiling_summary(sim.net))
+            
             if plot_snapshots:
                 viz.plot_firing_rates(sim=self, suffix='_'+str(n))
             
@@ -451,6 +458,7 @@ class Simulate(object):
         
     
     def post_process(self):
+        print('{} -- Starting postprocessing ...'.format(time.ctime()))
         viz.plot_landscape(sim)
         viz.plot_in_out_deg(sim)
         viz.plot_realized_landscape(sim)
@@ -462,17 +470,17 @@ class Simulate(object):
 if __name__=='__main__':
 
     # I_net
-    sim = Simulate('I_net', scalar=10./6, load_connectivity=True)
-    sim.setup_net()
-    sim.warmup()
-    sim.start(duration=1000*b2.ms, batch_dur=1000*b2.ms, 
-              restore=True, profile=False)
-    sim.post_process()
+    # sim = Simulate('I_net', scalar=1, load_connectivity=False)
+    # sim.setup_net()
+    # sim.warmup()
+    # sim.start(duration=10000*b2.ms, batch_dur=1000*b2.ms, 
+    #           restore=True, profile=True)
+    # sim.post_process()
 
     # EI_net
-    sim = Simulate('EI_net', scalar=10./6, load_connectivity=True)
+    sim = Simulate('EI_net', scalar=1, load_connectivity=False)
     sim.setup_net()
     sim.warmup()
-    sim.start(duration=1000*b2.ms, batch_dur=1000*b2.ms, 
-              restore=True, profile=False)
+    sim.start(duration=10000*b2.ms, batch_dur=1000*b2.ms, 
+              restore=True, profile=True)
     sim.post_process()
