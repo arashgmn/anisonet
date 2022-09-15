@@ -257,10 +257,11 @@
 <span class="sd">    </span>
 <span class="sd">#. ``type``: either ``&quot;alpha_voltage&quot;, &quot;alpha_current&quot;`` or ``&quot;alpha_conductance&quot;`` (str) -- for now, only alpha profile is available</span>
 <span class="sd">#. ``params``: </span>
-<span class="sd">    * ``tau``: rise and decay time scales as a Brian time quantity</span>
-<span class="sd">    * ``delay``: synaptic delay  as a Brian time quantity</span>
-<span class="sd">    * ``J``: synaptic qunatal with unit volt, ampere, or siemens for synapses of type ``voltage, current`` or ``conductance``. Note that the sign will determine the polarity of the projection (inhibitory or excitatory).</span>
-<span class="sd">    * ``Erev``: the reversal potential for conductance-based synapse as a Brian quantity of unit volt</span>
+
+<span class="sd">   * ``tau``: rise and decay time scales as a Brian time quantity</span>
+<span class="sd">   * ``delay``: synaptic delay  as a Brian time quantity</span>
+<span class="sd">   * ``J``: synaptic qunatal with unit volt, ampere, or siemens for synapses of type ``voltage, current`` or ``conductance``. Note that the sign will determine the polarity of the projection (inhibitory or excitatory).</span>
+<span class="sd">   * ``Erev``: the reversal potential for conductance-based synapse as a Brian quantity of unit volt</span>
 
 
 <span class="sd">~~~~~~~~~~</span>
@@ -279,9 +280,10 @@
 <span class="sd">    </span>
 <span class="sd">#. ``type``: name of anisotropy profile. For now only one of the ``[&#39;perlin, homogeneous, random, symmetric&#39;]`` are possible. (str)</span>
 <span class="sd">#. ``params``:</span>
-<span class="sd">    * ``r``: displacement (float) -- not important for symmetric type,</span>
-<span class="sd">    * ``scale``: perlin scale if type is ``&quot;perlin&quot;`` (int)</span>
-<span class="sd">    * ``phi``: uniform anisotropic angle if type is ``&quot;homogeneous&quot;`` (float)</span>
+
+<span class="sd">   * ``r``: displacement (float) -- not important for symmetric type,</span>
+<span class="sd">   * ``scale``: perlin scale if type is ``&quot;perlin&quot;`` (int)</span>
+<span class="sd">   * ``phi``: uniform anisotropic angle if type is ``&quot;homogeneous&quot;`` (float)</span>
 
 
 <span class="sd">.. _[1]: https://doi.org/10.1371/journal.pcbi.1007432</span>

@@ -245,15 +245,13 @@ similar to the following form:</p>
 </div>
 <ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">type</span></code>: either <code class="docutils literal notranslate"><span class="pre">&quot;alpha_voltage&quot;,</span> <span class="pre">&quot;alpha_current&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;alpha_conductance&quot;</span></code> (str) – for now, only alpha profile is available</p></li>
-<li><dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">params</span></code>: </dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">params</span></code>:</p>
+<ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">tau</span></code>: rise and decay time scales as a Brian time quantity</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">delay</span></code>: synaptic delay  as a Brian time quantity</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">J</span></code>: synaptic qunatal with unit volt, ampere, or siemens for synapses of type <code class="docutils literal notranslate"><span class="pre">voltage,</span> <span class="pre">current</span></code> or <code class="docutils literal notranslate"><span class="pre">conductance</span></code>. Note that the sign will determine the polarity of the projection (inhibitory or excitatory).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Erev</span></code>: the reversal potential for conductance-based synapse as a Brian quantity of unit volt</p></li>
 </ul>
-</dd>
-</dl>
 </li>
 </ol>
 </section>
@@ -270,14 +268,12 @@ similar to the following form:</p>
 </div>
 <ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">type</span></code>: name of anisotropy profile. For now only one of the <code class="docutils literal notranslate"><span class="pre">['perlin,</span> <span class="pre">homogeneous,</span> <span class="pre">random,</span> <span class="pre">symmetric']</span></code> are possible. (str)</p></li>
-<li><dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">params</span></code>:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">params</span></code>:</p>
+<ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">r</span></code>: displacement (float) – not important for symmetric type,</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">scale</span></code>: perlin scale if type is <code class="docutils literal notranslate"><span class="pre">&quot;perlin&quot;</span></code> (int)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">phi</span></code>: uniform anisotropic angle if type is <code class="docutils literal notranslate"><span class="pre">&quot;homogeneous&quot;</span></code> (float)</p></li>
 </ul>
-</dd>
-</dl>
 </li>
 </ol>
 <dl class="py function">

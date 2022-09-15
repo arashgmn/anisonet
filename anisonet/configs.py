@@ -87,10 +87,11 @@ Use either of the following structures for the value of ``profile`` key:
     
 #. ``type``: either ``"alpha_voltage", "alpha_current"`` or ``"alpha_conductance"`` (str) -- for now, only alpha profile is available
 #. ``params``: 
-    * ``tau``: rise and decay time scales as a Brian time quantity
-    * ``delay``: synaptic delay  as a Brian time quantity
-    * ``J``: synaptic qunatal with unit volt, ampere, or siemens for synapses of type ``voltage, current`` or ``conductance``. Note that the sign will determine the polarity of the projection (inhibitory or excitatory).
-    * ``Erev``: the reversal potential for conductance-based synapse as a Brian quantity of unit volt
+
+   * ``tau``: rise and decay time scales as a Brian time quantity
+   * ``delay``: synaptic delay  as a Brian time quantity
+   * ``J``: synaptic qunatal with unit volt, ampere, or siemens for synapses of type ``voltage, current`` or ``conductance``. Note that the sign will determine the polarity of the projection (inhibitory or excitatory).
+   * ``Erev``: the reversal potential for conductance-based synapse as a Brian quantity of unit volt
 
 
 ~~~~~~~~~~
@@ -109,9 +110,10 @@ Use either of the following structures for the value of ``profile`` key:
     
 #. ``type``: name of anisotropy profile. For now only one of the ``['perlin, homogeneous, random, symmetric']`` are possible. (str)
 #. ``params``:
-    * ``r``: displacement (float) -- not important for symmetric type,
-    * ``scale``: perlin scale if type is ``"perlin"`` (int)
-    * ``phi``: uniform anisotropic angle if type is ``"homogeneous"`` (float)
+
+   * ``r``: displacement (float) -- not important for symmetric type,
+   * ``scale``: perlin scale if type is ``"perlin"`` (int)
+   * ``phi``: uniform anisotropic angle if type is ``"homogeneous"`` (float)
 
 
 .. _[1]: https://doi.org/10.1371/journal.pcbi.1007432
