@@ -77,9 +77,9 @@ Finally, in voltage-based formulation we don't describe the injected current,
 but directly the increment in the membrane voltage:
     
 .. math::
-    \Delta V_{syn} = V_{max} \int_{-\infty}^t \sum_k f(t') \delta(t'-t_k) dt' =  V_{max} \sum_k f(t-t_k)
+    \Delta V_{syn} = V_{max} \int_{-\infty}^t \sum_k f(t-t') \delta(t'-t_k) dt' =  V_{max} \sum_k f(t-t_k)
 
-In all these formulations :math:`f(t)` is a filter, often replaced by an 
+In all these formulations :math:`f(t-t')` is a filter, often replaced by an 
 exponential, bi-exponential (with rise and decay time :math:`\\tau_r` and 
 :math:`\\tau_d`), and alpha function (equal rise and decay time), scaled by the
 :math:`_{max}` qunatites. :math:`\sum \delta(.)` is the incoming spike train. 

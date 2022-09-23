@@ -30,7 +30,7 @@ class Simulate(object):
     """
     
     def __init__(self, net_name='I_net', load_connectivity=True,  scalar=1,
-                 result_path=None):
+                 result_path=None, voltage_base_syn = True):
         """
         Initializes the simulator object for the given network configuration. 
         By default, tries to load the connectivity matrix from disk, otherwise
@@ -66,7 +66,13 @@ class Simulate(object):
         
         # initialize with defaults
         self.pops_cfg , self.conn_cfg = configs.get_config(net_name, scalar=scalar)
+        
+        # extract the synaptic base
         self.base = self.get_synaptic_base()
+        if voltage_base_syn:
+            self.base = 'voltage'
+            self.current_to_voltage()
+            
         self.load_connectivity = load_connectivity
         
         # making a unique name
@@ -96,6 +102,27 @@ class Simulate(object):
             return 'conductance'
         else:
             raise
+    
+    def current_to_voltage(self):
+        """
+        Transfaers the current based synapses into an equivalent voltage based 
+        synapse.
+        """
+        
+        for pathway in self.conn_cfg.keys():
+            syn_cfg = self.conn_cfg[pathway]['synapse']
+            src, trg = pathway
+            
+            assert syn_cfg['type'] == 'alpha_current'
+            
+            C_m = self.pops_cfg[src]['cell']['C']
+            tau_s = syn_cfg['params']['tau']
+
+            # adjustments
+            syn_cfg['params']['J']*= (tau_s/C_m)*np.exp(2) 
+            syn_cfg['type'] = 'alpha_voltage'
+            
+            self.conn_cfg[pathway]['synapse'] = syn_cfg # update
         
     def setup_net(self):
         """
@@ -470,15 +497,17 @@ class Simulate(object):
 if __name__=='__main__':
 
     # I_net
-    # sim = Simulate('I_net', scalar=1, load_connectivity=False)
+    # sim = Simulate('I_net', scalar=2.5, load_connectivity=False, 
+    #                voltage_base_syn=1)
     # sim.setup_net()
     # sim.warmup()
-    # sim.start(duration=10000*b2.ms, batch_dur=1000*b2.ms, 
+    # sim.start(duration=2000*b2.ms, batch_dur=2000*b2.ms, 
     #           restore=True, profile=True)
     # sim.post_process()
 
     # EI_net
-    sim = Simulate('EI_net', scalar=1, load_connectivity=False)
+    sim = Simulate('EI_net', scalar=2.5, load_connectivity=False,
+                   voltage_base_syn=1)
     sim.setup_net()
     sim.warmup()
     sim.start(duration=10000*b2.ms, batch_dur=1000*b2.ms, 

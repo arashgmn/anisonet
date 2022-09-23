@@ -155,7 +155,6 @@ def get_config(name='EI_net', scalar=3):
                    'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
                    #'profile': {'type':'Gaussian', 'params': {'std': 3} },
                    'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   #'synapse': {'type':'alpha_voltage', 'params': {'J': -(10*pA*5*ms/(250*pF))*(scalar**2)*np.exp(1), 'delay':1*ms, 'tau': 5*ms}},
                    'anisotropy': {'type': 'perlin', 'params': {'r': 1, 'scale':3}}
                    #'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':0*np.pi/4.}}
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
@@ -183,28 +182,24 @@ def get_config(name='EI_net', scalar=3):
             'EE': {'ncons': round(720/(scalar**2)), 'self_link':False, 
                   'profile': {'type':'Gaussian', 'params': {'std': 9/scalar} },
                   'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms} },
-                  #'synapse': {'type':'alpha_voltage', 'params': {'J': (10*pA*5*ms/(250*pF))*(scalar**2)*np.exp(1), 'delay':1*ms, 'tau': 5*ms}},
                   'anisotropy': {'type': 'perlin', 'params': {'scale': 3, 'r':1}}
                   },
             
             'EI': {'ncons': round(180/(scalar**2)), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 4.5/scalar}},
                    'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   #'synapse': {'type':'alpha_voltage', 'params': {'J': (10*pA*5*ms/(250*pF))*(scalar**2)*np.exp(1), 'delay':1*ms, 'tau': 5*ms}},
                    'anisotropy': {'type': 'symmetric', 'params': {}}
                    },
             
             'IE': {'ncons': round(720/(scalar**2)), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 12/scalar}},
                    'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   #'synapse': {'type':'alpha_voltage', 'params': {'J': -8*(10*pA*5*ms/(250*pF))*(scalar**2)*np.exp(1), 'delay':1*ms, 'tau': 5*ms}},
                    'anisotropy': {'type': 'symmetric', 'params': {}}
                    },
 
             'II': {'ncons': round(180/(scalar**2)), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 6/scalar}},
                    'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   #'synapse': {'type':'alpha_voltage', 'params': {'J': -8*(10*pA*5*ms/(250*pF))*(scalar**2)*np.exp(1), 'delay':1*ms, 'tau': 5*ms}},
                    'anisotropy': {'type': 'symmetric', 'params': {}}
                    },
         }    
