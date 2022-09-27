@@ -118,7 +118,7 @@ class Simulate(object):
             tau_s = syn_cfg['params']['tau']
             
             # adjustments
-            syn_cfg['params']['J']*= (tau_s/C_m) * np.exp(1)
+            syn_cfg['params']['J']*= (tau_s/C_m)
             syn_cfg['type'] = 'delta_voltage'
             
             self.conn_cfg[pathway]['synapse'] = syn_cfg # update
@@ -536,7 +536,7 @@ class Simulate(object):
 if __name__=='__main__':
 
     # I_net
-    sim = Simulate('I_net', scalar=2, load_connectivity=False, 
+    sim = Simulate('I_net', scalar=2, load_connectivity=True, 
                     voltage_base_syn=1)
     sim.setup_net()
     # viz.plot_connectivity(sim)

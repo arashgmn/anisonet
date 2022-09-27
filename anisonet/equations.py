@@ -156,7 +156,7 @@ def get_nrn_eqs(pop_name, pops_cfg, syn_base):
     noise_dt = pops_cfg[pop_name]['noise']['noise_dt']
     tmp = tmp.replace('noise_dt', str(noise_dt/b2.ms)+'*ms')
     
-    if syn_base!='voltage':
+    if 'voltage' not in syn_base:
         eqs_str= tmp + '''dv/dt = (E-v)/tau + (noise_pop + I_syn)/C : volt (unless refractory)\n'''
         I_syn_components = []
         for src_name in pops_cfg.keys():
@@ -223,14 +223,7 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
         #eqs_str += '''J = {}*mV: volt \n'''.format(J/mV)  
         eqs_str += '''J: volt (shared)\n'''  
         on_pre += '''\nv_post += w'''
-        
-    if syn_base=='delta_voltage':
-        # J is the post-synaptic voltage increment
-        eqs_str = '''w = J: volt \n'''
-        #eqs_str += '''J = {}*mV: volt \n'''.format(J/mV)  
-        eqs_str += '''J: volt (shared)\n'''  
-        on_pre += '''\nv_post += w'''
-    
+            
     elif syn_base=='current':
         # J is the post-synaptic current injection 
         eqs_str = tmp
@@ -245,6 +238,23 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
         eqs_str += '''J : siemens (shared)\n'''
         #eqs_str += '''J = {}*nS: siemens \n'''.format(J/nS)  
         #E = conn_cfg[conn_name]['synapse']['params']['E']/mV
+        
+    elif syn_base=='delta_voltage':
+        # J is the post-synaptic voltage increment
+        #eqs_str += '''J = {}*mV: volt \n'''.format(J/mV)  
+        eqs_str = '''J: volt (shared)'''  
+        on_pre = '''\nv_post += J*exp(-1)'''
+
+    # elif syn_base=='delta_voltage':
+    #     # J is the post-synaptic voltage increment
+    #     #eqs_str += '''J = {}*mV: volt \n'''.format(J/mV)  
+    #     eqs_str = tmp.replace('clock-driven', 'event-driven')
+    #     eqs_str += '''w = J*g: volt \n'''
+    #     eqs_str = '''J: volt (shared)'''  
+    #     on_pre = '''\nv_post += J'''
+
+    else:
+        raise 
         
     eqs = b2.Equations(eqs_str, 
                     tau = conn_cfg[conn_name]['synapse']['params']['tau'])
