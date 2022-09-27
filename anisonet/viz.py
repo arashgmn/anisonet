@@ -342,7 +342,7 @@ def plot_connectivity(sim):
     from scipy import sparse
     
     for pathway in sim.conn_cfg.keys():
-        path = osjoin(sim.data_path, 'w_'+sim.name+'_'+pathway+'.npz')
+        path = osjoin(sim.data_path, sim.name+'_w_'+pathway+'.npz')
         w = sparse.load_npz(path).toarray()
     
         plt.figure()
@@ -351,7 +351,7 @@ def plot_connectivity(sim):
         plt.ylabel('sources (pre-synapse)')
         plt.title(' '.join(sim.name.split('_')[:2]))
         
-        figpath = osjoin(sim.res_path, 'w_'+sim.name+'_'+pathway+'.png')
+        figpath = osjoin(sim.res_path, sim.name+'_w_'+pathway+'.png')
         plt.savefig(figpath, bbox_inches='tight', dpi=200)
         plt.close()
 
@@ -368,7 +368,8 @@ def plot_firing_rates_dist(sim):
         axs = [axs]
     
     for id_, mon in enumerate(sim.mons):
-        idxs, ts = utils.aggregate_mons(sim.data_path, mon.name+'_*.dat')
+        idxs, ts = utils.aggregate_mons(sim.data_path, 
+                                        sim.name +'_'+ mon.name+'_*.dat')
         T = (np.max(ts) - np.min(ts))/1000. # ts is in ms
         rates = value_counts(idxs)/T
         axs[id_].hist(rates, bins=50, density=True,)
@@ -380,7 +381,7 @@ def plot_firing_rates_dist(sim):
     
     axs[0].set_ylabel('Probability density')
     
-    path = osjoin(sim.res_path, 'rates_desnsity_'+sim.name+'.png')
+    path = osjoin(sim.res_path, sim.name+'_rates_desnsity.png')
     plt.savefig(path,bbox_inches='tight', dpi=200)
     plt.close()
 
@@ -432,7 +433,8 @@ def plot_animation(sim, ss_dur=50):
     field_imgs = []
     field_vals = []
     for id_, mon in enumerate(sim.mons):
-        idxs, ts = utils.aggregate_mons(sim.data_path, mon.name+'_*.dat')
+        idxs, ts = utils.aggregate_mons(sim.data_path, 
+                                        sim.name+ '_'+ mon.name+'_*.dat')
         gs = int(np.sqrt(sim.pops[mon.name[-1]].N))
         
         h = np.histogram2d(ts, idxs, bins=[ts_bins, range(gs**2 + 1)])[0]
@@ -446,7 +448,7 @@ def plot_animation(sim, ss_dur=50):
     anim = animator(fig, axs, field_imgs, field_vals, ts_bins)
     
     writergif = animation.PillowWriter(fps=10) 
-    path = osjoin(sim.res_path, 'animation_rate.gif')
+    path = osjoin(sim.res_path, sim.name+'_animation_rate.gif')
     anim.save(path , writer=writergif)
     plt.close()
     

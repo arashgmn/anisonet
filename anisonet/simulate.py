@@ -21,7 +21,8 @@ import utils
 import configs # default configurations
 import equations as eq
 from landscape import make_landscape
-from anisofy import draw_post_syns
+from anisofy import draw_post_syns as sample_post_syns
+# from anisofy import draw_post_syns_simple as sample_post_syns
 
 
 class Simulate(object):
@@ -54,36 +55,34 @@ class Simulate(object):
         if result_path==None:
             result_path = os.getcwd()
         root = osjoin(result_path, net_name)
-        
-        self.res_path = osjoin(root,'results')
-        self.data_path = osjoin(root,'data')
-        
-        # making necessary folders
-        if not os.path.exists(self.res_path):
-            os.makedirs(self.res_path)
-        if not os.path.exists(self.data_path):
-            os.makedirs(self.data_path)
-        
+                
         # initialize with defaults
         self.pops_cfg , self.conn_cfg = configs.get_config(net_name, scalar=scalar)
         
         # extract the synaptic base
         self.base = self.get_synaptic_base()
         if voltage_base_syn:
-            self.base = 'voltage'
             self.current_to_voltage()
+            self.base = 'delta_voltage'
             
         self.load_connectivity = load_connectivity
         
-        # making a unique name
-        self.name = list(self.conn_cfg.values())[0]['anisotropy']['type']
-        self.name+= '_'+list(self.conn_cfg.values())[0]['profile']['type'] 
-        self.name+= '_'+ str(scalar)
+        self.name = self.generate_name(scalar)
+        self.res_path = osjoin(root, self.name)#+'results')
+        self.data_path = osjoin(root, self.name)#+'data')
         
+        # making necessary folders
+        if not os.path.exists(self.res_path):
+            os.makedirs(self.res_path)
+        if not os.path.exists(self.data_path):
+            os.makedirs(self.data_path)
+
         # warm-up settings
         self.warmup_std = 500*b2.pA
         self.warmup_dur = 500*b2.ms
         
+        
+    
         
     def get_synaptic_base(self):
         """
@@ -117,13 +116,50 @@ class Simulate(object):
             
             C_m = self.pops_cfg[src]['cell']['C']
             tau_s = syn_cfg['params']['tau']
-
+            
             # adjustments
-            syn_cfg['params']['J']*= (tau_s/C_m)*np.exp(2) 
-            syn_cfg['type'] = 'alpha_voltage'
+            syn_cfg['params']['J']*= (tau_s/C_m) * np.exp(1)
+            syn_cfg['type'] = 'delta_voltage'
             
             self.conn_cfg[pathway]['synapse'] = syn_cfg # update
         
+    def generate_name(self, scalar):
+        # specifies the network scale
+        name = 'S%.3f_'%(scalar)
+        
+        # specifies the network type
+        for pop in self.pops_cfg.keys():
+            name += pop
+        name += '_'
+        
+        for item in self.conn_cfg.items():
+            pw_name, pw_cfg = item
+            name += pw_name
+            
+            # I factor the GA out becasue it's shared in Gamma and Gaussian
+            if pw_cfg['profile']['type']=='Gaussian':
+                name += 'U' 
+            elif pw_cfg['profile']['type']=='Gamma':
+                name += 'M'
+            else:
+                raise
+                
+            # I factor the GA out becasue it's shared in Gamma and Gaussian
+            if pw_cfg['anisotropy']['type']=='perlin':
+                name += 'P' 
+            elif pw_cfg['anisotropy']['type']=='homogeneous':
+                name += 'H'
+            elif pw_cfg['anisotropy']['type']=='random':
+                name += 'R'
+            elif pw_cfg['anisotropy']['type']=='symmetric':
+                name += 'S'
+            else:
+                raise
+            
+            name+='-'
+            
+        return name[:-1] #dropping the last seperator
+    
     def setup_net(self):
         """
         Sets up a network by the following steps:
@@ -262,10 +298,11 @@ class Simulate(object):
                               on_pre=on_pre,
                               on_post=on_post,
                               delay=self.conn_cfg[key]['synapse']['params']['delay'],
-                              method='exact'
+                              method='exact',
+                              name = 'syn_'+key
                               )
             # load or save connectivity 
-            w_name = 'w_'+self.name+'_'+key
+            w_name = self.name+'_w_'+key
             if self.load_connectivity:
                 try:
                     print('\tLoading connectivity matrix: {}'.format(w_name))
@@ -290,9 +327,9 @@ class Simulate(object):
                                         'r' : self.lscp[key]['r'][s_idx]},
                                profile = self.conn_cfg[key]['profile'],
                                self_link = self.conn_cfg[key]['self_link'],
-                               recurrent = trg==src
+                               recurrent = trg==src,
                                )
-                    s_coord, t_coords = draw_post_syns(**kws) # projects s_coord
+                    s_coord, t_coords = sample_post_syns(**kws) # projects s_coord
                     t_idxs = utils.coord2idx(t_coords, tpop)
                     
                 syn.connect(i = s_idx, j = t_idxs)
@@ -381,7 +418,7 @@ class Simulate(object):
         print('Finished warm up. Storing results.')
         
         self.net.store(name= self.name, 
-                       filename= osjoin(self.data_path,'warm-up_'+self.name))
+                       filename= osjoin(self.data_path, self.name+'.wup'))
         
         # switch on monitors        
         for mon in self.mons:
@@ -416,7 +453,7 @@ class Simulate(object):
         if restore:
             try:
                 self.net.restore(name = self.name, 
-                                 filename= osjoin(self.data_path,'warm-up_'+self.name))
+                                 filename= osjoin(self.data_path, self.name+'.wup'))
                 print('Restored state from warmed-up state: {}'.format(self.name))
             
             except Exception as e: 
@@ -448,7 +485,8 @@ class Simulate(object):
     def save_monitors(self, number):
         for mon in self.mons:
             data = mon.get_states()
-            with open (osjoin(self.data_path, mon.name+'_'+str(number+1)+'.dat'), 'wb') as f:
+            with open (osjoin(self.data_path, 
+                              self.name+'_'+mon.name+'_'+str(number+1)+'.dat'), 'wb') as f:
                 pickle.dump(data, f)
         del mon, data
     
@@ -457,7 +495,8 @@ class Simulate(object):
         
         for pop_name in sim.pops.keys():
             txy = []
-            files_list = sorted(glob.glob(osjoin(self.data_path, 'mon_'+pop_name+'*.dat')))
+            files_list = sorted(glob.glob(osjoin(self.data_path, 
+                                                 self.name+'_mon_'+pop_name+'*.dat')))
             for file in files_list[-2:]:
                 f = open(file, 'rb')
                 f = f.read()
@@ -468,7 +507,7 @@ class Simulate(object):
                 del data,xy
                 
             txy = np.concatenate(txy)
-            np.savetxt(osjoin(self.data_path, 'txy_'+self.name+'_'+pop_name+'.csv'),
+            np.savetxt(osjoin(self.data_path, self.name+'_'+pop_name+'_txy.csv'),
                        txy, fmt=('%f, %d, %d'))
             
             del txy, files_list
@@ -497,19 +536,20 @@ class Simulate(object):
 if __name__=='__main__':
 
     # I_net
-    # sim = Simulate('I_net', scalar=2.5, load_connectivity=False, 
-    #                voltage_base_syn=1)
-    # sim.setup_net()
-    # sim.warmup()
-    # sim.start(duration=2000*b2.ms, batch_dur=2000*b2.ms, 
-    #           restore=True, profile=True)
-    # sim.post_process()
-
-    # EI_net
-    sim = Simulate('EI_net', scalar=2.5, load_connectivity=False,
-                   voltage_base_syn=1)
+    sim = Simulate('I_net', scalar=2, load_connectivity=False, 
+                    voltage_base_syn=1)
     sim.setup_net()
+    # viz.plot_connectivity(sim)
     sim.warmup()
-    sim.start(duration=10000*b2.ms, batch_dur=1000*b2.ms, 
+    sim.start(duration=3000*b2.ms, batch_dur=2000*b2.ms, 
               restore=True, profile=True)
     sim.post_process()
+
+    # EI_net
+    # sim = Simulate('EI_net', scalar=2.5, load_connectivity=False,
+    #                 voltage_base_syn=1)
+    # sim.setup_net()
+    # sim.warmup()
+    # sim.start(duration=2000*b2.ms, batch_dur=1000*b2.ms, 
+    #           restore=False, profile=False)
+    # sim.post_process()

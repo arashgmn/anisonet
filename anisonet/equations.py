@@ -224,6 +224,13 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
         eqs_str += '''J: volt (shared)\n'''  
         on_pre += '''\nv_post += w'''
         
+    if syn_base=='delta_voltage':
+        # J is the post-synaptic voltage increment
+        eqs_str = '''w = J: volt \n'''
+        #eqs_str += '''J = {}*mV: volt \n'''.format(J/mV)  
+        eqs_str += '''J: volt (shared)\n'''  
+        on_pre += '''\nv_post += w'''
+    
     elif syn_base=='current':
         # J is the post-synaptic current injection 
         eqs_str = tmp

@@ -155,23 +155,25 @@ def get_config(name='EI_net', scalar=3):
                    'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
                    #'profile': {'type':'Gaussian', 'params': {'std': 3} },
                    'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': {'type': 'perlin', 'params': {'r': 1, 'scale':3}}
+                   #'anisotropy': {'type': 'perlin', 'params': {'r': 1, 'scale':3}}
                    #'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':0*np.pi/4.}}
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
-                   #'anisotropy': {'type': 'symmetric', 'params': {}}
+                   'anisotropy': {'type': 'symmetric', 'params': {}}
                    },
         }    
     elif name=='EI_net':
+        noiser = 1.
+        meaner = 1
         pops_cfg = {
             'I': {'gs': round(60/scalar), 
-                  'noise': {'mu': 350*pA, 'sigma': 100*pA, 'noise_dt': 1*ms},
+                  'noise': {'mu': 350*pA/meaner, 'sigma': 100*pA/noiser, 'noise_dt': 1*ms},
                   'cell': {'type': 'LIF', 
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
                            'tau': 10*ms, 'C': 250*pF}
                   },
             
             'E': {'gs': round(120/scalar), 
-                  'noise': {'mu': 350*pA, 'sigma': 100*pA, 'noise_dt': 1*ms},
+                  'noise': {'mu': 350*pA/meaner, 'sigma': 100*pA/noiser, 'noise_dt': 1*ms},
                   'cell': {'type': 'LIF', 
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
                            'tau': 10*ms, 'C': 250*pF}
@@ -180,27 +182,31 @@ def get_config(name='EI_net', scalar=3):
 
         conn_cfg = {
             'EE': {'ncons': round(720/(scalar**2)), 'self_link':False, 
+                  #'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
                   'profile': {'type':'Gaussian', 'params': {'std': 9/scalar} },
                   'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms} },
-                  'anisotropy': {'type': 'perlin', 'params': {'scale': 3, 'r':1}}
+                  'anisotropy': {'type': 'perlin', 'params': {'scale': 4, 'r':1}}
                   },
             
             'EI': {'ncons': round(180/(scalar**2)), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 4.5/scalar}},
                    'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': {'type': 'symmetric', 'params': {}}
+                   #'anisotropy': {'type': 'symmetric', 'params': {}}
+                   'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    },
             
             'IE': {'ncons': round(720/(scalar**2)), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 12/scalar}},
                    'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': {'type': 'symmetric', 'params': {}}
+                   #'anisotropy': {'type': 'symmetric', 'params': {}}
+                   'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    },
 
             'II': {'ncons': round(180/(scalar**2)), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 6/scalar}},
                    'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': {'type': 'symmetric', 'params': {}}
+                   #'anisotropy': {'type': 'symmetric', 'params': {}}
+                   'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    },
         }    
     else:
