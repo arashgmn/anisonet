@@ -141,6 +141,10 @@ def plot_firing_rates(sim, suffix='',
             ax.set_aspect('equal')
             ax.get_yaxis().set_ticks([])
             
+        phis = sim.lscp[2*src.name[-1]]['phi']
+        for ax in axs[:, id_]:
+            overlay_phis(phis, ax)
+                
     path = osjoin(sim.res_path, sim.name+'_rates'+suffix+'.png')
     plt.savefig(path, dpi=200, bbox_inches='tight')
     plt.close()
@@ -181,7 +185,7 @@ def plot_firing_snapshots(sim, tmin=None, tmax=None, alpha=0.1):
         
         
 
-def plot_field(field, figpath, vmin=None, vmax=None):
+def plot_field(field, figpath, vmin=None, vmax=None, phis=None):
     """
     Plots a field; a landscape, firing rate, or any heatmap.
     
@@ -200,6 +204,11 @@ def plot_field(field, figpath, vmin=None, vmax=None):
     ax=plt.gca()
     ax.set_aspect('equal')
     plt.colorbar(m)
+    
+    if phis is not None:
+        print(phis.shape)
+        overlay_phis(phis, ax)
+        
     plt.savefig(figpath, dpi=200, bbox_inches='tight')
     plt.close()
     
@@ -281,9 +290,10 @@ def plot_landscape(sim):
     """
     for id_, key in enumerate(sim.conn_cfg.keys()):
         phis = sim.lscp[key]['phi']
-        phis = phis.reshape((int(np.sqrt(len(phis))), -1))
         figpath = osjoin(sim.res_path, sim.name+'_gen_phi_'+key+'.png')
-        plot_field(phis, figpath, vmin=-np.pi, vmax = np.pi)
+        plot_field(phis.reshape((int(np.sqrt(len(phis))), -1)), figpath, 
+                   vmin=-np.pi, vmax = np.pi, 
+                   phis=phis)
 
 
 def plot_realized_landscape(sim):
@@ -355,6 +365,22 @@ def plot_connectivity(sim):
         plt.savefig(figpath, bbox_inches='tight', dpi=200)
         plt.close()
 
+def overlay_phis(phis, ax, size=5, **kwargs):
+    gs = len(phis)
+    if len(phis.shape)==1:
+        gs = np.sqrt(gs).astype(int)
+        phi = np.copy(phis).reshape(gs, gs)
+    else:
+        phi = np.copy(phis)
+        
+    X,Y = np.meshgrid(np.arange(gs), np.arange(gs))
+    
+    s = np.sin(phi).reshape(gs//size, size, gs//size, size).mean(axis=(1, 3))
+    c = np.cos(phi).reshape(gs//size, size, gs//size, size).mean(axis=(1, 3))
+    
+    ax.quiver(X[::size, ::size] + size/2, Y[::size, ::size] + size/2,
+              c, s, color='k', scale=5, **kwargs)
+    
 def plot_firing_rates_dist(sim):
     """
     Plots the average firing rate density in log scale.
@@ -441,6 +467,9 @@ def plot_animation(sim, ss_dur=50):
         field_val = h.reshape(-1, gs, gs)
         field_img = axs[id_].imshow(field_val[0], vmin=0, vmax=np.max(field_val))
         axs[id_].set_title('Population '+mon.name[-1])
+        
+        phis = sim.lscp[2*mon.name[-1]]['phi']
+        overlay_phis(phis, axs[id_])
         
         field_vals.append(field_val)
         field_imgs.append(field_img)
