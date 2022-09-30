@@ -79,7 +79,8 @@ def plot_in_out_deg(sim):
         
 def plot_firing_rates(sim, suffix='', 
                       conv_size=3, wl_size=10, 
-                      z_score=False):
+                      z_score=False,
+                      overlay=True):
     """
     Plots the overal firing rates within the active monitors of the ``sim``
     objects. The firing rate is also covolved with a 2D ricker kernel to show 
@@ -140,10 +141,11 @@ def plot_firing_rates(sim, suffix='',
             ax.set_title(title)
             ax.set_aspect('equal')
             ax.get_yaxis().set_ticks([])
-            
-        phis = sim.lscp[2*src.name[-1]]['phi']
-        for ax in axs[:, id_]:
-            overlay_phis(phis, ax)
+        
+        if overlay:
+            phis = sim.lscp[2*src.name[-1]]['phi']
+            for ax in axs[:, id_]:
+                overlay_phis(phis, ax)
                 
     path = osjoin(sim.res_path, sim.name+'_rates'+suffix+'.png')
     plt.savefig(path, dpi=200, bbox_inches='tight')
@@ -437,7 +439,7 @@ def animator(fig, axs, imgs, vals, ts_bins=[]):
 
     return anim
 
-def plot_animation(sim, ss_dur=50):
+def plot_animation(sim, ss_dur=50, overlay=True):
     """
     Aggregates the firing rate from disk and make an animation.
     
@@ -468,8 +470,9 @@ def plot_animation(sim, ss_dur=50):
         field_img = axs[id_].imshow(field_val[0], vmin=0, vmax=np.max(field_val))
         axs[id_].set_title('Population '+mon.name[-1])
         
-        phis = sim.lscp[2*mon.name[-1]]['phi']
-        overlay_phis(phis, axs[id_])
+        if overlay:
+            phis = sim.lscp[2*mon.name[-1]]['phi']
+            overlay_phis(phis, axs[id_])
         
         field_vals.append(field_val)
         field_imgs.append(field_img)
