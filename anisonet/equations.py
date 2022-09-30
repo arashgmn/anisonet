@@ -208,53 +208,59 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
 
     """
     
-    tmp = '''
+    tmp_alpha = '''
         dg/dt = (-g+h) / tau : 1 (clock-driven)
         dh/dt = -h / tau : 1 (clock-driven)
         '''
         
-    on_pre ='''h+=exp(1)'''
+    tmp_exp = '''
+        dg/dt = -g / tau : 1 (clock-driven)
+        '''
+    
     on_post = ''
     
-    if syn_base=='voltage':
-        # J is the post-synaptic voltage increment
-        eqs_str = tmp.replace('clock-driven', 'event-driven')
-        eqs_str += '''w = J*g: volt \n'''
-        #eqs_str += '''J = {}*mV: volt \n'''.format(J/mV)  
-        eqs_str += '''J: volt (shared)\n'''  
-        on_pre += '''\nv_post += w'''
-            
-    elif syn_base=='current':
+    if syn_base=='alpha_current':
         # J is the post-synaptic current injection 
-        eqs_str = tmp
-        eqs_str += '''I_syn_{}_post = J*g: amp (summed)\n'''.format(conn_name[0])
+        eqs_str = tmp_alpha
         eqs_str += '''J : amp (shared)\n'''
+        eqs_str += '''I_syn_{}_post = J*g: amp (summed)\n'''.format(conn_name[0])
         
-    elif syn_base=='conductance':
+        on_pre  = '''h+=exp(1)''' # to scale the max to 1
+        
+    elif syn_base=='alpha_conductance':
         # J is the maximum conductance
-        eqs_str = tmp
-        eqs_str += '''I_syn_{}_post = J*g*(v_post-Erev): amp \n'''.format(conn_name[0])
-        eqs_str += '''Erev : volt (shared)\n'''
+        eqs_str = tmp_alpha
         eqs_str += '''J : siemens (shared)\n'''
-        #eqs_str += '''J = {}*nS: siemens \n'''.format(J/nS)  
-        #E = conn_cfg[conn_name]['synapse']['params']['E']/mV
+        eqs_str += '''Erev : volt (shared)\n'''
+        eqs_str += '''I_syn_{}_post = J*g*(v_post-Erev): amp \n'''.format(conn_name[0])
         
-    elif syn_base=='delta_voltage':
+        on_pre  = '''h+=1''' # have not tested yet
+        
+    elif syn_base=='alpha_voltage':
         # J is the post-synaptic voltage increment
-        #eqs_str += '''J = {}*mV: volt \n'''.format(J/mV)  
+        eqs_str = tmp_alpha.replace('clock-driven', 'event-driven')
+        eqs_str += '''J: volt (shared)\n'''  
+        
+        on_pre  = '''h+=exp(3)''' # don't know why this works but exp(1) not
+        on_pre += '''\nv_post += J*g'''
+        
+    elif syn_base=='exp_voltage':
+        # J is the post-synaptic voltage increment
+        eqs_str = tmp_exp.replace('clock-driven', 'event-driven')
+        eqs_str += '''J: volt (shared)'''  
+        
+        on_pre = '''g+=1''' # have not tested yet
+        on_pre+= '''\nv_post += J'''
+
+
+    elif syn_base=='delta_voltage':
         eqs_str = '''J: volt (shared)'''  
-        on_pre = '''\nv_post += J*exp(-1)'''
-
-    # elif syn_base=='delta_voltage':
-    #     # J is the post-synaptic voltage increment
-    #     #eqs_str += '''J = {}*mV: volt \n'''.format(J/mV)  
-    #     eqs_str = tmp.replace('clock-driven', 'event-driven')
-    #     eqs_str += '''w = J*g: volt \n'''
-    #     eqs_str = '''J: volt (shared)'''  
-    #     on_pre = '''\nv_post += J'''
-
+        
+        on_pre = '''\nv_post += J*exp(1)''' # to match it with the alpha_current
+    
     else:
-        raise 
+        print(syn_base)
+        raise NotImplementedError
         
     eqs = b2.Equations(eqs_str, 
                     tau = conn_cfg[conn_name]['synapse']['params']['tau'])

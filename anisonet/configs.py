@@ -155,10 +155,10 @@ def get_config(name='EI_net', scalar=3):
                    'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
                    #'profile': {'type':'Gaussian', 'params': {'std': 3} },
                    'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   #'anisotropy': {'type': 'perlin', 'params': {'r': 1, 'scale':3}}
+                   'anisotropy': {'type': 'perlin', 'params': {'r': 1, 'scale':3}}
                    #'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':0*np.pi/4.}}
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
-                   'anisotropy': {'type': 'symmetric', 'params': {}}
+                   #'anisotropy': {'type': 'symmetric', 'params': {}}
                    },
         }    
     elif name=='EI_net':

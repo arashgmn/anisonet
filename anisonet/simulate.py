@@ -60,10 +60,9 @@ class Simulate(object):
         self.pops_cfg , self.conn_cfg = configs.get_config(net_name, scalar=scalar)
         
         # extract the synaptic base
-        self.base = self.get_synaptic_base()
         if voltage_base_syn:
             self.current_to_voltage()
-            self.base = 'delta_voltage'
+        self.base = self.get_synaptic_base()
             
         self.load_connectivity = load_connectivity
         
@@ -93,14 +92,15 @@ class Simulate(object):
         
         syn_type = list(self.conn_cfg.values())[0]['synapse']['type']
         
-        if 'current' in syn_type:
-            return 'current'            
-        elif 'voltage' in syn_type:
-            return 'voltage'
-        elif 'conductance' in syn_type: 
-            return 'conductance'
-        else:
-            raise
+        return syn_type
+        # if 'current' in syn_type:
+        #     return 'current'            
+        # elif 'voltage' in syn_type:
+        #     return 'voltage'
+        # elif 'conductance' in syn_type: 
+        #     return 'conductance'
+        # else:
+        #     raise
     
     def current_to_voltage(self):
         """
@@ -119,6 +119,7 @@ class Simulate(object):
             
             # adjustments
             syn_cfg['params']['J']*= (tau_s/C_m)
+            #syn_cfg['params']['delay']+= tau_s # didn't work
             syn_cfg['type'] = 'delta_voltage'
             
             self.conn_cfg[pathway]['synapse'] = syn_cfg # update
@@ -454,11 +455,11 @@ class Simulate(object):
             try:
                 self.net.restore(name = self.name, 
                                  filename= osjoin(self.data_path, self.name+'.wup'))
-                print('Restored state from warmed-up state: {}'.format(self.name))
+                print('Restored state from warmed-up state: {}'.format(self.name+'.wup'))
             
             except Exception as e: 
                 print(str(e))
-                print('Warning: Could not restore state from: warm-up_{}.'.format(self.name))
+                print('Warning: Could not restore state from: {}.'.format(self.name+'.wup'))
                 self.warmup()
         
         print('Starting simulation.')
@@ -536,12 +537,12 @@ class Simulate(object):
 if __name__=='__main__':
 
     # I_net
-    sim = Simulate('I_net', scalar=2, load_connectivity=True, 
+    sim = Simulate('I_net', scalar=1, load_connectivity=True, 
                     voltage_base_syn=1)
     sim.setup_net()
     # viz.plot_connectivity(sim)
     sim.warmup()
-    sim.start(duration=3000*b2.ms, batch_dur=2000*b2.ms, 
+    sim.start(duration=4000*b2.ms, batch_dur=2000*b2.ms, 
               restore=True, profile=True)
     sim.post_process()
 
