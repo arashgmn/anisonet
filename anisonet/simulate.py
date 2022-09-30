@@ -541,7 +541,7 @@ if __name__=='__main__':
                     voltage_base_syn=1)
     sim.setup_net()
     # viz.plot_connectivity(sim)
-    sim.warmup()
+    #sim.warmup()
     sim.start(duration=4000*b2.ms, batch_dur=2000*b2.ms, 
               restore=True, profile=True)
     sim.post_process()
