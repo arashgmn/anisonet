@@ -112,14 +112,32 @@ one can be computed in a ``(event-driven)`` fashion. Also look at
 It's however possible to transfer the current-based synapse to the voltage-based
 one with the following assumption:
     
-.. warning::
+.. note::
     **Asumption**: The total current injected to the cell via a single spike 
     leads to a  certain voltage increament. Setting :math:`V_{max}` equal to 
     this increment, we can make an voltage-based synapse from the current-based 
     one.
     
-This assumption leads to the scaling :math:`V_{max} = \\frac{I_{max} \\tau}{C} e`.
+This assumption leads to the scaling :math:`V_{max} = \\frac{I_{max} \\tau_s}{C} e`.
+(The facter e is due to scaling of alpha function.)
 
+.. warning::
+    This equivalence is not mathematically rigorous. A current-based method
+    computationally computes the voltage increment according to
+    
+    .. math::
+    	dv = \int \sum_k f(t-t_k) dt + ...
+
+    whereas a voltage based method as introduced above incorporates spikes as
+    
+    .. math::
+    	dv = \sum_k \int f(t-t_k) dt + ...
+        
+    assuming that the spilkes are essentially independent. This assumption is 
+    true for sparse spiking patterns, or when :math:`\tau_s \ll \tau_m`, meaning
+    that the membrane voltage is essentially in tact throughout the synaptic 
+    dynamics.
+    
 
 .. _Brian documentation: https://brian2.readthedocs.io/en/stable/user/synapses.html?highlight=event-driven#event-driven-updates
 .. _notebook: https://nest-simulator.readthedocs.io/en/v3.3/model_details/noise_generator.html
@@ -165,7 +183,7 @@ def get_nrn_eqs(pop_name, pops_cfg, syn_base):
         eqs_str+= 'I_syn = '+ '+'.join(I_syn_components) +': amp \n'''
         
     else:
-        eqs_str= tmp + '''dv/dt = (E-v)/tau + noise_pop/C : volt (unless refractory)\n'''
+        eqs_str= tmp + '''dv/dt = (E-v)/tau + (noise_pop)/C : volt (unless refractory)\n'''
         
     eqs_str = eqs_str.replace('_pop', '_'+pop_name)
     eqs = b2.Equations(eqs_str, 
@@ -241,7 +259,7 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
         eqs_str = tmp_alpha.replace('clock-driven', 'event-driven')
         eqs_str += '''J: volt (shared)\n'''  
         
-        on_pre  = '''h+=exp(3)''' # don't know why this works but exp(1) not
+        on_pre  = '''h+=exp(1)''' # don't know why this works but exp(1) not
         on_pre += '''\nv_post += J*g'''
         
     elif syn_base=='exp_voltage':

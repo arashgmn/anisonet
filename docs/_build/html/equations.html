@@ -230,8 +230,8 @@ is governed by:</p>
 <p>Finally, in voltage-based formulation we don’t describe the injected current, 
 but directly the increment in the membrane voltage:</p>
 <div class="math notranslate nohighlight">
-\[\Delta V_{syn} = V_{max} \int_{-\infty}^t \sum_k f(t') \delta(t'-t_k) dt' =  V_{max} \sum_k f(t-t_k)\]</div>
-<p>In all these formulations <span class="math notranslate nohighlight">\(f(t)\)</span> is a filter, often replaced by an 
+\[\Delta V_{syn} = V_{max} \int_{-\infty}^t \sum_k f(t-t') \delta(t'-t_k) dt' =  V_{max} \sum_k f(t-t_k)\]</div>
+<p>In all these formulations <span class="math notranslate nohighlight">\(f(t-t')\)</span> is a filter, often replaced by an 
 exponential, bi-exponential (with rise and decay time <span class="math notranslate nohighlight">\(\tau_r\)</span> and 
 <span class="math notranslate nohighlight">\(\tau_d\)</span>), and alpha function (equal rise and decay time), scaled by the
 <span class="math notranslate nohighlight">\(_{max}\)</span> qunatites. <span class="math notranslate nohighlight">\(\sum \delta(.)\)</span> is the incoming spike train. 
@@ -257,14 +257,29 @@ one can be computed in a <code class="docutils literal notranslate"><span class=
 (<a class="reference external" href="https://brian2.readthedocs.io/en/stable/user/synapses.html?highlight=event-driven#event-driven-updates">Brian documentation</a>) for more detail.</p>
 <p>It’s however possible to transfer the current-based synapse to the voltage-based
 one with the following assumption:</p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
 <p><strong>Asumption</strong>: The total current injected to the cell via a single spike 
 leads to a  certain voltage increament. Setting <span class="math notranslate nohighlight">\(V_{max}\)</span> equal to 
 this increment, we can make an voltage-based synapse from the current-based 
 one.</p>
 </div>
-<p>This assumption leads to the scaling <span class="math notranslate nohighlight">\(V_{max} = \frac{I_{max} \tau}{C} e\)</span>.</p>
+<p>This assumption leads to the scaling <span class="math notranslate nohighlight">\(V_{max} = \frac{I_{max} \tau_s}{C} e\)</span>.
+(The facter e is due to scaling of alpha function.)</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This equivalence is not mathematically rigorous. A current-based method
+computationally computes the voltage increment according to</p>
+<div class="math notranslate nohighlight">
+\[dv = \int \sum_k f(t-t_k) dt + ...\]</div>
+<p>whereas a voltage based method as introduced above incorporates spikes as</p>
+<div class="math notranslate nohighlight">
+\[dv = \sum_k \int f(t-t_k) dt + ...\]</div>
+<p>assuming that the spilkes are essentially independent. This assumption is 
+true for sparse spiking patterns, or when :math:`   au_s ll        au_m`, meaning
+that the membrane voltage is essentially in tact throughout the synaptic 
+dynamics.</p>
+</div>
 <dl class="py function">
 <dt class="sig sig-object py" id="equations.get_nrn_eqs">
 <span class="sig-prename descclassname"><span class="pre">equations.</span></span><span class="sig-name descname"><span class="pre">get_nrn_eqs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pop_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syn_base</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/equations.html#get_nrn_eqs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#equations.get_nrn_eqs" title="Permalink to this definition">¶</a></dt>

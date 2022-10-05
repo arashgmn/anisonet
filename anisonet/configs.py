@@ -146,9 +146,9 @@ def get_config(name='EI_net', scalar=3):
                   'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
                   'cell': {'type': 'LIF', 
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
-                           'tau': 10*ms, 'C': 250*pF}
-                  }
-        }
+                           'tau':10*ms, 'C': 250*pF}
+                          }
+            }
 
         conn_cfg = {
             'II': {'ncons': round(1000/(scalar**2)), 'self_link':False, 
@@ -185,7 +185,8 @@ def get_config(name='EI_net', scalar=3):
                   #'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
                   'profile': {'type':'Gaussian', 'params': {'std': 9/scalar} },
                   'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms} },
-                  'anisotropy': {'type': 'perlin', 'params': {'scale': 4, 'r':1}}
+                  'anisotropy': {'type': 'perlin', 'params': {'scale': 4, 'r':1}},
+                  #'anisotropy': {'type': 'symmetric', 'params': {}}
                   },
             
             'EI': {'ncons': round(180/(scalar**2)), 'self_link':False, 

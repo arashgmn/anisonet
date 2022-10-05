@@ -24,6 +24,7 @@ from landscape import make_landscape
 from anisofy import draw_post_syns as sample_post_syns
 # from anisofy import draw_post_syns_simple as sample_post_syns
 
+b2.seed(8)
 
 class Simulate(object):
     """
@@ -102,7 +103,7 @@ class Simulate(object):
         # else:
         #     raise
     
-    def current_to_voltage(self):
+    def current_to_voltage(self, increase_tau_m=True):
         """
         Transfaers the current based synapses into an equivalent voltage based 
         synapse.
@@ -119,11 +120,15 @@ class Simulate(object):
             
             # adjustments
             syn_cfg['params']['J']*= (tau_s/C_m)
-            #syn_cfg['params']['delay']+= tau_s # didn't work
             syn_cfg['type'] = 'delta_voltage'
             
             self.conn_cfg[pathway]['synapse'] = syn_cfg # update
         
+        if increase_tau_m:
+            for pop_cfg in self.pops_cfg.values():
+                pop_cfg['cell']['tau'] *= 1
+                
+            
     def generate_name(self, scalar):
         # specifies the network scale
         name = 'S%.3f_'%(scalar)
@@ -537,13 +542,12 @@ class Simulate(object):
 if __name__=='__main__':
 
     # I_net
-    sim = Simulate('I_net', scalar=1, load_connectivity=True, 
-                    voltage_base_syn=1)
+    sim = Simulate('EI_net', scalar=2, load_connectivity=True, 
+                    voltage_base_syn=0)
     sim.setup_net()
-    # viz.plot_connectivity(sim)
-    #sim.warmup()
+    sim.warmup()
     sim.start(duration=4000*b2.ms, batch_dur=2000*b2.ms, 
-              restore=True, profile=True)
+              restore=True, profile=False)
     sim.post_process()
 
     # EI_net

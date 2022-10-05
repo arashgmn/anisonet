@@ -34,7 +34,7 @@ However, it alters the pdf of the connectivity profile by sliding the
 near-zero events forward. Importantly, since the anisotropy is 
 introduced with a displacing the post-synaptic cloud, when the 
 displacement vector is zero, this approach may cause unintended 
-self-connections. `[1]`_ prevented thisby explicitly excluding those 
+self-connections. `[1]`_ prevented this by explicitly excluding those 
 connections (look `here`_) which in turn, may change the total number 
 of out-degrees. 
 
@@ -45,7 +45,7 @@ source and targets when initializing the network.
 .. _[1]: https://doi.org/10.1371/journal.pcbi.1007432
 .. _[3]: https://doi.org/10.1523/ENEURO.0348-16.2017
 .. _[4]: http://epubs.siam.org/doi/10.1137/030600040
-
+.. _here: https://github.com/babsey/spatio-temporal-activity-sequence/blob/bb82c7d4d3b2f85e9d2635a5479d0478868d33bb/scripts/lib/connection_matrix.py#L28
 
 """
 

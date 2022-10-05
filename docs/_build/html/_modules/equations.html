@@ -247,9 +247,9 @@
 <span class="sd">but directly the increment in the membrane voltage:</span>
 <span class="sd">    </span>
 <span class="sd">.. math::</span>
-<span class="sd">    \Delta V_{syn} = V_{max} \int_{-\infty}^t \sum_k f(t&#39;) \delta(t&#39;-t_k) dt&#39; =  V_{max} \sum_k f(t-t_k)</span>
+<span class="sd">    \Delta V_{syn} = V_{max} \int_{-\infty}^t \sum_k f(t-t&#39;) \delta(t&#39;-t_k) dt&#39; =  V_{max} \sum_k f(t-t_k)</span>
 
-<span class="sd">In all these formulations :math:`f(t)` is a filter, often replaced by an </span>
+<span class="sd">In all these formulations :math:`f(t-t&#39;)` is a filter, often replaced by an </span>
 <span class="sd">exponential, bi-exponential (with rise and decay time :math:`\\tau_r` and </span>
 <span class="sd">:math:`\\tau_d`), and alpha function (equal rise and decay time), scaled by the</span>
 <span class="sd">:math:`_{max}` qunatites. :math:`\sum \delta(.)` is the incoming spike train. </span>
@@ -282,14 +282,32 @@
 <span class="sd">It&#39;s however possible to transfer the current-based synapse to the voltage-based</span>
 <span class="sd">one with the following assumption:</span>
 <span class="sd">    </span>
-<span class="sd">.. warning::</span>
+<span class="sd">.. note::</span>
 <span class="sd">    **Asumption**: The total current injected to the cell via a single spike </span>
 <span class="sd">    leads to a  certain voltage increament. Setting :math:`V_{max}` equal to </span>
 <span class="sd">    this increment, we can make an voltage-based synapse from the current-based </span>
 <span class="sd">    one.</span>
 <span class="sd">    </span>
-<span class="sd">This assumption leads to the scaling :math:`V_{max} = \\frac{I_{max} \\tau}{C} e`.</span>
+<span class="sd">This assumption leads to the scaling :math:`V_{max} = \\frac{I_{max} \\tau_s}{C} e`.</span>
+<span class="sd">(The facter e is due to scaling of alpha function.)</span>
 
+<span class="sd">.. warning::</span>
+<span class="sd">    This equivalence is not mathematically rigorous. A current-based method</span>
+<span class="sd">    computationally computes the voltage increment according to</span>
+<span class="sd">    </span>
+<span class="sd">    .. math::</span>
+<span class="sd">    	dv = \int \sum_k f(t-t_k) dt + ...</span>
+
+<span class="sd">    whereas a voltage based method as introduced above incorporates spikes as</span>
+<span class="sd">    </span>
+<span class="sd">    .. math::</span>
+<span class="sd">    	dv = \sum_k \int f(t-t_k) dt + ...</span>
+<span class="sd">        </span>
+<span class="sd">    assuming that the spilkes are essentially independent. This assumption is </span>
+<span class="sd">    true for sparse spiking patterns, or when :math:`\tau_s \ll \tau_m`, meaning</span>
+<span class="sd">    that the membrane voltage is essentially in tact throughout the synaptic </span>
+<span class="sd">    dynamics.</span>
+<span class="sd">    </span>
 
 <span class="sd">.. _Brian documentation: https://brian2.readthedocs.io/en/stable/user/synapses.html?highlight=event-driven#event-driven-updates</span>
 <span class="sd">.. _notebook: https://nest-simulator.readthedocs.io/en/v3.3/model_details/noise_generator.html</span>
@@ -326,7 +344,7 @@
     <span class="n">noise_dt</span> <span class="o">=</span> <span class="n">pops_cfg</span><span class="p">[</span><span class="n">pop_name</span><span class="p">][</span><span class="s1">&#39;noise&#39;</span><span class="p">][</span><span class="s1">&#39;noise_dt&#39;</span><span class="p">]</span>
     <span class="n">tmp</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;noise_dt&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">noise_dt</span><span class="o">/</span><span class="n">b2</span><span class="o">.</span><span class="n">ms</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;*ms&#39;</span><span class="p">)</span>
     
-    <span class="k">if</span> <span class="n">syn_base</span><span class="o">!=</span><span class="s1">&#39;voltage&#39;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s1">&#39;voltage&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">syn_base</span><span class="p">:</span>
         <span class="n">eqs_str</span><span class="o">=</span> <span class="n">tmp</span> <span class="o">+</span> <span class="s1">&#39;&#39;&#39;dv/dt = (E-v)/tau + (noise_pop + I_syn)/C : volt (unless refractory)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
         <span class="n">I_syn_components</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">src_name</span> <span class="ow">in</span> <span class="n">pops_cfg</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
@@ -335,7 +353,7 @@
         <span class="n">eqs_str</span><span class="o">+=</span> <span class="s1">&#39;I_syn = &#39;</span><span class="o">+</span> <span class="s1">&#39;+&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">I_syn_components</span><span class="p">)</span> <span class="o">+</span><span class="s1">&#39;: amp </span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
         
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">eqs_str</span><span class="o">=</span> <span class="n">tmp</span> <span class="o">+</span> <span class="s1">&#39;&#39;&#39;dv/dt = (E-v)/tau + noise_pop/C : volt (unless refractory)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
+        <span class="n">eqs_str</span><span class="o">=</span> <span class="n">tmp</span> <span class="o">+</span> <span class="s1">&#39;&#39;&#39;dv/dt = (E-v)/tau + (noise_pop)/C : volt (unless refractory)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
         
     <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">eqs_str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_pop&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="o">+</span><span class="n">pop_name</span><span class="p">)</span>
     <span class="n">eqs</span> <span class="o">=</span> <span class="n">b2</span><span class="o">.</span><span class="n">Equations</span><span class="p">(</span><span class="n">eqs_str</span><span class="p">,</span> 
@@ -378,36 +396,59 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     
-    <span class="n">tmp</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+    <span class="n">tmp_alpha</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
 <span class="s1">        dg/dt = (-g+h) / tau : 1 (clock-driven)</span>
 <span class="s1">        dh/dt = -h / tau : 1 (clock-driven)</span>
 <span class="s1">        &#39;&#39;&#39;</span>
         
-    <span class="n">on_pre</span> <span class="o">=</span><span class="s1">&#39;&#39;&#39;h+=exp(1)&#39;&#39;&#39;</span>
+    <span class="n">tmp_exp</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">        dg/dt = -g / tau : 1 (clock-driven)</span>
+<span class="s1">        &#39;&#39;&#39;</span>
+    
     <span class="n">on_post</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
     
-    <span class="k">if</span> <span class="n">syn_base</span><span class="o">==</span><span class="s1">&#39;voltage&#39;</span><span class="p">:</span>
-        <span class="c1"># J is the post-synaptic voltage increment</span>
-        <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;clock-driven&#39;</span><span class="p">,</span> <span class="s1">&#39;event-driven&#39;</span><span class="p">)</span>
-        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;w = J*g: volt </span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
-        <span class="c1">#eqs_str += &#39;&#39;&#39;J = {}*mV: volt \n&#39;&#39;&#39;.format(J/mV)  </span>
-        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;J: volt (shared)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>  
-        <span class="n">on_pre</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;</span><span class="se">\n</span><span class="s1">v_post += w&#39;&#39;&#39;</span>
-        
-    <span class="k">elif</span> <span class="n">syn_base</span><span class="o">==</span><span class="s1">&#39;current&#39;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">syn_base</span><span class="o">==</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">:</span>
         <span class="c1"># J is the post-synaptic current injection </span>
-        <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">tmp</span>
-        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;I_syn_</span><span class="si">{}</span><span class="s1">_post = J*g: amp (summed)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">conn_name</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">tmp_alpha</span>
         <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;J : amp (shared)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
+        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;I_syn_</span><span class="si">{}</span><span class="s1">_post = J*g: amp (summed)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">conn_name</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         
-    <span class="k">elif</span> <span class="n">syn_base</span><span class="o">==</span><span class="s1">&#39;conductance&#39;</span><span class="p">:</span>
+        <span class="n">on_pre</span>  <span class="o">=</span> <span class="s1">&#39;&#39;&#39;h+=exp(1)&#39;&#39;&#39;</span> <span class="c1"># to scale the max to 1</span>
+        
+    <span class="k">elif</span> <span class="n">syn_base</span><span class="o">==</span><span class="s1">&#39;alpha_conductance&#39;</span><span class="p">:</span>
         <span class="c1"># J is the maximum conductance</span>
-        <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">tmp</span>
-        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;I_syn_</span><span class="si">{}</span><span class="s1">_post = J*g*(v_post-Erev): amp </span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">conn_name</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;Erev : volt (shared)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
+        <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">tmp_alpha</span>
         <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;J : siemens (shared)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
-        <span class="c1">#eqs_str += &#39;&#39;&#39;J = {}*nS: siemens \n&#39;&#39;&#39;.format(J/nS)  </span>
-        <span class="c1">#E = conn_cfg[conn_name][&#39;synapse&#39;][&#39;params&#39;][&#39;E&#39;]/mV</span>
+        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;Erev : volt (shared)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
+        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;I_syn_</span><span class="si">{}</span><span class="s1">_post = J*g*(v_post-Erev): amp </span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">conn_name</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        
+        <span class="n">on_pre</span>  <span class="o">=</span> <span class="s1">&#39;&#39;&#39;h+=1&#39;&#39;&#39;</span> <span class="c1"># have not tested yet</span>
+        
+    <span class="k">elif</span> <span class="n">syn_base</span><span class="o">==</span><span class="s1">&#39;alpha_voltage&#39;</span><span class="p">:</span>
+        <span class="c1"># J is the post-synaptic voltage increment</span>
+        <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">tmp_alpha</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;clock-driven&#39;</span><span class="p">,</span> <span class="s1">&#39;event-driven&#39;</span><span class="p">)</span>
+        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;J: volt (shared)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>  
+        
+        <span class="n">on_pre</span>  <span class="o">=</span> <span class="s1">&#39;&#39;&#39;h+=exp(1)&#39;&#39;&#39;</span> <span class="c1"># don&#39;t know why this works but exp(1) not</span>
+        <span class="n">on_pre</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;</span><span class="se">\n</span><span class="s1">v_post += J*g&#39;&#39;&#39;</span>
+        
+    <span class="k">elif</span> <span class="n">syn_base</span><span class="o">==</span><span class="s1">&#39;exp_voltage&#39;</span><span class="p">:</span>
+        <span class="c1"># J is the post-synaptic voltage increment</span>
+        <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">tmp_exp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;clock-driven&#39;</span><span class="p">,</span> <span class="s1">&#39;event-driven&#39;</span><span class="p">)</span>
+        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;J: volt (shared)&#39;&#39;&#39;</span>  
+        
+        <span class="n">on_pre</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;g+=1&#39;&#39;&#39;</span> <span class="c1"># have not tested yet</span>
+        <span class="n">on_pre</span><span class="o">+=</span> <span class="s1">&#39;&#39;&#39;</span><span class="se">\n</span><span class="s1">v_post += J&#39;&#39;&#39;</span>
+
+
+    <span class="k">elif</span> <span class="n">syn_base</span><span class="o">==</span><span class="s1">&#39;delta_voltage&#39;</span><span class="p">:</span>
+        <span class="n">eqs_str</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;J: volt (shared)&#39;&#39;&#39;</span>  
+        
+        <span class="n">on_pre</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span><span class="se">\n</span><span class="s1">v_post += J*exp(1)&#39;&#39;&#39;</span> <span class="c1"># to match it with the alpha_current</span>
+    
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">syn_base</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
         
     <span class="n">eqs</span> <span class="o">=</span> <span class="n">b2</span><span class="o">.</span><span class="n">Equations</span><span class="p">(</span><span class="n">eqs_str</span><span class="p">,</span> 
                     <span class="n">tau</span> <span class="o">=</span> <span class="n">conn_cfg</span><span class="p">[</span><span class="n">conn_name</span><span class="p">][</span><span class="s1">&#39;synapse&#39;</span><span class="p">][</span><span class="s1">&#39;params&#39;</span><span class="p">][</span><span class="s1">&#39;tau&#39;</span><span class="p">])</span>

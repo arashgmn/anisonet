@@ -367,7 +367,7 @@ def plot_connectivity(sim):
         plt.savefig(figpath, bbox_inches='tight', dpi=200)
         plt.close()
 
-def overlay_phis(phis, ax, size=5, **kwargs):
+def overlay_phis(phis, ax, size=5, color='k', scale=30, **kwargs):
     gs = len(phis)
     if len(phis.shape)==1:
         gs = np.sqrt(gs).astype(int)
@@ -377,11 +377,31 @@ def overlay_phis(phis, ax, size=5, **kwargs):
         
     X,Y = np.meshgrid(np.arange(gs), np.arange(gs))
     
+    # we need to adjust the gating size if it is not divisible to the grid size
+    adjust_needed = gs%size # 
+    
+    # in case size adjustment is needed, we do so by hopping up and down around
+    # the given size to find the closest size which is divisible to the gs. So
+    # the iterations go this way:
+    #   it 1: size - 1        
+    #   it 2: size + 1
+    #   it 3: size - 2
+    #   it 4: size + 2
+    #   ...                        
+    counter = 1
+    while adjust_needed:
+        # this spans back and forth for a good size
+        size += (-1)**counter * (counter)
+        if size>0:
+            adjust_needed = gs%size        
+        
+    
     s = np.sin(phi).reshape(gs//size, size, gs//size, size).mean(axis=(1, 3))
     c = np.cos(phi).reshape(gs//size, size, gs//size, size).mean(axis=(1, 3))
     
     ax.quiver(X[::size, ::size] + size/2, Y[::size, ::size] + size/2,
-              c, s, color='k', scale=30, **kwargs)
+              c, s, 
+              color=color, scale=scale, **kwargs)
     
 def plot_firing_rates_dist(sim):
     """
@@ -439,7 +459,7 @@ def animator(fig, axs, imgs, vals, ts_bins=[]):
 
     return anim
 
-def plot_animation(sim, ss_dur=50, overlay=True):
+def plot_animation(sim, ss_dur=50, fps=10, overlay=True):
     """
     Aggregates the firing rate from disk and make an animation.
     
@@ -479,7 +499,7 @@ def plot_animation(sim, ss_dur=50, overlay=True):
         
     anim = animator(fig, axs, field_imgs, field_vals, ts_bins)
     
-    writergif = animation.PillowWriter(fps=10) 
+    writergif = animation.PillowWriter(fps=fps) 
     path = osjoin(sim.res_path, sim.name+'_animation_rate.gif')
     anim.save(path , writer=writergif)
     plt.close()
