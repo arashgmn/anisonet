@@ -82,8 +82,6 @@ class Simulate(object):
         self.warmup_dur = 500*b2.ms
         
         
-    
-        
     def get_synaptic_base(self):
         """
         Synaptic inputs can be defined in different ways. This method reads the
@@ -142,13 +140,17 @@ class Simulate(object):
             pw_name, pw_cfg = item
             name += pw_name
             
-            # I factor the GA out becasue it's shared in Gamma and Gaussian
-            if pw_cfg['profile']['type']=='Gaussian':
-                name += 'U' 
-            elif pw_cfg['profile']['type']=='Gamma':
-                name += 'M'
+            
+            if pw_cfg['profile'] == None:
+                name+='ISO'
             else:
-                raise
+                # I factor the GA out becasue it's shared in Gamma and Gaussian
+                if pw_cfg['profile']['type']=='Gaussian':
+                    name += 'U' 
+                elif pw_cfg['profile']['type']=='Gamma':
+                    name += 'M'
+                else:
+                    raise
                 
             # I factor the GA out becasue it's shared in Gamma and Gaussian
             if pw_cfg['anisotropy']['type']=='perlin':
@@ -529,26 +531,26 @@ class Simulate(object):
         self.net.add(self.mons)
         
     
-    def post_process(self):
+    def post_process(self, overlay=True):
         print('{} -- Starting postprocessing ...'.format(time.ctime()))
-        viz.plot_landscape(sim)
+        viz.plot_landscape(sim, overlay=overlay)
         viz.plot_in_out_deg(sim)
         viz.plot_realized_landscape(sim)
         viz.plot_connectivity(sim)
         viz.plot_firing_rates_dist(sim)
-        viz.plot_animation(sim) 
+        viz.plot_animation(sim, overlay=overlay) 
         
         
 if __name__=='__main__':
 
     # I_net
-    sim = Simulate('EI_net', scalar=2, load_connectivity=True, 
+    sim = Simulate('I_net', scalar=1, load_connectivity=False, 
                     voltage_base_syn=0)
     sim.setup_net()
     sim.warmup()
     sim.start(duration=4000*b2.ms, batch_dur=2000*b2.ms, 
               restore=True, profile=False)
-    sim.post_process()
+    sim.post_process(overlay=True)
 
     # EI_net
     # sim = Simulate('EI_net', scalar=2.5, load_connectivity=False,

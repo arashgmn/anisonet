@@ -134,7 +134,7 @@ This assumption leads to the scaling :math:`V_{max} = \\frac{I_{max} \\tau_s}{C}
     	dv = \sum_k \int f(t-t_k) dt + ...
         
     assuming that the spilkes are essentially independent. This assumption is 
-    true for sparse spiking patterns, or when :math:`\tau_s \ll \tau_m`, meaning
+    true for sparse spiking patterns, or when :math:`\\tau_s \ll \\tau_m`, meaning
     that the membrane voltage is essentially in tact throughout the synaptic 
     dynamics.
     

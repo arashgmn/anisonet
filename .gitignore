@@ -5,6 +5,7 @@ anisonet/tmp
 anisonet/results/
 anisonet/EI_net/
 anisonet/I_net/
+anisonet/iso_net/
 anisonet/__init__.py # it intervenes the sphinx-apidoc locally
                                                                                                                                                                                                                                                                                                                                                                                             
 

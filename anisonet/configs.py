@@ -122,7 +122,7 @@ Use either of the following structures for the value of ``profile`` key:
 from brian2.units import pA, mV, ms, pF
 import numpy as np
 
-np.random.seed(8)
+np.random.seed(18)
 
 
 def get_config(name='EI_net', scalar=3):
@@ -156,7 +156,7 @@ def get_config(name='EI_net', scalar=3):
                    #'profile': {'type':'Gaussian', 'params': {'std': 3} },
                    'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
                    'anisotropy': {'type': 'perlin', 'params': {'r': 1, 'scale':3}}
-                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':0*np.pi/4.}}
+                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':np.pi/6.}}
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    #'anisotropy': {'type': 'symmetric', 'params': {}}
                    },
@@ -185,29 +185,50 @@ def get_config(name='EI_net', scalar=3):
                   #'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
                   'profile': {'type':'Gaussian', 'params': {'std': 9/scalar} },
                   'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms} },
-                  'anisotropy': {'type': 'perlin', 'params': {'scale': 4, 'r':1}},
+                  'anisotropy': {'type': 'perlin', 'params': {'scale': 3, 'r':1}},
                   #'anisotropy': {'type': 'symmetric', 'params': {}}
+                  #'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':np.pi/6.}}
                   },
             
             'EI': {'ncons': round(180/(scalar**2)), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 4.5/scalar}},
                    'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   #'anisotropy': {'type': 'symmetric', 'params': {}}
-                   'anisotropy': {'type': 'random', 'params': {'r': 1,}}
+                   'anisotropy': {'type': 'symmetric', 'params': {}}
+                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    },
             
             'IE': {'ncons': round(720/(scalar**2)), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 12/scalar}},
                    'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   #'anisotropy': {'type': 'symmetric', 'params': {}}
-                   'anisotropy': {'type': 'random', 'params': {'r': 1,}}
+                   'anisotropy': {'type': 'symmetric', 'params': {}}
+                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    },
 
             'II': {'ncons': round(180/(scalar**2)), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 6/scalar}},
                    'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'anisotropy': {'type': 'symmetric', 'params': {}}
+                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
+                   },
+        }
+    elif name=='iso_net':
+        pops_cfg = {
+            'I': {'gs': round(100/scalar), 
+                  'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
+                  'cell': {'type': 'LIF', 
+                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                           'tau':10*ms, 'C': 250*pF}
+                          }
+            }
+
+        conn_cfg = {
+            'II': {'ncons': round(1000/(scalar**2)), 'self_link':False, 
+                   'profile': None,
+                   'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'anisotropy': {'type': 'perlin', 'params': {'r': 1, 'scale':3}}
+                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':0*np.pi/4.}}
+                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    #'anisotropy': {'type': 'symmetric', 'params': {}}
-                   'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    },
         }    
     else:

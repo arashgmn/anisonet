@@ -282,7 +282,7 @@ def plot_periodicity(sim, N=10):
             plot_id += 1
         del post_cntr, pres, posts
         
-def plot_landscape(sim):
+def plot_landscape(sim, overlay=True):
     """
     Plots the intended landscape (only :math:`\\phi`) for all the populations
     set in a simulation.
@@ -293,10 +293,13 @@ def plot_landscape(sim):
     for id_, key in enumerate(sim.conn_cfg.keys()):
         phis = sim.lscp[key]['phi']
         figpath = osjoin(sim.res_path, sim.name+'_gen_phi_'+key+'.png')
-        plot_field(phis.reshape((int(np.sqrt(len(phis))), -1)), figpath, 
-                   vmin=-np.pi, vmax = np.pi, 
-                   phis=phis)
-
+        if overlay:	    
+            plot_field(phis.reshape((int(np.sqrt(len(phis))), -1)), figpath, 
+                       vmin=-np.pi, vmax = np.pi, 
+                       phis=phis)
+        else:
+            plot_field(phis.reshape((int(np.sqrt(len(phis))), -1)), figpath, 
+                       vmin=-np.pi, vmax = np.pi)
 
 def plot_realized_landscape(sim):
     """
@@ -459,7 +462,7 @@ def animator(fig, axs, imgs, vals, ts_bins=[]):
 
     return anim
 
-def plot_animation(sim, ss_dur=50, fps=10, overlay=True):
+def plot_animation(sim, ss_dur=25, fps=10, overlay=True):
     """
     Aggregates the firing rate from disk and make an animation.
     
@@ -487,7 +490,9 @@ def plot_animation(sim, ss_dur=50, fps=10, overlay=True):
         
         h = np.histogram2d(ts, idxs, bins=[ts_bins, range(gs**2 + 1)])[0]
         field_val = h.reshape(-1, gs, gs)
-        field_img = axs[id_].imshow(field_val[0], vmin=0, vmax=np.max(field_val))
+        field_img = axs[id_].imshow(field_val[0], vmin=0, vmax=np.max(field_val), 
+                                    origin='lower' # to match field snapshots 
+                                    )
         axs[id_].set_title('Population '+mon.name[-1])
         
         if overlay:

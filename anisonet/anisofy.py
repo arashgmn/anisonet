@@ -97,8 +97,13 @@ def draw_post_syns(s_coord, ncons,
     """
     
     # just for convenience
-    p_param = profile['params']
-    w_type = profile['type']
+    if profile== None:
+        w_type = None        
+        shift = {'r':0, 'phi':0}
+    else:
+        w_type = profile['type']
+        p_param = profile['params']
+        
     
     # dispalcement can be anything, but it will be rounded to the grid points
     shift_x = shift['r'] * np.cos(shift['phi']) 
@@ -116,41 +121,45 @@ def draw_post_syns(s_coord, ncons,
     # permitted, we don't perform this iterative step and all initially drawn
     # (and displaced) targets will be accepted.
     
-    
     x = np.zeros(ncons, dtype=int)
     y = np.zeros(ncons, dtype=int)
     redraw = (x==0) & (y==0)  # index of those who must be redrawn. Now, all.
     
     while sum(redraw)>0:
         ncon = sum(redraw)
-
-        # angle        
-        alpha = np.random.uniform(low=-np.pi, high=np.pi, size=ncon)
         
-        # radius
-        if w_type=='Gaussian':
-            radius = p_param['std'] * np.random.randn(ncon)
-        elif w_type=='Gamma':
-            radius = np.concatenate(
-                (-np.random.gamma(shape= p_param['kappa'], 
-                                  scale= p_param['theta'], 
-                                  size= int(ncon // 2)),
-                +np.random.gamma(shape=p_param['kappa'], 
-                                 scale=p_param['theta'], 
-                                 size=ncon -int(ncon // 2)))
-                )
+        if w_type==None:
+            x_ = np.random.randint(-tcol//2, tcol-tcol//2, ncon)
+            y_ = np.random.randint(-(trow-trow//2), trow//2, ncon)
+            
         else:
-            raise NotImplementedError
-
-        # LCRN network has a minimum gap of 1 between source and targets.
-        # If these lines don't exist, the bumps won't be pronounced. Also look
-        # at our refernce [1].
-        radius[radius<0] -= gap
-        radius[radius>=0]+= gap
-        
-        # draw coordinates
-        x_ = np.round(radius*np.cos(alpha) + shift_x).astype(int)
-        y_ = np.round(radius*np.sin(alpha) + shift_y).astype(int)
+            # angle        
+            alpha = np.random.uniform(low=-np.pi, high=np.pi, size=ncon)
+            
+            # radius
+            if w_type=='Gaussian':
+                radius = p_param['std'] * np.random.randn(ncon)
+            elif w_type=='Gamma':
+                radius = np.concatenate(
+                    (-np.random.gamma(shape= p_param['kappa'], 
+                                      scale= p_param['theta'], 
+                                      size= int(ncon // 2)),
+                    +np.random.gamma(shape=p_param['kappa'], 
+                                     scale=p_param['theta'], 
+                                     size=ncon -int(ncon // 2)))
+                    )
+            else:
+                raise NotImplementedError
+    
+            # LCRN network has a minimum gap of 1 between source and targets.
+            # If these lines don't exist, the bumps won't be pronounced. Also look
+            # at our refernce [1].
+            radius[radius<0] -= gap
+            radius[radius>=0]+= gap
+            
+            # draw coordinates
+            x_ = np.round(radius*np.cos(alpha) + shift_x).astype(int)
+            y_ = np.round(radius*np.sin(alpha) + shift_y).astype(int)
         
         # make periodic
         # x[redraw] = x_ % tcol
