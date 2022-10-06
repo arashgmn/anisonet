@@ -79,7 +79,8 @@ def plot_in_out_deg(sim):
         
 def plot_firing_rates(sim, suffix='', 
                       conv_size=3, wl_size=10, 
-                      z_score=False):
+                      z_score=False,
+                      overlay=True):
     """
     Plots the overal firing rates within the active monitors of the ``sim``
     objects. The firing rate is also covolved with a 2D ricker kernel to show 
@@ -140,7 +141,12 @@ def plot_firing_rates(sim, suffix='',
             ax.set_title(title)
             ax.set_aspect('equal')
             ax.get_yaxis().set_ticks([])
-            
+        
+        if overlay:
+            phis = sim.lscp[2*src.name[-1]]['phi']
+            for ax in axs[:, id_]:
+                overlay_phis(phis, ax)
+                
     path = osjoin(sim.res_path, sim.name+'_rates'+suffix+'.png')
     plt.savefig(path, dpi=200, bbox_inches='tight')
     plt.close()
@@ -181,7 +187,7 @@ def plot_firing_snapshots(sim, tmin=None, tmax=None, alpha=0.1):
         
         
 
-def plot_field(field, figpath, vmin=None, vmax=None):
+def plot_field(field, figpath, vmin=None, vmax=None, phis=None):
     """
     Plots a field; a landscape, firing rate, or any heatmap.
     
@@ -200,6 +206,11 @@ def plot_field(field, figpath, vmin=None, vmax=None):
     ax=plt.gca()
     ax.set_aspect('equal')
     plt.colorbar(m)
+    
+    if phis is not None:
+        print(phis.shape)
+        overlay_phis(phis, ax)
+        
     plt.savefig(figpath, dpi=200, bbox_inches='tight')
     plt.close()
     
@@ -281,9 +292,10 @@ def plot_landscape(sim):
     """
     for id_, key in enumerate(sim.conn_cfg.keys()):
         phis = sim.lscp[key]['phi']
-        phis = phis.reshape((int(np.sqrt(len(phis))), -1))
         figpath = osjoin(sim.res_path, sim.name+'_gen_phi_'+key+'.png')
-        plot_field(phis, figpath, vmin=-np.pi, vmax = np.pi)
+        plot_field(phis.reshape((int(np.sqrt(len(phis))), -1)), figpath, 
+                   vmin=-np.pi, vmax = np.pi, 
+                   phis=phis)
 
 
 def plot_realized_landscape(sim):
@@ -342,7 +354,7 @@ def plot_connectivity(sim):
     from scipy import sparse
     
     for pathway in sim.conn_cfg.keys():
-        path = osjoin(sim.data_path, 'w_'+sim.name+'_'+pathway+'.npz')
+        path = osjoin(sim.data_path, sim.name+'_w_'+pathway+'.npz')
         w = sparse.load_npz(path).toarray()
     
         plt.figure()
@@ -351,10 +363,46 @@ def plot_connectivity(sim):
         plt.ylabel('sources (pre-synapse)')
         plt.title(' '.join(sim.name.split('_')[:2]))
         
-        figpath = osjoin(sim.res_path, 'w_'+sim.name+'_'+pathway+'.png')
+        figpath = osjoin(sim.res_path, sim.name+'_w_'+pathway+'.png')
         plt.savefig(figpath, bbox_inches='tight', dpi=200)
         plt.close()
 
+def overlay_phis(phis, ax, size=5, color='k', scale=30, **kwargs):
+    gs = len(phis)
+    if len(phis.shape)==1:
+        gs = np.sqrt(gs).astype(int)
+        phi = np.copy(phis).reshape(gs, gs)
+    else:
+        phi = np.copy(phis)
+        
+    X,Y = np.meshgrid(np.arange(gs), np.arange(gs))
+    
+    # we need to adjust the gating size if it is not divisible to the grid size
+    adjust_needed = gs%size # 
+    
+    # in case size adjustment is needed, we do so by hopping up and down around
+    # the given size to find the closest size which is divisible to the gs. So
+    # the iterations go this way:
+    #   it 1: size - 1        
+    #   it 2: size + 1
+    #   it 3: size - 2
+    #   it 4: size + 2
+    #   ...                        
+    counter = 1
+    while adjust_needed:
+        # this spans back and forth for a good size
+        size += (-1)**counter * (counter)
+        if size>0:
+            adjust_needed = gs%size        
+        
+    
+    s = np.sin(phi).reshape(gs//size, size, gs//size, size).mean(axis=(1, 3))
+    c = np.cos(phi).reshape(gs//size, size, gs//size, size).mean(axis=(1, 3))
+    
+    ax.quiver(X[::size, ::size] + size/2, Y[::size, ::size] + size/2,
+              c, s, 
+              color=color, scale=scale, **kwargs)
+    
 def plot_firing_rates_dist(sim):
     """
     Plots the average firing rate density in log scale.
@@ -368,7 +416,8 @@ def plot_firing_rates_dist(sim):
         axs = [axs]
     
     for id_, mon in enumerate(sim.mons):
-        idxs, ts = utils.aggregate_mons(sim.data_path, mon.name+'_*.dat')
+        idxs, ts = utils.aggregate_mons(sim.data_path, 
+                                        sim.name +'_'+ mon.name+'_*.dat')
         T = (np.max(ts) - np.min(ts))/1000. # ts is in ms
         rates = value_counts(idxs)/T
         axs[id_].hist(rates, bins=50, density=True,)
@@ -380,7 +429,7 @@ def plot_firing_rates_dist(sim):
     
     axs[0].set_ylabel('Probability density')
     
-    path = osjoin(sim.res_path, 'rates_desnsity_'+sim.name+'.png')
+    path = osjoin(sim.res_path, sim.name+'_rates_desnsity.png')
     plt.savefig(path,bbox_inches='tight', dpi=200)
     plt.close()
 
@@ -410,7 +459,7 @@ def animator(fig, axs, imgs, vals, ts_bins=[]):
 
     return anim
 
-def plot_animation(sim, ss_dur=50):
+def plot_animation(sim, ss_dur=50, fps=10, overlay=True):
     """
     Aggregates the firing rate from disk and make an animation.
     
@@ -432,7 +481,8 @@ def plot_animation(sim, ss_dur=50):
     field_imgs = []
     field_vals = []
     for id_, mon in enumerate(sim.mons):
-        idxs, ts = utils.aggregate_mons(sim.data_path, mon.name+'_*.dat')
+        idxs, ts = utils.aggregate_mons(sim.data_path, 
+                                        sim.name+ '_'+ mon.name+'_*.dat')
         gs = int(np.sqrt(sim.pops[mon.name[-1]].N))
         
         h = np.histogram2d(ts, idxs, bins=[ts_bins, range(gs**2 + 1)])[0]
@@ -440,13 +490,17 @@ def plot_animation(sim, ss_dur=50):
         field_img = axs[id_].imshow(field_val[0], vmin=0, vmax=np.max(field_val))
         axs[id_].set_title('Population '+mon.name[-1])
         
+        if overlay:
+            phis = sim.lscp[2*mon.name[-1]]['phi']
+            overlay_phis(phis, axs[id_])
+        
         field_vals.append(field_val)
         field_imgs.append(field_img)
         
     anim = animator(fig, axs, field_imgs, field_vals, ts_bins)
     
-    writergif = animation.PillowWriter(fps=10) 
-    path = osjoin(sim.res_path, 'animation_rate.gif')
+    writergif = animation.PillowWriter(fps=fps) 
+    path = osjoin(sim.res_path, sim.name+'_animation_rate.gif')
     anim.save(path , writer=writergif)
     plt.close()
     
