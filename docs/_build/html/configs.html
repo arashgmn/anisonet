@@ -99,7 +99,12 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="equations.html">equations module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="equations.html#noise-scaling">Noise scaling</a></li>
-<li class="toctree-l3"><a class="reference internal" href="equations.html#synaptic-model">Synaptic model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="equations.html#synapse-equations">Synapse equations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="equations.html#model">Model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="equations.html#kernel">Kernel</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="equations.html#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a></li>
@@ -244,12 +249,17 @@ similar to the following form:</p>
 </pre></div>
 </div>
 <ol class="arabic simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">type</span></code>: either <code class="docutils literal notranslate"><span class="pre">&quot;alpha_voltage&quot;,</span> <span class="pre">&quot;alpha_current&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;alpha_conductance&quot;</span></code> (str) – for now, only alpha profile is available</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span></code>: encodes both synpatic <em>kernel</em> and <em>model</em> in form of 
+<code class="docutils literal notranslate"><span class="pre">&lt;kernel&gt;_&lt;method&gt;</span></code>. Please refer to  <a class="reference internal" href="equations.html#synapse-equations"><span class="std std-ref">Synapse equations</span></a> 
+for possible values of kernels and models.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">params</span></code>:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">tau</span></code>: rise and decay time scales as a Brian time quantity</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tau</span></code>: synaptic timescales as a Brian time quantity (for exp, and alpha kernels)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tau_r</span></code> and <code class="docutils literal notranslate"><span class="pre">tau_d</span></code>: rise and decay timescales as a Brian time quantity (for biexp kernel)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">delay</span></code>: synaptic delay  as a Brian time quantity</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">J</span></code>: synaptic qunatal with unit volt, ampere, or siemens for synapses of type <code class="docutils literal notranslate"><span class="pre">voltage,</span> <span class="pre">current</span></code> or <code class="docutils literal notranslate"><span class="pre">conductance</span></code>. Note that the sign will determine the polarity of the projection (inhibitory or excitatory).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">J</span></code>: synaptic qunatal with unit volt, ampere, or siemens for synapse
+models <code class="docutils literal notranslate"><span class="pre">jump</span></code>, <code class="docutils literal notranslate"><span class="pre">current</span></code> or <code class="docutils literal notranslate"><span class="pre">conductance</span></code> (c.f. <a class="reference internal" href="equations.html#synapse-equations"><span class="std std-ref">Synapse equations</span></a> )
+Note that the sign will determine the polarity of the projection (inhibitory or excitatory).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Erev</span></code>: the reversal potential for conductance-based synapse as a Brian quantity of unit volt</p></li>
 </ul>
 </li>

@@ -85,12 +85,17 @@ Use either of the following structures for the value of ``profile`` key:
     }
     
     
-#. ``type``: either ``"alpha_voltage", "alpha_current"`` or ``"alpha_conductance"`` (str) -- for now, only alpha profile is available
+#. ``type``: encodes both synpatic *kernel* and *model* in form of 
+   ``<kernel>_<method>``. Please refer to  :ref:`equations:Synapse equations` 
+   for possible values of kernels and models.
 #. ``params``: 
 
-   * ``tau``: rise and decay time scales as a Brian time quantity
+   * ``tau``: synaptic timescales as a Brian time quantity (for exp, and alpha kernels)
+   * ``tau_r`` and ``tau_d``: rise and decay timescales as a Brian time quantity (for biexp kernel)
    * ``delay``: synaptic delay  as a Brian time quantity
-   * ``J``: synaptic qunatal with unit volt, ampere, or siemens for synapses of type ``voltage, current`` or ``conductance``. Note that the sign will determine the polarity of the projection (inhibitory or excitatory).
+   * ``J``: synaptic qunatal with unit volt, ampere, or siemens for synapse
+     models ``jump``, ``current`` or ``conductance`` (c.f. :ref:`equations:Synapse equations` ).
+     Note that the sign will determine the polarity of the projection (inhibitory or excitatory).
    * ``Erev``: the reversal potential for conductance-based synapse as a Brian quantity of unit volt
 
 

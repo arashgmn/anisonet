@@ -32,7 +32,7 @@ class Simulate(object):
     """
     
     def __init__(self, net_name='I_net', load_connectivity=True,  scalar=1,
-                 result_path=None, voltage_base_syn = True):
+                 result_path=None, to_event_driven = True):
         """
         Initializes the simulator object for the given network configuration. 
         By default, tries to load the connectivity matrix from disk, otherwise
@@ -61,7 +61,7 @@ class Simulate(object):
         self.pops_cfg , self.conn_cfg = configs.get_config(net_name, scalar=scalar)
         
         # extract the synaptic base
-        if voltage_base_syn:
+        if to_event_driven :
             self.current_to_voltage()
         self.base = self.get_synaptic_base()
             
@@ -103,28 +103,40 @@ class Simulate(object):
     
     def current_to_voltage(self, increase_tau_m=True):
         """
-        Transfaers the current based synapses into an equivalent voltage based 
-        synapse.
+        Transfaers the current-based synapses into an (almost) equivalent 
+        voltage jump increment model. Look at ``Equation`` module for more info.
         """
         
         for pathway in self.conn_cfg.keys():
             syn_cfg = self.conn_cfg[pathway]['synapse']
             src, trg = pathway
             
-            assert syn_cfg['type'] == 'alpha_current'
+            kernel, model = syn_cfg['type'].split('_') # identify kernel and model
+            assert model == 'current'
+            assert kernel != 'const'
             
-            C_m = self.pops_cfg[src]['cell']['C']
-            tau_s = syn_cfg['params']['tau']
+            if kernel=='exp':
+                C_m = self.pops_cfg[src]['cell']['C']
+                tau_s = syn_cfg['params']['tau']
+                syn_cfg['params']['J']*= (tau_s/C_m)
             
-            # adjustments
-            syn_cfg['params']['J']*= (tau_s/C_m)
-            syn_cfg['type'] = 'delta_voltage'
+            elif kernel=='alpha':
+                C_m = self.pops_cfg[src]['cell']['C']
+                tau_s = syn_cfg['params']['tau']
+                syn_cfg['params']['J']*= (tau_s/C_m)*np.exp(1)
+            
+            else:
+                # TODO: need to find the correct conversion 
+                tau_r = syn_cfg['params']['tau'] # tau_r instead of tau
+                tau_d = syn_cfg['params']['tau'] # tau_d instead of tau
+            
+            syn_cfg['type'] = 'const_jump'
             
             self.conn_cfg[pathway]['synapse'] = syn_cfg # update
         
-        if increase_tau_m:
-            for pop_cfg in self.pops_cfg.values():
-                pop_cfg['cell']['tau'] *= 1
+        # if increase_tau_m:
+        #     for pop_cfg in self.pops_cfg.values():
+        #         pop_cfg['cell']['tau'] *= 1
                 
             
     def generate_name(self, scalar):
@@ -179,18 +191,16 @@ class Simulate(object):
         and adds them all to a Brian network object for simulation. Read their 
         description on each method.
         """
+        
         b2.start_scope()
         
         print('Net setup started.')
         self.setup_pops()
         
-        print('Landscape setup started.')
         self.setup_landscape()
         
-        print('Connecting populations ...')
         self.setup_syns()
         
-        print('Configuring spike monitors.')
         self.configure_monitors()
         
         self.net = b2.Network()
@@ -216,6 +226,8 @@ class Simulate(object):
             mathes the one of images.
         
         """
+        print('{} -- Setting up populations.'.format(time.ctime()))
+        
         self.pops = {}
         for pop_name in self.pops_cfg.keys():
             gs = self.pops_cfg[pop_name]['gs'] # grid size
@@ -257,7 +269,8 @@ class Simulate(object):
         Landscapes are accessible via the `lscp` attribute of the ``Simulate``
         object, in form of a dictionary keyed by the population's name.
         """
-        
+        print('{} -- Setting up ladscapes.'.format(time.ctime()))
+
         self.lscp = {}
         for conn_name in self.conn_cfg.keys():
             src, trg = conn_name
@@ -291,7 +304,8 @@ class Simulate(object):
         .. _[1]: https://doi.org/10.1371/journal.pcbi.1007432
 
         """
-        
+        print('{} -- Setting up synapses ...'.format(time.ctime()))
+
         self.syns = []
         for key in sorted(self.conn_cfg.keys()):
             src, trg = key
@@ -373,6 +387,8 @@ class Simulate(object):
         :rtype: TYPE
 
         """
+        print('{} -- Configuring monitors'.format(time.ctime()))
+        
         if hasattr(self, 'mons'):
             del self.mons
             
@@ -417,7 +433,7 @@ class Simulate(object):
             pop.mu = 0*b2.pA # turning background off
             pop.sigma = self.warmup_std # warm up noise
             
-        print('Starting warm-up.')
+        print('{} -- Starting warm-up ...'.format(time.ctime()))
         self.net.run(self.warmup_dur/2)
         for pop in self.pops.values():
             pop.mu = mus[pop.name]*b2.pA
@@ -545,7 +561,7 @@ if __name__=='__main__':
 
     # I_net
     sim = Simulate('I_net', scalar=1, load_connectivity=False, 
-                    voltage_base_syn=0)
+                    to_event_driven=0)
     sim.setup_net()
     sim.warmup()
     sim.start(duration=4000*b2.ms, batch_dur=2000*b2.ms, 

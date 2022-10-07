@@ -96,7 +96,12 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../equations.html">equations module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../equations.html#noise-scaling">Noise scaling</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../equations.html#synaptic-model">Synaptic model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../equations.html#synapse-equations">Synapse equations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../equations.html#model">Model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../equations.html#kernel">Kernel</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../equations.html#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../landscape.html">landscape module</a></li>
@@ -255,12 +260,17 @@
 <span class="sd">    }</span>
 <span class="sd">    </span>
 <span class="sd">    </span>
-<span class="sd">#. ``type``: either ``&quot;alpha_voltage&quot;, &quot;alpha_current&quot;`` or ``&quot;alpha_conductance&quot;`` (str) -- for now, only alpha profile is available</span>
+<span class="sd">#. ``type``: encodes both synpatic *kernel* and *model* in form of </span>
+<span class="sd">   ``&lt;kernel&gt;_&lt;method&gt;``. Please refer to  :ref:`equations:Synapse equations` </span>
+<span class="sd">   for possible values of kernels and models.</span>
 <span class="sd">#. ``params``: </span>
 
-<span class="sd">   * ``tau``: rise and decay time scales as a Brian time quantity</span>
+<span class="sd">   * ``tau``: synaptic timescales as a Brian time quantity (for exp, and alpha kernels)</span>
+<span class="sd">   * ``tau_r`` and ``tau_d``: rise and decay timescales as a Brian time quantity (for biexp kernel)</span>
 <span class="sd">   * ``delay``: synaptic delay  as a Brian time quantity</span>
-<span class="sd">   * ``J``: synaptic qunatal with unit volt, ampere, or siemens for synapses of type ``voltage, current`` or ``conductance``. Note that the sign will determine the polarity of the projection (inhibitory or excitatory).</span>
+<span class="sd">   * ``J``: synaptic qunatal with unit volt, ampere, or siemens for synapse</span>
+<span class="sd">     models ``jump``, ``current`` or ``conductance`` (c.f. :ref:`equations:Synapse equations` )</span>
+<span class="sd">     Note that the sign will determine the polarity of the projection (inhibitory or excitatory).</span>
 <span class="sd">   * ``Erev``: the reversal potential for conductance-based synapse as a Brian quantity of unit volt</span>
 
 

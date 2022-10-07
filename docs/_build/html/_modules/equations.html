@@ -96,7 +96,12 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../equations.html">equations module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../equations.html#noise-scaling">Noise scaling</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../equations.html#synaptic-model">Synaptic model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../equations.html#synapse-equations">Synapse equations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../equations.html#model">Model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../equations.html#kernel">Kernel</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../equations.html#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../landscape.html">landscape module</a></li>
@@ -221,40 +226,64 @@
 <span class="sd">.. math:: </span>
 <span class="sd">	\sigma^2_{Brian} = \sigma^2_{NEST} \Delta t_{NEST}</span>
 <span class="sd"> </span>
-<span class="sd">==============</span>
-<span class="sd">Synaptic model</span>
-<span class="sd">==============</span>
-<span class="sd">There are three different conventional models for synapses:</span>
-<span class="sd">    </span>
-<span class="sd">    #. conductance-based,</span>
-<span class="sd">    #. current-based, and</span>
-<span class="sd">    #. voltage-based</span>
-<span class="sd">    </span>
-<span class="sd">which, from the both mathematical and implementation perspective have </span>
-<span class="sd">differences. From mathematical point of view, a conductance based synapse </span>
-<span class="sd">is governed by:</span>
-<span class="sd">    </span>
-<span class="sd">.. math:: </span>
-<span class="sd">	I_{syn} = g_{max} g(t) (V_{post} - V_{pre})\n</span>
-<span class="sd">    g(t) = \int_{-\infty}^t \sum_k f(t-t&#39;) \delta(t&#39;-t_k) dt&#39; = \sum_k f(t-t_k)</span>
+<span class="sd"> </span>
+<span class="sd">=================</span>
+<span class="sd">Synapse equations</span>
+<span class="sd">=================</span>
+<span class="sd">Synaptic inputs can be added to the neuron either by a current, or a prescribed jump</span>
+<span class="sd">in the voltage. By default, all synaptic states must be updated in each timestamp -- </span>
+<span class="sd">so-called ``clock-driven`` -- which is very time consuming. However, if synapses </span>
+<span class="sd">induces discret voltage jumps, for certain synaptic models, it is possible to update</span>
+<span class="sd">the synaptic inputs only when a spike arrives -- thus, ``event-driven``. This enhances</span>
+<span class="sd">the performance substatially. Also look at (`Brian documentation`_) for more detail.</span>
 
-<span class="sd">A current-based synapse, on the other hand, describes the synaptic current as:</span>
 
-<span class="sd">.. math::</span>
-<span class="sd">	I_{syn} = I_{max} \int_{-\infty}^t \sum_k f(t-t&#39;) \delta(t&#39;-t_k) dt&#39; = I_{max} \sum_k f(t-t_k)</span>
-<span class="sd">    </span>
-<span class="sd">Finally, in voltage-based formulation we don&#39;t describe the injected current, </span>
-<span class="sd">but directly the increment in the membrane voltage:</span>
-<span class="sd">    </span>
-<span class="sd">.. math::</span>
-<span class="sd">    \Delta V_{syn} = V_{max} \int_{-\infty}^t \sum_k f(t-t&#39;) \delta(t&#39;-t_k) dt&#39; =  V_{max} \sum_k f(t-t_k)</span>
+<span class="sd">We use the following numenclature to explain possible synaptic models:</span>
 
-<span class="sd">In all these formulations :math:`f(t-t&#39;)` is a filter, often replaced by an </span>
-<span class="sd">exponential, bi-exponential (with rise and decay time :math:`\\tau_r` and </span>
-<span class="sd">:math:`\\tau_d`), and alpha function (equal rise and decay time), scaled by the</span>
-<span class="sd">:math:`_{max}` qunatites. :math:`\sum \delta(.)` is the incoming spike train. </span>
-<span class="sd">Here we use the alpha function -- scaled to a maximum of one -- with the </span>
-<span class="sd">following system:</span>
+<span class="sd">* **model**: specifies how neuron incorporates the synaptic input. Possible </span>
+<span class="sd">  options are ``conductance, current``, and ``jump``.</span>
+<span class="sd">* **kernel**: determines the dynamics of synaptic input. In other words, how</span>
+<span class="sd">  the strength of synaptic input changes over time. Possible options are </span>
+<span class="sd">  ``alpha``, ``biexp`` (for bi-exponential), ``exp`` (for exponential), and </span>
+<span class="sd">  ``cons`` (for constant).</span>
+
+
+<span class="sd">Model</span>
+<span class="sd">~~~~~</span>
+<span class="sd">From mathematical point of view, different models mean the following term in the </span>
+<span class="sd">neuron equation</span>
+
+<span class="sd">#. **conductance-based**: :math:`I_{syn}(t) = J_{max} g(t) (V_{post} - V_{pre})`</span>
+<span class="sd">#. **current-based**: :math:`I_{syn}(t) = J_{max} g(t)`</span>
+<span class="sd">#. **increment-based (jump)** : :math:`I_{syn}(t) = J_{max} g(t) \delta(t)`</span>
+
+<span class="sd">	</span>
+<span class="sd">in which :math:`g(t)` is the kernel (look below), and :math:`\delta(t)` is unitary </span>
+<span class="sd">Dirac&#39;s delta function that picks a specific strength for the synaptic input whenever</span>
+<span class="sd">a spike arrives. Note that the :math:`J_{max}` quantities have different unit in each </span>
+<span class="sd">model (respectively simense, ampre, and volt/s in SI units). </span>
+
+<span class="sd">.. note::</span>
+<span class="sd">    We do not include a synaptic current term for ``jump`` model. Instead, we use the ``on_pre``</span>
+<span class="sd">    syntax of Brian to directly apply this jump. Consequently, the strength of the jump,  </span>
+<span class="sd">    :math:`J_{max}`, must have a unit of volts.</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">Kernel</span>
+<span class="sd">~~~~~~</span>
+<span class="sd">Kernels, are unitless functions that control the temporal characteristics of the synaptic </span>
+<span class="sd">input. **It is important to remember that the kernels, by design are NOT bounded**. The </span>
+<span class="sd">following kernels are available (look below to see which ones are available):</span>
+
+<span class="sd">#. **constant** (``const``): :math:`g(t) = 1`</span>
+<span class="sd">#. **exponential** (``exp``): :math:`g(t) = \exp(-t/\\tau)`</span>
+<span class="sd">#. **alpha** (``alpha``): :math:`g(t) = A \\frac{t}{\\tau} \exp(-t/\\tau)`</span>
+<span class="sd">#. **bi-exponential** (``biexp``): :math:`g(t) = A \\frac{\\tau_2}{\\tau_2 - \\tau_1} [ \exp(-t/\\tau_1) - \exp(-t/\\tau_2) ]`</span>
+
+<span class="sd">    </span>
+<span class="sd">In which the coefficient :math:`A` max-normalizes the kernel to 1. In brian, these kernels</span>
+<span class="sd">are implemented as first-order ordinary differential equations. For instance, for ``alpha``</span>
+<span class="sd">the kernel is modeled as </span>
 
 <span class="sd">..  code-block:: python</span>
 
@@ -268,47 +297,62 @@
 <span class="sd">    on_pre = &#39;&#39;&#39;h += exp(1)&#39;&#39;&#39;  # takes care of the max-normalizing to 1</span>
 <span class="sd">    </span>
 
-
-<span class="sd">Computationally, in Brian the first two require a ``I_syn`` term in the neuronal</span>
-<span class="sd">equations that needs to be evaluated on every single timestep. One the </span>
-<span class="sd">contrary, voltage-based synapses only manipulate the potential of the </span>
-<span class="sd">post-synapse upon arrival of the presynaptic spike. Therefore, voltage-based </span>
-<span class="sd">synapse is computationally cheaper, immensely. In Brian, current/conductance-based </span>
-<span class="sd">synapses must be handled as ``(clock-driven)`` states whereas the voltage-based </span>
-<span class="sd">one can be computed in a ``(event-driven)`` fashion. Also look at </span>
-<span class="sd">(`Brian documentation`_) for more detail.</span>
-
-
-<span class="sd">It&#39;s however possible to transfer the current-based synapse to the voltage-based</span>
-<span class="sd">one with the following assumption:</span>
-<span class="sd">    </span>
 <span class="sd">.. note::</span>
-<span class="sd">    **Asumption**: The total current injected to the cell via a single spike </span>
-<span class="sd">    leads to a  certain voltage increament. Setting :math:`V_{max}` equal to </span>
-<span class="sd">    this increment, we can make an voltage-based synapse from the current-based </span>
-<span class="sd">    one.</span>
+<span class="sd">    ``biexp`` kernel is still under development and is not tested yet.</span>
 <span class="sd">    </span>
-<span class="sd">This assumption leads to the scaling :math:`V_{max} = \\frac{I_{max} \\tau_s}{C} e`.</span>
-<span class="sd">(The facter e is due to scaling of alpha function.)</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">========================</span>
+<span class="sd">Conversion to jump model</span>
+<span class="sd">========================</span>
+<span class="sd">To avoide long run-times, one can convert the ``clock-driven`` models to</span>
+<span class="sd">``event-driven`` voltage-increment ones by equating the total injected </span>
+<span class="sd">charge to the membrane upon arrival of a spike. For instance, for a </span>
+<span class="sd">current-based synapse model we can write</span>
+
+<span class="sd">.. math:: </span>
+<span class="sd">	q = \int I_{max}g(t) dt \equiv C\ V_{max}</span>
+
+
+<span class="sd">where :math:`V_{max}` is the equivalent increment in the membrane potential. </span>
+<span class="sd">Performing the integration we get</span>
+
+<span class="sd">#. ``exp``: :math:`V_{max} = \\frac{I_{max} \\tau_s}{C}`.</span>
+<span class="sd">#. ``alpha``: :math:`V_{max} = \\frac{I_{max} \\tau_s}{C} e`. (Factor e is due </span>
+<span class="sd">   to normalization of alpha kernel).</span>
+<span class="sd">#. ``biexp``: :math:`V_{max} = ???` (TODO :D ).</span>
+
+
+<span class="sd">This a utility function that transforms current-based models to increment-based</span>
+<span class="sd">ones is implemented as a method of ``Simulate`` class. </span>
+
+<span class="sd">.. note::</span>
+<span class="sd">   Such equivalence is only possible for decaying kernels. Therefore, constant</span>
+<span class="sd">   kernel cannot be converted. Furthermore, conductance-based models, due to</span>
+<span class="sd">   their dependence on both pre and post voltages are not amenable to this </span>
+<span class="sd">   equivalence. </span>
 
 <span class="sd">.. warning::</span>
-<span class="sd">    This equivalence is not mathematically rigorous. A current-based method</span>
-<span class="sd">    computationally computes the voltage increment according to</span>
+<span class="sd">    This equivalence is not mathematically rigorous. A general non-jumping </span>
+<span class="sd">    model computes the voltage increment due to synaptic inputs according to</span>
 <span class="sd">    </span>
 <span class="sd">    .. math::</span>
-<span class="sd">    	dv = \int \sum_k f(t-t_k) dt + ...</span>
+<span class="sd">        Cv(t) = \int (I_{syn}(t) + ...) dt = \int (\sum_k I_k(t) + ... ) dt </span>
 
-<span class="sd">    whereas a voltage based method as introduced above incorporates spikes as</span>
+<span class="sd">    with $k$ enumerating the afferent fibers to a neuron. Yet, increment-based </span>
+<span class="sd">    model, assumes that each spike is independt from the others. Therefore, </span>
+<span class="sd">    every spike induces the same amount of potentiation (or depression). </span>
+<span class="sd">    Mathematically, this translates to membrane voltage increment according to</span>
 <span class="sd">    </span>
 <span class="sd">    .. math::</span>
-<span class="sd">    	dv = \sum_k \int f(t-t_k) dt + ...</span>
+<span class="sd">    	Cv(t) = \int (I_{syn}(t) + ...) dt = \sum_k \int I_k(t) dt + \int (...) dt </span>
 <span class="sd">        </span>
-<span class="sd">    assuming that the spilkes are essentially independent. This assumption is </span>
-<span class="sd">    true for sparse spiking patterns, or when :math:`\\tau_s \ll \\tau_m`, meaning</span>
-<span class="sd">    that the membrane voltage is essentially in tact throughout the synaptic </span>
-<span class="sd">    dynamics.</span>
+<span class="sd">    Therefore, such an equivalence is true if spiking patterns is sparse, </span>
+<span class="sd">    or when :math:`\\tau_s \ll \\tau_m`, meaning that the synaptic dynamic is </span>
+<span class="sd">    so rapid that the membrane essentially doesn&#39;t resolve it. In other words,</span>
+<span class="sd">    one when timescale seperation is possible.</span>
 <span class="sd">    </span>
-
+<span class="sd">    </span>
 <span class="sd">.. _Brian documentation: https://brian2.readthedocs.io/en/stable/user/synapses.html?highlight=event-driven#event-driven-updates</span>
 <span class="sd">.. _notebook: https://nest-simulator.readthedocs.io/en/v3.3/model_details/noise_generator.html</span>
 <span class="sd">.. _[2]: https://www.researchgate.net/publication/260254488_Equation-oriented_specification_of_neural_models_for_simulations</span>
@@ -327,7 +371,7 @@
 <span class="sd">    :type pop_name: str</span>
 <span class="sd">    :param pops_cfg: population configuration</span>
 <span class="sd">    :type pops_cfg: dict</span>
-<span class="sd">    :param syn_base: synapse model base (infered from the config dicts)</span>
+<span class="sd">    :param syn_base: synapse model and kernel (inferred from the config dicts)</span>
 <span class="sd">    :type syn_base: str</span>
 <span class="sd">    :return: Brian Equation object for neuron</span>
 <span class="sd">    :rtype: Brian Equation object</span>
@@ -344,7 +388,8 @@
     <span class="n">noise_dt</span> <span class="o">=</span> <span class="n">pops_cfg</span><span class="p">[</span><span class="n">pop_name</span><span class="p">][</span><span class="s1">&#39;noise&#39;</span><span class="p">][</span><span class="s1">&#39;noise_dt&#39;</span><span class="p">]</span>
     <span class="n">tmp</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;noise_dt&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">noise_dt</span><span class="o">/</span><span class="n">b2</span><span class="o">.</span><span class="n">ms</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;*ms&#39;</span><span class="p">)</span>
     
-    <span class="k">if</span> <span class="s1">&#39;voltage&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">syn_base</span><span class="p">:</span>
+    <span class="n">kernel</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">syn_base</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="c1"># identify kernel and model</span>
+    <span class="k">if</span> <span class="n">model</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;conductance&#39;</span><span class="p">,</span> <span class="s1">&#39;current&#39;</span><span class="p">]:</span>
         <span class="n">eqs_str</span><span class="o">=</span> <span class="n">tmp</span> <span class="o">+</span> <span class="s1">&#39;&#39;&#39;dv/dt = (E-v)/tau + (noise_pop + I_syn)/C : volt (unless refractory)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
         <span class="n">I_syn_components</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">src_name</span> <span class="ow">in</span> <span class="n">pops_cfg</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
@@ -396,62 +441,112 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     
+    <span class="c1"># equation templates</span>
     <span class="n">tmp_alpha</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
 <span class="s1">        dg/dt = (-g+h) / tau : 1 (clock-driven)</span>
 <span class="s1">        dh/dt = -h / tau : 1 (clock-driven)</span>
 <span class="s1">        &#39;&#39;&#39;</span>
-        
+    
+    <span class="n">tmp_biexp</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;&#39;&#39;&#39;</span> <span class="c1"># TODO    </span>
+    
     <span class="n">tmp_exp</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
 <span class="s1">        dg/dt = -g / tau : 1 (clock-driven)</span>
 <span class="s1">        &#39;&#39;&#39;</span>
     
-    <span class="n">on_post</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
     
-    <span class="k">if</span> <span class="n">syn_base</span><span class="o">==</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">:</span>
-        <span class="c1"># J is the post-synaptic current injection </span>
-        <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">tmp_alpha</span>
-        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;J : amp (shared)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
-        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;I_syn_</span><span class="si">{}</span><span class="s1">_post = J*g: amp (summed)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">conn_name</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="c1"># Constructing equations</span>
+    <span class="n">kernel</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">syn_base</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="c1"># identify kernel and model</span>
+    
+    <span class="c1"># kernel related components (only traces updates are given here)</span>
+    <span class="k">if</span> <span class="n">kernel</span> <span class="o">==</span> <span class="s1">&#39;alpha&#39;</span><span class="p">:</span>
+    	<span class="n">eqs_str</span> <span class="o">=</span> <span class="n">tmp_alpha</span>
+    	<span class="n">on_pre</span> <span class="o">=</span> <span class="s1">&#39;h += exp(1)&#39;</span> 
+    
+    <span class="k">elif</span> <span class="n">kernel</span><span class="o">==</span> <span class="s1">&#39;biexp&#39;</span><span class="p">:</span>
+    	<span class="n">eqs_str</span> <span class="o">=</span> <span class="n">tmp_biexp</span>
+    	<span class="n">on_pre</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> <span class="c1"># TODO: we have to decide how do we normalize exp kernel</span>
+    
+    <span class="k">elif</span> <span class="n">kernel</span><span class="o">==</span> <span class="s1">&#39;exp&#39;</span><span class="p">:</span>
+    	<span class="n">eqs_str</span> <span class="o">=</span> <span class="n">tmp_exp</span>
+    	<span class="n">on_pre</span> <span class="o">=</span> <span class="s1">&#39;g += 1&#39;</span> <span class="c1"># TODO: we have to decide how do we normalize exp kernel</span>
         
-        <span class="n">on_pre</span>  <span class="o">=</span> <span class="s1">&#39;&#39;&#39;h+=exp(1)&#39;&#39;&#39;</span> <span class="c1"># to scale the max to 1</span>
-        
-    <span class="k">elif</span> <span class="n">syn_base</span><span class="o">==</span><span class="s1">&#39;alpha_conductance&#39;</span><span class="p">:</span>
-        <span class="c1"># J is the maximum conductance</span>
-        <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">tmp_alpha</span>
-        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;J : siemens (shared)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
-        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;Erev : volt (shared)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
-        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;I_syn_</span><span class="si">{}</span><span class="s1">_post = J*g*(v_post-Erev): amp </span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">conn_name</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        
-        <span class="n">on_pre</span>  <span class="o">=</span> <span class="s1">&#39;&#39;&#39;h+=1&#39;&#39;&#39;</span> <span class="c1"># have not tested yet</span>
-        
-    <span class="k">elif</span> <span class="n">syn_base</span><span class="o">==</span><span class="s1">&#39;alpha_voltage&#39;</span><span class="p">:</span>
-        <span class="c1"># J is the post-synaptic voltage increment</span>
-        <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">tmp_alpha</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;clock-driven&#39;</span><span class="p">,</span> <span class="s1">&#39;event-driven&#39;</span><span class="p">)</span>
-        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;J: volt (shared)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>  
-        
-        <span class="n">on_pre</span>  <span class="o">=</span> <span class="s1">&#39;&#39;&#39;h+=exp(1)&#39;&#39;&#39;</span> <span class="c1"># don&#39;t know why this works but exp(1) not</span>
-        <span class="n">on_pre</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;</span><span class="se">\n</span><span class="s1">v_post += J*g&#39;&#39;&#39;</span>
-        
-    <span class="k">elif</span> <span class="n">syn_base</span><span class="o">==</span><span class="s1">&#39;exp_voltage&#39;</span><span class="p">:</span>
-        <span class="c1"># J is the post-synaptic voltage increment</span>
-        <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">tmp_exp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;clock-driven&#39;</span><span class="p">,</span> <span class="s1">&#39;event-driven&#39;</span><span class="p">)</span>
-        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;J: volt (shared)&#39;&#39;&#39;</span>  
-        
-        <span class="n">on_pre</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;g+=1&#39;&#39;&#39;</span> <span class="c1"># have not tested yet</span>
-        <span class="n">on_pre</span><span class="o">+=</span> <span class="s1">&#39;&#39;&#39;</span><span class="se">\n</span><span class="s1">v_post += J&#39;&#39;&#39;</span>
-
-
-    <span class="k">elif</span> <span class="n">syn_base</span><span class="o">==</span><span class="s1">&#39;delta_voltage&#39;</span><span class="p">:</span>
-        <span class="n">eqs_str</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;J: volt (shared)&#39;&#39;&#39;</span>  
-        
-        <span class="n">on_pre</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span><span class="se">\n</span><span class="s1">v_post += J*exp(1)&#39;&#39;&#39;</span> <span class="c1"># to match it with the alpha_current</span>
+    <span class="k">elif</span> <span class="n">kernel</span><span class="o">==</span><span class="s1">&#39;const&#39;</span> <span class="p">:</span> <span class="c1"># constant kernel</span>
+    	<span class="n">eqs_str</span> <span class="o">=</span> <span class="s1">&#39;g = 1 : 1&#39;</span>
+    	<span class="n">on_pre</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> <span class="c1"># no </span>
     
     <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">syn_base</span><span class="p">)</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;synaptic kernel type </span><span class="si">{}</span><span class="s1"> is not recognized!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kernel</span><span class="p">))</span>
+    
+    
+    <span class="c1"># model related components (pre/post updates are prescribed here)</span>
+    <span class="k">if</span> <span class="n">model</span><span class="o">==</span><span class="s1">&#39;conductance&#39;</span><span class="p">:</span>
+        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;J : siemens (shared)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
+        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;Erev : volt (shared)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
+        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;I_syn_</span><span class="si">{}</span><span class="s1">_post = J*g*(v_post-Erev): amp (summed)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">conn_name</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         
+    <span class="k">elif</span> <span class="n">model</span><span class="o">==</span><span class="s1">&#39;current&#39;</span><span class="p">:</span>
+        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;J : amp (shared)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
+        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;I_syn_</span><span class="si">{}</span><span class="s1">_post = J*g: amp  (summed)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">conn_name</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    
+    <span class="k">elif</span> <span class="n">model</span><span class="o">==</span><span class="s1">&#39;jump&#39;</span><span class="p">:</span>
+    	<span class="n">eqs_str</span> <span class="o">=</span> <span class="n">eqs_str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;clock-driven&#39;</span><span class="p">,</span> <span class="s1">&#39;event-driven&#39;</span><span class="p">)</span>
+    	<span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;</span><span class="se">\n</span><span class="s1">J: volt (shared)&#39;&#39;&#39;</span>
+    	<span class="n">on_pre</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;</span><span class="se">\n</span><span class="s1">v_post += J*g&#39;&#39;&#39;</span>        
+    
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;synaptic model type </span><span class="si">{}</span><span class="s1"> is not recognized!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
+    
+    <span class="n">on_post</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+    
+    
+    <span class="c1"># if syn_base==&#39;alpha_conductance&#39;:</span>
+    <span class="c1">#     # J is the maximum conductance</span>
+    <span class="c1">#     eqs_str = tmp_alpha</span>
+    <span class="c1">#     eqs_str += &#39;&#39;&#39;J : siemens (shared)\n&#39;&#39;&#39;</span>
+    <span class="c1">#     eqs_str += &#39;&#39;&#39;Erev : volt (shared)\n&#39;&#39;&#39;</span>
+    <span class="c1">#     eqs_str += &#39;&#39;&#39;I_syn_{}_post = J*g*(v_post-Erev): amp \n&#39;&#39;&#39;.format(conn_name[0])</span>
+        
+    <span class="c1">#     on_pre  = &#39;&#39;&#39;h+=1&#39;&#39;&#39; # have not tested yet</span>
+        
+    <span class="c1"># elif syn_base==&#39;alpha_current&#39;:</span>
+    <span class="c1">#     # J is the post-synaptic current injection </span>
+    <span class="c1">#     eqs_str = tmp_alpha</span>
+    <span class="c1">#     eqs_str += &#39;&#39;&#39;J : amp (shared)\n&#39;&#39;&#39;</span>
+    <span class="c1">#     eqs_str += &#39;&#39;&#39;I_syn_{}_post = J*g: amp (summed)\n&#39;&#39;&#39;.format(conn_name[0])</span>
+        
+    <span class="c1">#     on_pre  = &#39;&#39;&#39;h+=exp(1)&#39;&#39;&#39; # to scale the max to 1</span>
+        
+        
+    <span class="c1"># elif syn_base==&#39;alpha_voltage&#39;:</span>
+    <span class="c1">#     # J is the post-synaptic voltage increment</span>
+    <span class="c1">#     eqs_str = tmp_alpha.replace(&#39;clock-driven&#39;, &#39;event-driven&#39;)</span>
+    <span class="c1">#     eqs_str += &#39;&#39;&#39;J: volt (shared)\n&#39;&#39;&#39;  </span>
+        
+    <span class="c1">#     on_pre  = &#39;&#39;&#39;h+=exp(1)&#39;&#39;&#39; # don&#39;t know why this works but exp(1) not</span>
+    <span class="c1">#     on_pre += &#39;&#39;&#39;\nv_post += J*g&#39;&#39;&#39;</span>
+        
+    <span class="c1"># elif syn_base==&#39;exp_voltage&#39;:</span>
+    <span class="c1">#     # J is the post-synaptic voltage increment</span>
+    <span class="c1">#     eqs_str = tmp_exp.replace(&#39;clock-driven&#39;, &#39;event-driven&#39;)</span>
+    <span class="c1">#     eqs_str += &#39;&#39;&#39;J: volt (shared)&#39;&#39;&#39;  </span>
+        
+    <span class="c1">#     on_pre = &#39;&#39;&#39;g+=1&#39;&#39;&#39; # have not tested yet</span>
+    <span class="c1">#     on_pre+= &#39;&#39;&#39;\nv_post += J&#39;&#39;&#39;</span>
+
+
+    <span class="c1"># elif syn_base==&#39;delta_voltage&#39;:</span>
+    <span class="c1">#     eqs_str = &#39;&#39;&#39;J: volt (shared)&#39;&#39;&#39;  </span>
+        
+    <span class="c1">#     on_pre = &#39;&#39;&#39;\nv_post += J*exp(1)&#39;&#39;&#39; # to match it with the alpha_current</span>
+    
+    <span class="c1"># else:</span>
+    <span class="c1">#     print(syn_base)</span>
+    <span class="c1">#     raise NotImplementedError</span>
+        
+    <span class="c1"># TODO: adjust this as it won&#39;t work for bi-exp or constant kernels.</span>
     <span class="n">eqs</span> <span class="o">=</span> <span class="n">b2</span><span class="o">.</span><span class="n">Equations</span><span class="p">(</span><span class="n">eqs_str</span><span class="p">,</span> 
-                    <span class="n">tau</span> <span class="o">=</span> <span class="n">conn_cfg</span><span class="p">[</span><span class="n">conn_name</span><span class="p">][</span><span class="s1">&#39;synapse&#39;</span><span class="p">][</span><span class="s1">&#39;params&#39;</span><span class="p">][</span><span class="s1">&#39;tau&#39;</span><span class="p">])</span>
+                      <span class="n">tau</span> <span class="o">=</span> <span class="n">conn_cfg</span><span class="p">[</span><span class="n">conn_name</span><span class="p">][</span><span class="s1">&#39;synapse&#39;</span><span class="p">][</span><span class="s1">&#39;params&#39;</span><span class="p">][</span><span class="s1">&#39;tau&#39;</span><span class="p">])</span>
     
     <span class="k">return</span> <span class="n">eqs</span><span class="p">,</span> <span class="n">on_pre</span><span class="p">,</span> <span class="n">on_post</span></div>
 </pre></div>

@@ -99,7 +99,12 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="equations.html">equations module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="equations.html#noise-scaling">Noise scaling</a></li>
-<li class="toctree-l3"><a class="reference internal" href="equations.html#synaptic-model">Synaptic model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="equations.html#synapse-equations">Synapse equations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="equations.html#model">Model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="equations.html#kernel">Kernel</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="equations.html#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a></li>
@@ -180,7 +185,7 @@
 modules are auxillary utilities used here.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="simulate.Simulate">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">simulate.</span></span><span class="sig-name descname"><span class="pre">Simulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">net_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'I_net'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_connectivity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scalar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voltage_base_syn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">simulate.</span></span><span class="sig-name descname"><span class="pre">Simulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">net_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'I_net'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_connectivity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scalar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_event_driven</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>High-level object for simulating an anisotropic network in Brian.</p>
 <p>Initializes the simulator object for the given network configuration. 

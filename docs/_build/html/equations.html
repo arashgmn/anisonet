@@ -99,7 +99,12 @@
 </li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">equations module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#noise-scaling">Noise scaling</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#synaptic-model">Synaptic model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#synapse-equations">Synapse equations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#model">Model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kernel">Kernel</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a></li>
@@ -209,34 +214,57 @@ Var[q(t)_{Brian}] = 0 + t \sigma^2\end{split}\]</div>
 <div class="math notranslate nohighlight">
 \[\sigma^2_{Brian} = \sigma^2_{NEST} \Delta t_{NEST}\]</div>
 </section>
-<section id="synaptic-model">
-<h2>Synaptic model<a class="headerlink" href="#synaptic-model" title="Permalink to this heading">¶</a></h2>
-<p>There are three different conventional models for synapses:</p>
-<blockquote>
-<div><ol class="arabic simple">
-<li><p>conductance-based,</p></li>
-<li><p>current-based, and</p></li>
-<li><p>voltage-based</p></li>
+<section id="synapse-equations">
+<h2>Synapse equations<a class="headerlink" href="#synapse-equations" title="Permalink to this heading">¶</a></h2>
+<p>Synaptic inputs can be added to the neuron either by a current, or a prescribed jump
+in the voltage. By default, all synaptic states must be updated in each timestamp – 
+so-called <code class="docutils literal notranslate"><span class="pre">clock-driven</span></code> – which is very time consuming. However, if synapses 
+induces discret voltage jumps, for certain synaptic models, it is possible to update
+the synaptic inputs only when a spike arrives – thus, <code class="docutils literal notranslate"><span class="pre">event-driven</span></code>. This enhances
+the performance substatially. Also look at (<a class="reference external" href="https://brian2.readthedocs.io/en/stable/user/synapses.html?highlight=event-driven#event-driven-updates">Brian documentation</a>) for more detail.</p>
+<p>We use the following numenclature to explain possible synaptic models:</p>
+<ul class="simple">
+<li><p><strong>model</strong>: specifies how neuron incorporates the synaptic input. Possible 
+options are <code class="docutils literal notranslate"><span class="pre">conductance,</span> <span class="pre">current</span></code>, and <code class="docutils literal notranslate"><span class="pre">jump</span></code>.</p></li>
+<li><p><strong>kernel</strong>: determines the dynamics of synaptic input. In other words, how
+the strength of synaptic input changes over time. Possible options are 
+<code class="docutils literal notranslate"><span class="pre">alpha</span></code>, <code class="docutils literal notranslate"><span class="pre">biexp</span></code> (for bi-exponential), <code class="docutils literal notranslate"><span class="pre">exp</span></code> (for exponential), and 
+<code class="docutils literal notranslate"><span class="pre">cons</span></code> (for constant).</p></li>
+</ul>
+<section id="model">
+<h3>Model<a class="headerlink" href="#model" title="Permalink to this heading">¶</a></h3>
+<p>From mathematical point of view, different models mean the following term in the 
+neuron equation</p>
+<ol class="arabic simple">
+<li><p><strong>conductance-based</strong>: <span class="math notranslate nohighlight">\(I_{syn}(t) = J_{max} g(t) (V_{post} - V_{pre})\)</span></p></li>
+<li><p><strong>current-based</strong>: <span class="math notranslate nohighlight">\(I_{syn}(t) = J_{max} g(t)\)</span></p></li>
+<li><p><strong>increment-based (jump)</strong> : <span class="math notranslate nohighlight">\(I_{syn}(t) = J_{max} g(t) \delta(t)\)</span></p></li>
 </ol>
-</div></blockquote>
-<p>which, from the both mathematical and implementation perspective have 
-differences. From mathematical point of view, a conductance based synapse 
-is governed by:</p>
-<div class="math notranslate nohighlight">
-\[ \begin{align}\begin{aligned}I_{syn} = g_{max} g(t) (V_{post} - V_{pre})\\g(t) = \int_{-\infty}^t \sum_k f(t-t') \delta(t'-t_k) dt' = \sum_k f(t-t_k)\end{aligned}\end{align} \]</div>
-<p>A current-based synapse, on the other hand, describes the synaptic current as:</p>
-<div class="math notranslate nohighlight">
-\[I_{syn} = I_{max} \int_{-\infty}^t \sum_k f(t-t') \delta(t'-t_k) dt' = I_{max} \sum_k f(t-t_k)\]</div>
-<p>Finally, in voltage-based formulation we don’t describe the injected current, 
-but directly the increment in the membrane voltage:</p>
-<div class="math notranslate nohighlight">
-\[\Delta V_{syn} = V_{max} \int_{-\infty}^t \sum_k f(t-t') \delta(t'-t_k) dt' =  V_{max} \sum_k f(t-t_k)\]</div>
-<p>In all these formulations <span class="math notranslate nohighlight">\(f(t-t')\)</span> is a filter, often replaced by an 
-exponential, bi-exponential (with rise and decay time <span class="math notranslate nohighlight">\(\tau_r\)</span> and 
-<span class="math notranslate nohighlight">\(\tau_d\)</span>), and alpha function (equal rise and decay time), scaled by the
-<span class="math notranslate nohighlight">\(_{max}\)</span> qunatites. <span class="math notranslate nohighlight">\(\sum \delta(.)\)</span> is the incoming spike train. 
-Here we use the alpha function – scaled to a maximum of one – with the 
-following system:</p>
+<p>in which <span class="math notranslate nohighlight">\(g(t)\)</span> is the kernel (look below), and <span class="math notranslate nohighlight">\(\delta(t)\)</span> is unitary 
+Dirac’s delta function that picks a specific strength for the synaptic input whenever
+a spike arrives. Note that the <span class="math notranslate nohighlight">\(J_{max}\)</span> quantities have different unit in each 
+model (respectively simense, ampre, and volt/s in SI units).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>We do not include a synaptic current term for <code class="docutils literal notranslate"><span class="pre">jump</span></code> model. Instead, we use the <code class="docutils literal notranslate"><span class="pre">on_pre</span></code>
+syntax of Brian to directly apply this jump. Consequently, the strength of the jump,  
+<span class="math notranslate nohighlight">\(J_{max}\)</span>, must have a unit of volts.</p>
+</div>
+</section>
+<section id="kernel">
+<h3>Kernel<a class="headerlink" href="#kernel" title="Permalink to this heading">¶</a></h3>
+<p>Kernels, are unitless functions that control the temporal characteristics of the synaptic 
+input. <strong>It is important to remember that the kernels, by design are NOT bounded</strong>. The 
+following kernels are available (look below to see which ones are available):</p>
+<ol class="arabic simple">
+<li><p><strong>constant</strong> (<code class="docutils literal notranslate"><span class="pre">const</span></code>): <span class="math notranslate nohighlight">\(g(t) = 1\)</span></p></li>
+<li><p><strong>exponential</strong> (<code class="docutils literal notranslate"><span class="pre">exp</span></code>): <span class="math notranslate nohighlight">\(g(t) = \exp(-t/\tau)\)</span></p></li>
+<li><p><strong>alpha</strong> (<code class="docutils literal notranslate"><span class="pre">alpha</span></code>): <span class="math notranslate nohighlight">\(g(t) = A \frac{t}{\tau} \exp(-t/\tau)\)</span></p></li>
+<li><p><strong>bi-exponential</strong> (<code class="docutils literal notranslate"><span class="pre">biexp</span></code>): <span class="math notranslate nohighlight">\(g(t) = A \frac{\tau_2}{\tau_2 - \tau_1} [ \exp(-t/\tau_1) - \exp(-t/\tau_2) ]\)</span></p></li>
+</ol>
+<p>In which the coefficient <span class="math notranslate nohighlight">\(A\)</span> max-normalizes the kernel to 1. In brian, these kernels
+are implemented as first-order ordinary differential equations. For instance, for <code class="docutils literal notranslate"><span class="pre">alpha</span></code>
+the kernel is modeled as</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">dg/dt = -(g+h)/tau : 1</span>
 <span class="sd">dh/dt = -h/tau :1</span>
@@ -247,38 +275,53 @@ following system:</p>
 <span class="n">on_pre</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;h += exp(1)&#39;&#39;&#39;</span>  <span class="c1"># takes care of the max-normalizing to 1</span>
 </pre></div>
 </div>
-<p>Computationally, in Brian the first two require a <code class="docutils literal notranslate"><span class="pre">I_syn</span></code> term in the neuronal
-equations that needs to be evaluated on every single timestep. One the 
-contrary, voltage-based synapses only manipulate the potential of the 
-post-synapse upon arrival of the presynaptic spike. Therefore, voltage-based 
-synapse is computationally cheaper, immensely. In Brian, current/conductance-based 
-synapses must be handled as <code class="docutils literal notranslate"><span class="pre">(clock-driven)</span></code> states whereas the voltage-based 
-one can be computed in a <code class="docutils literal notranslate"><span class="pre">(event-driven)</span></code> fashion. Also look at 
-(<a class="reference external" href="https://brian2.readthedocs.io/en/stable/user/synapses.html?highlight=event-driven#event-driven-updates">Brian documentation</a>) for more detail.</p>
-<p>It’s however possible to transfer the current-based synapse to the voltage-based
-one with the following assumption:</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p><strong>Asumption</strong>: The total current injected to the cell via a single spike 
-leads to a  certain voltage increament. Setting <span class="math notranslate nohighlight">\(V_{max}\)</span> equal to 
-this increment, we can make an voltage-based synapse from the current-based 
-one.</p>
+<p><code class="docutils literal notranslate"><span class="pre">biexp</span></code> kernel is still under development and is not tested yet.</p>
 </div>
-<p>This assumption leads to the scaling <span class="math notranslate nohighlight">\(V_{max} = \frac{I_{max} \tau_s}{C} e\)</span>.
-(The facter e is due to scaling of alpha function.)</p>
+</section>
+</section>
+<section id="conversion-to-jump-model">
+<h2>Conversion to jump model<a class="headerlink" href="#conversion-to-jump-model" title="Permalink to this heading">¶</a></h2>
+<p>To avoide long run-times, one can convert the <code class="docutils literal notranslate"><span class="pre">clock-driven</span></code> models to
+<code class="docutils literal notranslate"><span class="pre">event-driven</span></code> voltage-increment ones by equating the total injected 
+charge to the membrane upon arrival of a spike. For instance, for a 
+current-based synapse model we can write</p>
+<div class="math notranslate nohighlight">
+\[q = \int I_{max}g(t) dt \equiv C\ V_{max}\]</div>
+<p>where <span class="math notranslate nohighlight">\(V_{max}\)</span> is the equivalent increment in the membrane potential. 
+Performing the integration we get</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">exp</span></code>: <span class="math notranslate nohighlight">\(V_{max} = \frac{I_{max} \tau_s}{C}\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">alpha</span></code>: <span class="math notranslate nohighlight">\(V_{max} = \frac{I_{max} \tau_s}{C} e\)</span>. (Factor e is due 
+to normalization of alpha kernel).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">biexp</span></code>: <span class="math notranslate nohighlight">\(V_{max} = ???\)</span> (TODO :D ).</p></li>
+</ol>
+<p>This a utility function that transforms current-based models to increment-based
+ones is implemented as a method of <code class="docutils literal notranslate"><span class="pre">Simulate</span></code> class.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Such equivalence is only possible for decaying kernels. Therefore, constant
+kernel cannot be converted. Furthermore, conductance-based models, due to
+their dependence on both pre and post voltages are not amenable to this 
+equivalence.</p>
+</div>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>This equivalence is not mathematically rigorous. A current-based method
-computationally computes the voltage increment according to</p>
+<p>This equivalence is not mathematically rigorous. A general non-jumping 
+model computes the voltage increment due to synaptic inputs according to</p>
 <div class="math notranslate nohighlight">
-\[dv = \int \sum_k f(t-t_k) dt + ...\]</div>
-<p>whereas a voltage based method as introduced above incorporates spikes as</p>
+\[Cv(t) = \int (I_{syn}(t) + ...) dt = \int (\sum_k I_k(t) + ... ) dt \]</div>
+<p>with $k$ enumerating the afferent fibers to a neuron. Yet, increment-based 
+model, assumes that each spike is independt from the others. Therefore, 
+every spike induces the same amount of potentiation (or depression). 
+Mathematically, this translates to membrane voltage increment according to</p>
 <div class="math notranslate nohighlight">
-\[dv = \sum_k \int f(t-t_k) dt + ...\]</div>
-<p>assuming that the spilkes are essentially independent. This assumption is 
-true for sparse spiking patterns, or when <span class="math notranslate nohighlight">\(\tau_s \ll \tau_m\)</span>, meaning
-that the membrane voltage is essentially in tact throughout the synaptic 
-dynamics.</p>
+\[Cv(t) = \int (I_{syn}(t) + ...) dt = \sum_k \int I_k(t) dt + \int (...) dt \]</div>
+<p>Therefore, such an equivalence is true if spiking patterns is sparse, 
+or when <span class="math notranslate nohighlight">\(\tau_s \ll \tau_m\)</span>, meaning that the synaptic dynamic is 
+so rapid that the membrane essentially doesn’t resolve it. In other words,
+one when timescale seperation is possible.</p>
 </div>
 <dl class="py function">
 <dt class="sig sig-object py" id="equations.get_nrn_eqs">
@@ -291,7 +334,7 @@ NEST and the paper are using a “current-alpha”, as opposed to “voltage-”
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>pop_name</strong> (<em>str</em>) – population name</p></li>
 <li><p><strong>pops_cfg</strong> (<em>dict</em>) – population configuration</p></li>
-<li><p><strong>syn_base</strong> (<em>str</em>) – synapse model base (infered from the config dicts)</p></li>
+<li><p><strong>syn_base</strong> (<em>str</em>) – synapse model and kernel (inferred from the config dicts)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -395,6 +438,7 @@ parameter <code class="docutils literal notranslate"><span class="pre">h</span><
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/_sphinx_javascript_frameworks_compat.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="None"></script>
       <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
   
