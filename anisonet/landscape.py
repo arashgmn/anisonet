@@ -12,7 +12,7 @@ a few assertion.
 import numpy as np
 from noise import pnoise2 as perlin    
 
-def make_landscape(gs, ls_type='random', ls_params={}, digitize=False) :
+def make_landscape(gs, config, digitize=False) :
     """
     Makes a landscape according for neural network placed on a square grid of 
     size ``gs``. The landscape has two components `rs` (the radial 
@@ -38,6 +38,12 @@ def make_landscape(gs, ls_type='random', ls_params={}, digitize=False) :
         symmetric and random cases, similar to `[1]`_ we flatten the disribution before 
         passing the landscape field to the network.  
     """
+    if config==None:
+    	ls_type = 'iso'
+    else:	
+        ls_type = config['type']
+        ls_params = config['params']
+    
     if ls_type=='homogeneous':
         assert 'phi' in ls_params.keys(), "phi value is needed for landscape "+ls_type
         assert 'r' in ls_params.keys(), "r value is needed for landscape "+ls_type
@@ -74,7 +80,7 @@ def make_landscape(gs, ls_type='random', ls_params={}, digitize=False) :
         phis = np.random.uniform(-np.pi, np.pi, size=gs**2)
         rs = np.ones(gs**2, dtype=int)*ls_params['r']
    
-    elif ls_type=='symmetric':
+    elif ls_type=='iso':
         phis = np.random.uniform(-np.pi, np.pi, size=gs**2)
         rs = np.zeros(gs**2, dtype=int)
         
