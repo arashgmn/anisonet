@@ -120,6 +120,7 @@ Use either of the following structures for the value of ``profile`` key:
    * ``scale``: perlin scale if type is ``"perlin"`` (int)
    * ``phi``: uniform anisotropic angle if type is ``"homogeneous"`` (float)
 
+    
 
 .. _[1]: https://doi.org/10.1371/journal.pcbi.1007432
 """
@@ -130,11 +131,41 @@ import numpy as np
 np.random.seed(18)
 
 
+def round_to_even(gs, scaler):
+    """
+    We better round things to even number for better visualization
+    """
+    rounded = round(gs/scaler)
+    if rounded%2:
+        rounded+=1
+    return int(rounded)
+
 def get_config(name='EI_net', scalar=3):
     """
     Generates the population and pathways config dictuinary only by providing 
     the name of the desired network.
     
+    .. note::
+        One should differetiate between homogeneity/randomness in angle and 
+        location. `[1]`_ used these terms somewhat loosely. We use the following 
+        terms for different setups:
+            
+            * ``homiso_net``: Homogenous and isotropic netowrk, equivalent to the fully
+              random graph of Erdos-Renyi.
+            * ``iso_net``: Isotropic but spatially inhomogeneous (in a locally 
+              conneted manner, although with a long-tailed radial profile one can
+              generate few long-range connection -- thus produce a small-world net).
+            * ``homo_net``: Connections are formed without dependence on the distance,
+              but angle.
+            * ``I_net``: the recurrent inhibitory network with radial and angular
+              profiles according to to `[1]`_.
+            * ``EI_net``: the recurrent inhibitory network with radial and angular
+              profiles according to to `[1]`_.
+
+        Also note that these structures are independent from how anisotropy is 
+        imposed.
+
+
     :param name: nework name. Either "I_net" or "EI_net", defaults to 'EI_net'
     :type name: str, optional
     :param scalar: scales down the network by a factor. The network must be 
@@ -144,10 +175,12 @@ def get_config(name='EI_net', scalar=3):
     :return: pops_cfg, conn_cfg 
     :rtype: tuple of dicts
 
+    .. _[1]: https://doi.org/10.1371/journal.pcbi.1007432
+
     """
     if name=='I_net':
         pops_cfg = {
-            'I': {'gs': round(100/scalar), 
+            'I': {'gs': round_to_even(100, scalar), 
                   'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
                   'cell': {'type': 'LIF', 
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
@@ -156,12 +189,12 @@ def get_config(name='EI_net', scalar=3):
             }
 
         conn_cfg = {
-            'II': {'ncons': round(1000/(scalar**2)), 'self_link':False, 
+            'II': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
                    'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
                    #'profile': {'type':'Gaussian', 'params': {'std': 3} },
                    'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': {'type': 'perlin', 'params': {'r': 1, 'scale':3}}
-                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':np.pi/6.}}
+                   'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}}
+                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/6.}}
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    #'anisotropy': {'type': 'symmetric', 'params': {}}
                    },
@@ -170,14 +203,14 @@ def get_config(name='EI_net', scalar=3):
         noiser = 1.
         meaner = 1
         pops_cfg = {
-            'I': {'gs': round(60/scalar), 
+            'I': {'gs': round_to_even(60, scalar), 
                   'noise': {'mu': 350*pA/meaner, 'sigma': 100*pA/noiser, 'noise_dt': 1*ms},
                   'cell': {'type': 'LIF', 
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
                            'tau': 10*ms, 'C': 250*pF}
                   },
             
-            'E': {'gs': round(120/scalar), 
+            'E': {'gs': round_to_even(120, scalar), 
                   'noise': {'mu': 350*pA/meaner, 'sigma': 100*pA/noiser, 'noise_dt': 1*ms},
                   'cell': {'type': 'LIF', 
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
@@ -186,39 +219,40 @@ def get_config(name='EI_net', scalar=3):
         }
 
         conn_cfg = {
-            'EE': {'ncons': round(720/(scalar**2)), 'self_link':False, 
+            'EE': {'ncons': round_to_even(720, scalar**2), 'self_link':False, 
                   #'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
                   'profile': {'type':'Gaussian', 'params': {'std': 9/scalar} },
                   'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms} },
-                  'anisotropy': {'type': 'perlin', 'params': {'scale': 3, 'r':1}},
+                  #'anisotropy': {'type': 'perlin', 'params': {'scale': 3, 'r':np.sqrt(2)}},
                   #'anisotropy': {'type': 'symmetric', 'params': {}}
-                  #'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':np.pi/6.}}
+                  'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':np.pi/6.}}
                   },
             
-            'EI': {'ncons': round(180/(scalar**2)), 'self_link':False, 
+            'EI': {'ncons': round_to_even(180, scalar**2), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 4.5/scalar}},
                    'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': {'type': 'symmetric', 'params': {}}
+                   'anisotropy': {'type': 'random', 'params': {'r': 1,}},
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    },
             
-            'IE': {'ncons': round(720/(scalar**2)), 'self_link':False, 
+            'IE': {'ncons': round_to_even(720, scalar**2), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 12/scalar}},
                    'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': {'type': 'symmetric', 'params': {}}
+                   'anisotropy': {'type': 'random', 'params': {'r': 1,}},
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    },
 
-            'II': {'ncons': round(180/(scalar**2)), 'self_link':False, 
+            'II': {'ncons': round_to_even(180, scalar**2), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 6/scalar}},
                    'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': {'type': 'symmetric', 'params': {}}
+                   'anisotropy': {'type': 'random', 'params': {'r': 1,}},
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    },
         }
-    elif name=='iso_net':
+        
+    elif name=='homo_net':
         pops_cfg = {
-            'I': {'gs': round(100/scalar), 
+            'I': {'gs': round_to_even(100, scalar), 
                   'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
                   'cell': {'type': 'LIF', 
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
@@ -227,15 +261,50 @@ def get_config(name='EI_net', scalar=3):
             }
 
         conn_cfg = {
-            'II': {'ncons': round(1000/(scalar**2)), 'self_link':False, 
+            'II': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
                    'profile': None,
                    'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': {'type': 'perlin', 'params': {'r': 1, 'scale':3}}
-                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':0*np.pi/4.}}
-                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
-                   #'anisotropy': {'type': 'symmetric', 'params': {}}
+                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/6.}}
+                   'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}}
                    },
         }    
+        
+    elif name=='iso_net':
+        pops_cfg = {
+            'I': {'gs': round_to_even(100, scalar), 
+                  'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
+                  'cell': {'type': 'LIF', 
+                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                           'tau':10*ms, 'C': 250*pF}
+                          }
+            }
+
+        conn_cfg = {
+            'II': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
+                   'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
+                   'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'anisotropy': None
+                   },
+        }    
+
+    elif name=='homiso_net':
+        pops_cfg = {
+            'I': {'gs': round_to_even(100, scalar), 
+                  'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
+                  'cell': {'type': 'LIF', 
+                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                           'tau':10*ms, 'C': 250*pF}
+                          }
+            }
+
+        conn_cfg = {
+            'II': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
+                   'profile': None,
+                   'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'anisotropy': None
+                   },
+        }    
+    
     else:
         raise
     
