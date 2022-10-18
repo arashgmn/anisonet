@@ -208,7 +208,6 @@ def plot_field(field, figpath, vmin=None, vmax=None, phis=None):
     plt.colorbar(m)
     
     if phis is not None:
-        print(phis.shape)
         overlay_phis(phis, ax)
         
     plt.savefig(figpath, dpi=200, bbox_inches='tight')
@@ -328,7 +327,7 @@ def plot_realized_landscape(sim):
             post_cntr = (t_coords-s_coord).astype(float) # centers
             post_cntr -= np.fix(post_cntr/(gs_t/2)) *gs_t # make periodic
             phis[s_idx] = np.arctan2(post_cntr[:,1].mean(), post_cntr[:,0].mean())
-       
+            #phis[s_idx] = np.arctan2(post_cntr[:,1], post_cntr[:,0]).mean()
         
         figpath = osjoin(sim.res_path, sim.name + '_realized_phi_'+ key+'.png')
         plot_field(phis.reshape(gs_s, gs_s), figpath=figpath, vmin=-np.pi, vmax=np.pi)
@@ -370,7 +369,7 @@ def plot_connectivity(sim):
         plt.savefig(figpath, bbox_inches='tight', dpi=200)
         plt.close()
 
-def overlay_phis(phis, ax, size=5, color='k', scale=30, **kwargs):
+def overlay_phis(phis, ax, size=5, color='k', scale=0.3, **kwargs):
     gs = len(phis)
     if len(phis.shape)==1:
         gs = np.sqrt(gs).astype(int)
@@ -380,7 +379,7 @@ def overlay_phis(phis, ax, size=5, color='k', scale=30, **kwargs):
         
     X,Y = np.meshgrid(np.arange(gs), np.arange(gs))
     
-    # we need to adjust the gating size if it is not divisible to the grid size
+    #we need to adjust the gating size if it is not divisible to the grid size
     adjust_needed = gs%size # 
     
     # in case size adjustment is needed, we do so by hopping up and down around
@@ -395,15 +394,19 @@ def overlay_phis(phis, ax, size=5, color='k', scale=30, **kwargs):
     while adjust_needed:
         # this spans back and forth for a good size
         size += (-1)**counter * (counter)
-        if size>0:
+        if size>1:
             adjust_needed = gs%size        
-        
-    
+        else:
+            adjust_needed = True
+        counter+= 1
+            
+    print('gridsize: {}   gating size: {}'.format(gs, size))
     s = np.sin(phi).reshape(gs//size, size, gs//size, size).mean(axis=(1, 3))
     c = np.cos(phi).reshape(gs//size, size, gs//size, size).mean(axis=(1, 3))
     
     ax.quiver(X[::size, ::size] + size/2, Y[::size, ::size] + size/2,
               c, s, 
+              units='xy', 
               color=color, scale=scale, **kwargs)
     
 def plot_firing_rates_dist(sim):
