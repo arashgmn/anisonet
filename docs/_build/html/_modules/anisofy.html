@@ -238,7 +238,7 @@
 <span class="sd">    #. ``positive-rotate``: A rotation-based method that constraints the point </span>
 <span class="sd">       cloud to positive x values before rotation. Thus, differentiates between </span>
 <span class="sd">       angle :math:`\\theta` and :math:`2\pi - \\theta`. </span>
-<span class="sd">    #. ``squeeze-positive-rotate``: combination of last two methods.</span>
+<span class="sd">    #. ``positive-squeeze-rotate``: combination of last two methods.</span>
 <span class="sd">     </span>
 <span class="sd">Dispalcement-based</span>
 <span class="sd">~~~~~~~~~~~~~~~~~~</span>
@@ -267,8 +267,8 @@
 
 <span class="sd">Squeeze positive rotation</span>
 <span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~</span>
-<span class="sd">Combines the two method above by first squeezing, then converting to positive</span>
-<span class="sd">x values, and then rotating.</span>
+<span class="sd">Combines the two method above by first converting to positive x values, and </span>
+<span class="sd">then squeezing followed by rotating.</span>
 
 
 <span class="sd">Other methods can be exercised as well.</span>
@@ -661,7 +661,7 @@
         
         <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">rot</span> <span class="o">@</span> <span class="n">r0</span>
 
-    <span class="k">elif</span> <span class="n">method</span><span class="o">==</span><span class="s1">&#39;postive-squeeze-rotate&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">method</span><span class="o">==</span><span class="s1">&#39;positive-squeeze-rotate&#39;</span><span class="p">:</span>
         <span class="n">r0</span><span class="p">[</span><span class="mi">0</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">r0</span><span class="p">[</span><span class="mi">0</span><span class="p">,:])</span> 
         <span class="n">sqz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="mi">1</span><span class="o">+</span><span class="n">r</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">r</span><span class="p">)])</span>
         <span class="n">rot</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_euler</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">phi</span><span class="p">)</span><span class="o">.</span><span class="n">as_matrix</span><span class="p">()[:</span><span class="mi">2</span><span class="p">,:</span><span class="mi">2</span><span class="p">]</span>

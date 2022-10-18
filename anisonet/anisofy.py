@@ -54,7 +54,7 @@ in this cloud. The API accepts the following values which are explained below:
     #. ``positive-rotate``: A rotation-based method that constraints the point 
        cloud to positive x values before rotation. Thus, differentiates between 
        angle :math:`\\theta` and :math:`2\pi - \\theta`. 
-    #. ``squeeze-positive-rotate``: combination of last two methods.
+    #. ``positive-squeeze-rotate``: combination of last two methods.
      
 Dispalcement-based
 ~~~~~~~~~~~~~~~~~~
@@ -83,8 +83,8 @@ Then, it rotates the (now half-circular) point cloud without squeezign it.
 
 Squeeze positive rotation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-Combines the two method above by first squeezing, then converting to positive
-x values, and then rotating.
+Combines the two method above by first converting to positive x values, and 
+then squeezing followed by rotating.
 
 
 Other methods can be exercised as well.
@@ -477,7 +477,7 @@ def make_anisotropic(x,y, lscp, method='shift'):
         
         x, y = rot @ r0
 
-    elif method=='postive-squeeze-rotate':
+    elif method=='positive-squeeze-rotate':
         r0[0,:] = np.abs(r0[0,:]) 
         sqz = np.diag([1+r, 1/(1+r)])
         rot = R.from_euler('z', phi).as_matrix()[:2,:2]

@@ -241,7 +241,7 @@ cloud</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">positive-rotate</span></code>: A rotation-based method that constraints the point 
 cloud to positive x values before rotation. Thus, differentiates between 
 angle <span class="math notranslate nohighlight">\(\theta\)</span> and <span class="math notranslate nohighlight">\(2\pi - \theta\)</span>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">squeeze-positive-rotate</span></code>: combination of last two methods.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">positive-squeeze-rotate</span></code>: combination of last two methods.</p></li>
 </ol>
 </div></blockquote>
 <section id="dispalcement-based">
@@ -270,8 +270,8 @@ Then, it rotates the (now half-circular) point cloud without squeezign it.</p>
 </section>
 <section id="squeeze-positive-rotation">
 <h3>Squeeze positive rotation<a class="headerlink" href="#squeeze-positive-rotation" title="Permalink to this heading">¶</a></h3>
-<p>Combines the two method above by first squeezing, then converting to positive
-x values, and then rotating.</p>
+<p>Combines the two method above by first converting to positive x values, and 
+then squeezing followed by rotating.</p>
 <p>Other methods can be exercised as well.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="anisofy.draw_posts">
