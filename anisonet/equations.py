@@ -70,7 +70,7 @@ We use the following numenclature to explain possible synaptic models:
 * **kernel**: determines the dynamics of synaptic input. In other words, how
   the strength of synaptic input changes over time. Possible options are 
   ``alpha``, ``biexp`` (for bi-exponential), ``exp`` (for exponential), and 
-  ``cons`` (for constant).
+  ``const`` (for constant).
 
 
 Model
@@ -184,7 +184,7 @@ ones is implemented as a method of ``Simulate`` class.
 """
 
 import brian2 as b2
-
+import copy
 
 def get_nrn_eqs(pop_name, pops_cfg, syn_base):    
     """
@@ -278,10 +278,15 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
         dg/dt = -g / tau : 1 (clock-driven)
         '''
     
+    tmp_tsodysk_markram = '''
+        dx/dt = (1-x)/tau_d: 1 (clock-driven)
+        du/dt = (U-u)/tau_f: 1 (clock-driven)
+        g: 1
+    '''
     
     # Constructing equations
     kernel, model = syn_base.split('_') # identify kernel and model
-    
+    print(kernel, model)
     # kernel related components (only traces updates are given here)
     if kernel == 'alpha':
     	eqs_str = tmp_alpha
@@ -299,8 +304,16 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
     	eqs_str = 'g = 1 : 1'
     	on_pre = '' # no 
     
+    elif kernel=='tsodysk-markram':
+        eqs_str = tmp_tsodysk_markram
+        on_pre = '''
+            u += U * (1 - u)
+            g = u * x
+            x = x-g
+        '''
+    
     else:
-        raise NotImplementedError('synaptic kernel type {} is not recognized!'.format(kernel))
+        raise NotImplementedError('synaptic kernel type "{}" is not recognized!'.format(kernel))
     
     
     # model related components (pre/post updates are prescribed here)
@@ -314,12 +327,12 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
         eqs_str += '''I_syn_{}_post = J*g: amp  (summed)\n'''.format(conn_name[0])
     
     elif model=='jump':
-    	eqs_str = eqs_str.replace('clock-driven', 'event-driven')
+    	eqs_str = eqs_str#.replace('clock-driven', 'event-driven')
     	eqs_str += '''\nJ: volt (shared)'''
     	on_pre += '''\nv_post += J*g'''        
     
     else:
-        raise NotImplementedError('synaptic model type {} is not recognized!'.format(model))
+        raise NotImplementedError('synaptic model type "{}" is not recognized!'.format(model))
     
     on_post = ''
 
@@ -369,8 +382,9 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
     #     print(syn_base)
     #     raise NotImplementedError
         
-    # TODO: adjust this as it won't work for bi-exp or constant kernels.
-    eqs = b2.Equations(eqs_str, 
-                      tau = conn_cfg[conn_name]['synapse']['params']['tau'])
+    eqs = b2.Equations(eqs_str)
+    namspace = copy.deepcopy(conn_cfg[conn_name]['synapse']['params'])
+    namspace.pop('J')
+
+    return eqs, on_pre, on_post, namspace
     
-    return eqs, on_pre, on_post

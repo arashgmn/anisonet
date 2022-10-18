@@ -1,6 +1,5 @@
 anisonet/__pycache__/
 anisonet/.ipynb_checkpoints
-tests
 anisonet/tmp
 anisonet/results/
 anisonet/*_net/
