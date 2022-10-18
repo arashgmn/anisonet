@@ -83,7 +83,11 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../modules.html">anisonet</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../anisofy.html">anisofy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../anisofy.html">anisofy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#dispalcement-based">Dispalcement-based</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#rotation-based">Rotation-based</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../configs.html">configs module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../configs.html#population-s-configuration">Population’s configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../configs.html#pathways-configuration">Pathways’ configuration</a><ul>
@@ -96,7 +100,12 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../equations.html">equations module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../equations.html#noise-scaling">Noise scaling</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../equations.html#synaptic-model">Synaptic model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../equations.html#synapse-equations">Synapse equations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../equations.html#model">Model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../equations.html#kernel">Kernel</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../equations.html#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../landscape.html">landscape module</a></li>
@@ -126,7 +135,7 @@
 
       <div class="wy-nav-content">
         
-        <div class="rst-content">
+        <div class="rst-content style-external-links">
         
           
 
@@ -378,7 +387,6 @@
     <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
     
     <span class="k">if</span> <span class="n">phis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">phis</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
         <span class="n">overlay_phis</span><span class="p">(</span><span class="n">phis</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span>
         
     <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">figpath</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
@@ -498,7 +506,7 @@
             <span class="n">post_cntr</span> <span class="o">=</span> <span class="p">(</span><span class="n">t_coords</span><span class="o">-</span><span class="n">s_coord</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span> <span class="c1"># centers</span>
             <span class="n">post_cntr</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">post_cntr</span><span class="o">/</span><span class="p">(</span><span class="n">gs_t</span><span class="o">/</span><span class="mi">2</span><span class="p">))</span> <span class="o">*</span><span class="n">gs_t</span> <span class="c1"># make periodic</span>
             <span class="n">phis</span><span class="p">[</span><span class="n">s_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">post_cntr</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">post_cntr</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
-       
+            <span class="c1">#phis[s_idx] = np.arctan2(post_cntr[:,1], post_cntr[:,0]).mean()</span>
         
         <span class="n">figpath</span> <span class="o">=</span> <span class="n">osjoin</span><span class="p">(</span><span class="n">sim</span><span class="o">.</span><span class="n">res_path</span><span class="p">,</span> <span class="n">sim</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;_realized_phi_&#39;</span><span class="o">+</span> <span class="n">key</span><span class="o">+</span><span class="s1">&#39;.png&#39;</span><span class="p">)</span>
         <span class="n">plot_field</span><span class="p">(</span><span class="n">phis</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">gs_s</span><span class="p">,</span> <span class="n">gs_s</span><span class="p">),</span> <span class="n">figpath</span><span class="o">=</span><span class="n">figpath</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
@@ -540,7 +548,7 @@
         <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">figpath</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="overlay_phis"><a class="viewcode-back" href="../viz.html#viz.overlay_phis">[docs]</a><span class="k">def</span> <span class="nf">overlay_phis</span><span class="p">(</span><span class="n">phis</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="overlay_phis"><a class="viewcode-back" href="../viz.html#viz.overlay_phis">[docs]</a><span class="k">def</span> <span class="nf">overlay_phis</span><span class="p">(</span><span class="n">phis</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="n">gs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">phis</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">phis</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
         <span class="n">gs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">gs</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
@@ -550,7 +558,7 @@
         
     <span class="n">X</span><span class="p">,</span><span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">gs</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">gs</span><span class="p">))</span>
     
-    <span class="c1"># we need to adjust the gating size if it is not divisible to the grid size</span>
+    <span class="c1">#we need to adjust the gating size if it is not divisible to the grid size</span>
     <span class="n">adjust_needed</span> <span class="o">=</span> <span class="n">gs</span><span class="o">%</span><span class="n">size</span> <span class="c1"># </span>
     
     <span class="c1"># in case size adjustment is needed, we do so by hopping up and down around</span>
@@ -565,15 +573,19 @@
     <span class="k">while</span> <span class="n">adjust_needed</span><span class="p">:</span>
         <span class="c1"># this spans back and forth for a good size</span>
         <span class="n">size</span> <span class="o">+=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">**</span><span class="n">counter</span> <span class="o">*</span> <span class="p">(</span><span class="n">counter</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">size</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">size</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">:</span>
             <span class="n">adjust_needed</span> <span class="o">=</span> <span class="n">gs</span><span class="o">%</span><span class="n">size</span>        
-        
-    
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">adjust_needed</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">counter</span><span class="o">+=</span> <span class="mi">1</span>
+            
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;gridsize: </span><span class="si">{}</span><span class="s1">   gating size: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">gs</span><span class="p">,</span> <span class="n">size</span><span class="p">))</span>
     <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">gs</span><span class="o">//</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">gs</span><span class="o">//</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
     <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">gs</span><span class="o">//</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">gs</span><span class="o">//</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
     
     <span class="n">ax</span><span class="o">.</span><span class="n">quiver</span><span class="p">(</span><span class="n">X</span><span class="p">[::</span><span class="n">size</span><span class="p">,</span> <span class="p">::</span><span class="n">size</span><span class="p">]</span> <span class="o">+</span> <span class="n">size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">Y</span><span class="p">[::</span><span class="n">size</span><span class="p">,</span> <span class="p">::</span><span class="n">size</span><span class="p">]</span> <span class="o">+</span> <span class="n">size</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span>
               <span class="n">c</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> 
+              <span class="n">units</span><span class="o">=</span><span class="s1">&#39;xy&#39;</span><span class="p">,</span> 
               <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
     
 <div class="viewcode-block" id="plot_firing_rates_dist"><a class="viewcode-back" href="../viz.html#viz.plot_firing_rates_dist">[docs]</a><span class="k">def</span> <span class="nf">plot_firing_rates_dist</span><span class="p">(</span><span class="n">sim</span><span class="p">):</span>

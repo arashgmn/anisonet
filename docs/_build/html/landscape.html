@@ -86,7 +86,16 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">anisonet</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="anisofy.html">anisofy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="anisofy.html">anisofy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#enforcing-anisotropy">Enforcing anisotropy</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#dispalcement-based">Dispalcement-based</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#rotation-based">Rotation-based</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#positive-rotation">Positive rotation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#squeeze-positive-rotation">Squeeze positive rotation</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="configs.html">configs module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="configs.html#population-s-configuration">Population’s configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="configs.html#pathways-configuration">Pathways’ configuration</a><ul>
@@ -134,7 +143,7 @@
 
       <div class="wy-nav-content">
         
-        <div class="rst-content">
+        <div class="rst-content style-external-links">
         
           
 
@@ -187,7 +196,7 @@ merely a reimplementation of <code class="docutils literal notranslate"><span cl
 a few assertion.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="landscape.make_landscape">
-<span class="sig-prename descclassname"><span class="pre">landscape.</span></span><span class="sig-name descname"><span class="pre">make_landscape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'random'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digitize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/landscape.html#make_landscape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#landscape.make_landscape" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">landscape.</span></span><span class="sig-name descname"><span class="pre">make_landscape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digitize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/landscape.html#make_landscape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#landscape.make_landscape" title="Permalink to this definition">¶</a></dt>
 <dd><p>Makes a landscape according for neural network placed on a square grid of 
 size <code class="docutils literal notranslate"><span class="pre">gs</span></code>. The landscape has two components <cite>rs</cite> (the radial 
 displacement) and <cite>phis</cite> (the anisotropic bias angle). <cite>phis</cite> are forced to

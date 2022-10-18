@@ -83,7 +83,11 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../modules.html">anisonet</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../anisofy.html">anisofy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../anisofy.html">anisofy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#dispalcement-based">Dispalcement-based</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#rotation-based">Rotation-based</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../configs.html">configs module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../configs.html#population-s-configuration">Population’s configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../configs.html#pathways-configuration">Pathways’ configuration</a><ul>
@@ -96,7 +100,12 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../equations.html">equations module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../equations.html#noise-scaling">Noise scaling</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../equations.html#synaptic-model">Synaptic model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../equations.html#synapse-equations">Synapse equations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../equations.html#model">Model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../equations.html#kernel">Kernel</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../equations.html#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../landscape.html">landscape module</a></li>
@@ -126,7 +135,7 @@
 
       <div class="wy-nav-content">
         
-        <div class="rst-content">
+        <div class="rst-content style-external-links">
         
           
 
@@ -182,7 +191,7 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">noise</span> <span class="kn">import</span> <span class="n">pnoise2</span> <span class="k">as</span> <span class="n">perlin</span>    
 
-<div class="viewcode-block" id="make_landscape"><a class="viewcode-back" href="../landscape.html#landscape.make_landscape">[docs]</a><span class="k">def</span> <span class="nf">make_landscape</span><span class="p">(</span><span class="n">gs</span><span class="p">,</span> <span class="n">ls_type</span><span class="o">=</span><span class="s1">&#39;random&#39;</span><span class="p">,</span> <span class="n">ls_params</span><span class="o">=</span><span class="p">{},</span> <span class="n">digitize</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="p">:</span>
+<div class="viewcode-block" id="make_landscape"><a class="viewcode-back" href="../landscape.html#landscape.make_landscape">[docs]</a><span class="k">def</span> <span class="nf">make_landscape</span><span class="p">(</span><span class="n">gs</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">digitize</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Makes a landscape according for neural network placed on a square grid of </span>
 <span class="sd">    size ``gs``. The landscape has two components `rs` (the radial </span>
@@ -208,6 +217,12 @@
 <span class="sd">        symmetric and random cases, similar to `[1]`_ we flatten the disribution before </span>
 <span class="sd">        passing the landscape field to the network.  </span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">==</span><span class="kc">None</span><span class="p">:</span>
+    	<span class="n">ls_type</span> <span class="o">=</span> <span class="s1">&#39;iso&#39;</span>
+    <span class="k">else</span><span class="p">:</span>	
+        <span class="n">ls_type</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+        <span class="n">ls_params</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;params&#39;</span><span class="p">]</span>
+    
     <span class="k">if</span> <span class="n">ls_type</span><span class="o">==</span><span class="s1">&#39;homogeneous&#39;</span><span class="p">:</span>
         <span class="k">assert</span> <span class="s1">&#39;phi&#39;</span> <span class="ow">in</span> <span class="n">ls_params</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="s2">&quot;phi value is needed for landscape &quot;</span><span class="o">+</span><span class="n">ls_type</span>
         <span class="k">assert</span> <span class="s1">&#39;r&#39;</span> <span class="ow">in</span> <span class="n">ls_params</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="s2">&quot;r value is needed for landscape &quot;</span><span class="o">+</span><span class="n">ls_type</span>
@@ -244,7 +259,7 @@
         <span class="n">phis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">gs</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">rs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">gs</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span><span class="o">*</span><span class="n">ls_params</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">]</span>
    
-    <span class="k">elif</span> <span class="n">ls_type</span><span class="o">==</span><span class="s1">&#39;symmetric&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">ls_type</span><span class="o">==</span><span class="s1">&#39;iso&#39;</span><span class="p">:</span>
         <span class="n">phis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">gs</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">rs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">gs</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
         

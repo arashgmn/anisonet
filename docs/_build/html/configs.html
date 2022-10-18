@@ -86,7 +86,16 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">anisonet</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="anisofy.html">anisofy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="anisofy.html">anisofy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#enforcing-anisotropy">Enforcing anisotropy</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#dispalcement-based">Dispalcement-based</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#rotation-based">Rotation-based</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#positive-rotation">Positive rotation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#squeeze-positive-rotation">Squeeze positive rotation</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">configs module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#population-s-configuration">Population’s configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#pathways-configuration">Pathways’ configuration</a><ul>
@@ -134,7 +143,7 @@
 
       <div class="wy-nav-content">
         
-        <div class="rst-content">
+        <div class="rst-content style-external-links">
         
           
 
@@ -258,7 +267,7 @@ for possible values of kernels and models.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">tau_r</span></code> and <code class="docutils literal notranslate"><span class="pre">tau_d</span></code>: rise and decay timescales as a Brian time quantity (for biexp kernel)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">delay</span></code>: synaptic delay  as a Brian time quantity</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">J</span></code>: synaptic qunatal with unit volt, ampere, or siemens for synapse
-models <code class="docutils literal notranslate"><span class="pre">jump</span></code>, <code class="docutils literal notranslate"><span class="pre">current</span></code> or <code class="docutils literal notranslate"><span class="pre">conductance</span></code> (c.f. <a class="reference internal" href="equations.html#synapse-equations"><span class="std std-ref">Synapse equations</span></a> )
+models <code class="docutils literal notranslate"><span class="pre">jump</span></code>, <code class="docutils literal notranslate"><span class="pre">current</span></code> or <code class="docutils literal notranslate"><span class="pre">conductance</span></code> (c.f. <a class="reference internal" href="equations.html#synapse-equations"><span class="std std-ref">Synapse equations</span></a> ).
 Note that the sign will determine the polarity of the projection (inhibitory or excitatory).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Erev</span></code>: the reversal potential for conductance-based synapse as a Brian quantity of unit volt</p></li>
 </ul>
@@ -291,6 +300,29 @@ Note that the sign will determine the polarity of the projection (inhibitory or 
 <span class="sig-prename descclassname"><span class="pre">configs.</span></span><span class="sig-name descname"><span class="pre">get_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'EI_net'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scalar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/configs.html#get_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#configs.get_config" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generates the population and pathways config dictuinary only by providing 
 the name of the desired network.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>One should differetiate between homogeneity/randomness in angle and 
+location. <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a> used these terms somewhat loosely. We use the following 
+terms for different setups:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">homiso_net</span></code>: Homogenous and isotropic netowrk, equivalent to the fully
+random graph of Erdos-Renyi.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">iso_net</span></code>: Isotropic but spatially inhomogeneous (in a locally 
+conneted manner, although with a long-tailed radial profile one can
+generate few long-range connection – thus produce a small-world net).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">homo_net</span></code>: Connections are formed without dependence on the distance,
+but angle.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">I_net</span></code>: the recurrent inhibitory network with radial and angular
+profiles according to to <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">EI_net</span></code>: the recurrent inhibitory network with radial and angular
+profiles according to to <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a>.</p></li>
+</ul>
+</div></blockquote>
+<p>Also note that these structures are independent from how anisotropy is 
+imposed.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -307,6 +339,12 @@ connectivity profile will be scaled accordingly. defaults to 3</p></li>
 <dd class="field-odd"><p>tuple of dicts</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="configs.round_to_even">
+<span class="sig-prename descclassname"><span class="pre">configs.</span></span><span class="sig-name descname"><span class="pre">round_to_even</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaler</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/configs.html#round_to_even"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#configs.round_to_even" title="Permalink to this definition">¶</a></dt>
+<dd><p>We better round things to even number for better visualization</p>
 </dd></dl>
 
 </section>

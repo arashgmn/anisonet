@@ -83,7 +83,11 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../modules.html">anisonet</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../anisofy.html">anisofy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../anisofy.html">anisofy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#dispalcement-based">Dispalcement-based</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#rotation-based">Rotation-based</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../configs.html">configs module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../configs.html#population-s-configuration">Population’s configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../configs.html#pathways-configuration">Pathways’ configuration</a><ul>
@@ -131,7 +135,7 @@
 
       <div class="wy-nav-content">
         
-        <div class="rst-content">
+        <div class="rst-content style-external-links">
         
           
 
@@ -196,8 +200,8 @@
 <span class="kn">import</span> <span class="nn">configs</span> <span class="c1"># default configurations</span>
 <span class="kn">import</span> <span class="nn">equations</span> <span class="k">as</span> <span class="nn">eq</span>
 <span class="kn">from</span> <span class="nn">landscape</span> <span class="kn">import</span> <span class="n">make_landscape</span>
-<span class="kn">from</span> <span class="nn">anisofy</span> <span class="kn">import</span> <span class="n">draw_post_syns</span> <span class="k">as</span> <span class="n">sample_post_syns</span>
-<span class="c1"># from anisofy import draw_post_syns_simple as sample_post_syns</span>
+<span class="c1">#from anisofy import draw_post_syns as draw_posts</span>
+<span class="kn">from</span> <span class="nn">anisofy</span> <span class="kn">import</span> <span class="n">draw_posts</span> <span class="k">as</span> <span class="n">draw_posts</span>
 
 <span class="n">b2</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
 
@@ -234,6 +238,7 @@
                 
         <span class="c1"># initialize with defaults</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pops_cfg</span> <span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span> <span class="o">=</span> <span class="n">configs</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="n">net_name</span><span class="p">,</span> <span class="n">scalar</span><span class="o">=</span><span class="n">scalar</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">process_configs</span><span class="p">()</span>
         
         <span class="c1"># extract the synaptic base</span>
         <span class="k">if</span> <span class="n">to_event_driven</span> <span class="p">:</span>
@@ -242,7 +247,7 @@
             
         <span class="bp">self</span><span class="o">.</span><span class="n">load_connectivity</span> <span class="o">=</span> <span class="n">load_connectivity</span>
         
-        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_name</span><span class="p">(</span><span class="n">scalar</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_name</span><span class="p">(</span><span class="n">scalar</span><span class="p">,</span> <span class="n">net_name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">res_path</span> <span class="o">=</span> <span class="n">osjoin</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="c1">#+&#39;results&#39;)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data_path</span> <span class="o">=</span> <span class="n">osjoin</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="c1">#+&#39;data&#39;)</span>
         
@@ -278,8 +283,8 @@
     
 <div class="viewcode-block" id="Simulate.current_to_voltage"><a class="viewcode-back" href="../simulate.html#simulate.Simulate.current_to_voltage">[docs]</a>    <span class="k">def</span> <span class="nf">current_to_voltage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">increase_tau_m</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Transfaers the current based synapses into an equivalent voltage based </span>
-<span class="sd">        synapse.</span>
+<span class="sd">        Transfaers the current-based synapses into an (almost) equivalent </span>
+<span class="sd">        voltage jump increment model. Look at ``Equation`` module for more info.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         
         <span class="k">for</span> <span class="n">pathway</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
@@ -314,30 +319,34 @@
         <span class="c1">#         pop_cfg[&#39;cell&#39;][&#39;tau&#39;] *= 1</span>
                 
             
-<div class="viewcode-block" id="Simulate.generate_name"><a class="viewcode-back" href="../simulate.html#simulate.Simulate.generate_name">[docs]</a>    <span class="k">def</span> <span class="nf">generate_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scalar</span><span class="p">):</span>
+<div class="viewcode-block" id="Simulate.generate_name"><a class="viewcode-back" href="../simulate.html#simulate.Simulate.generate_name">[docs]</a>    <span class="k">def</span> <span class="nf">generate_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scalar</span><span class="p">,</span> <span class="n">net_name</span><span class="p">):</span>
         <span class="c1"># specifies the network scale</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;S</span><span class="si">%.3f</span><span class="s1">_&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">scalar</span><span class="p">)</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;S</span><span class="si">%.1f</span><span class="s1">_&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">scalar</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Initializing network: &#39;</span><span class="o">+</span><span class="n">net_name</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">* scaled down by a factor: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">scalar</span><span class="p">))</span>
         
         <span class="c1"># specifies the network type</span>
+        <span class="n">pop_str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
         <span class="k">for</span> <span class="n">pop</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pops_cfg</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="n">name</span> <span class="o">+=</span> <span class="n">pop</span>
-        <span class="n">name</span> <span class="o">+=</span> <span class="s1">&#39;_&#39;</span>
+            <span class="n">pop_str</span> <span class="o">+=</span> <span class="n">pop</span>
+        <span class="n">name</span> <span class="o">+=</span> <span class="n">pop_str</span><span class="o">+</span><span class="s1">&#39;_&#39;</span>
         
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">* populations: &#39;</span><span class="o">+</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pop_str</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">* pathways: &#39;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">pw_name</span><span class="p">,</span> <span class="n">pw_cfg</span> <span class="o">=</span> <span class="n">item</span>
+            
             <span class="n">name</span> <span class="o">+=</span> <span class="n">pw_name</span>
             
-            
-            <span class="k">if</span> <span class="n">pw_cfg</span><span class="p">[</span><span class="s1">&#39;profile&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">name</span><span class="o">+=</span><span class="s1">&#39;ISO&#39;</span>
+        <span class="c1"># I factor the GA out becasue it&#39;s shared in Gamma and Gaussian</span>
+            <span class="k">if</span> <span class="n">pw_cfg</span><span class="p">[</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">+=</span> <span class="s1">&#39;U&#39;</span> 
+            <span class="k">elif</span> <span class="n">pw_cfg</span><span class="p">[</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;Gamma&#39;</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">+=</span> <span class="s1">&#39;M&#39;</span>
+            <span class="k">elif</span> <span class="n">pw_cfg</span><span class="p">[</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;homog&#39;</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">+=</span> <span class="s1">&#39;H&#39;</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># I factor the GA out becasue it&#39;s shared in Gamma and Gaussian</span>
-                <span class="k">if</span> <span class="n">pw_cfg</span><span class="p">[</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">:</span>
-                    <span class="n">name</span> <span class="o">+=</span> <span class="s1">&#39;U&#39;</span> 
-                <span class="k">elif</span> <span class="n">pw_cfg</span><span class="p">[</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;Gamma&#39;</span><span class="p">:</span>
-                    <span class="n">name</span> <span class="o">+=</span> <span class="s1">&#39;M&#39;</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span>
+                <span class="k">raise</span>
                 
             <span class="c1"># I factor the GA out becasue it&#39;s shared in Gamma and Gaussian</span>
             <span class="k">if</span> <span class="n">pw_cfg</span><span class="p">[</span><span class="s1">&#39;anisotropy&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;perlin&#39;</span><span class="p">:</span>
@@ -346,15 +355,31 @@
                 <span class="n">name</span> <span class="o">+=</span> <span class="s1">&#39;H&#39;</span>
             <span class="k">elif</span> <span class="n">pw_cfg</span><span class="p">[</span><span class="s1">&#39;anisotropy&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;random&#39;</span><span class="p">:</span>
                 <span class="n">name</span> <span class="o">+=</span> <span class="s1">&#39;R&#39;</span>
-            <span class="k">elif</span> <span class="n">pw_cfg</span><span class="p">[</span><span class="s1">&#39;anisotropy&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;symmetric&#39;</span><span class="p">:</span>
-                <span class="n">name</span> <span class="o">+=</span> <span class="s1">&#39;S&#39;</span>
+            <span class="k">elif</span> <span class="n">pw_cfg</span><span class="p">[</span><span class="s1">&#39;anisotropy&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;iso&#39;</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">+=</span> <span class="s1">&#39;I&#39;</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span>
             
-            <span class="n">name</span><span class="o">+=</span><span class="s1">&#39;-&#39;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t\t</span><span class="si">{}</span><span class="s1">: Connectivity profle </span><span class="si">{}</span><span class="s1"> - anisotropy pattern </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">pw_name</span><span class="p">,</span> <span class="n">pw_cfg</span><span class="p">[</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">],</span> <span class="n">pw_cfg</span><span class="p">[</span><span class="s1">&#39;anisotropy&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]))</span>
             
+            <span class="n">name</span><span class="o">+=</span><span class="s1">&#39;-&#39;</span>
+        
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">The network is abbreviated to : &#39;</span><span class="o">+</span> <span class="n">name</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">name</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="c1">#dropping the last seperator</span></div>
     
+<div class="viewcode-block" id="Simulate.process_configs"><a class="viewcode-back" href="../simulate.html#simulate.Simulate.process_configs">[docs]</a>    <span class="k">def</span> <span class="nf">process_configs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">pathway</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">src</span><span class="p">,</span> <span class="n">trg</span> <span class="o">=</span> <span class="n">pathway</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="p">[</span><span class="n">pathway</span><span class="p">]</span>
+            
+            <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;profile&#39;</span><span class="p">]</span><span class="o">==</span><span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="p">[</span><span class="n">pathway</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;homog&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:{}}</span>
+            
+            <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;anisotropy&#39;</span><span class="p">]</span><span class="o">==</span><span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="p">[</span><span class="n">pathway</span><span class="p">][</span><span class="s1">&#39;anisotropy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;iso&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:{}}</span></div>
+
+        
 <div class="viewcode-block" id="Simulate.setup_net"><a class="viewcode-back" href="../simulate.html#simulate.Simulate.setup_net">[docs]</a>    <span class="k">def</span> <span class="nf">setup_net</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Sets up a network by the following steps:</span>
@@ -366,18 +391,16 @@
 <span class="sd">        and adds them all to a Brian network object for simulation. Read their </span>
 <span class="sd">        description on each method.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        
         <span class="n">b2</span><span class="o">.</span><span class="n">start_scope</span><span class="p">()</span>
         
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Net setup started.&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">setup_pops</span><span class="p">()</span>
         
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Landscape setup started.&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">setup_landscape</span><span class="p">()</span>
         
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Connecting populations ...&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">setup_syns</span><span class="p">()</span>
         
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Configuring spike monitors.&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">configure_monitors</span><span class="p">()</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">net</span> <span class="o">=</span> <span class="n">b2</span><span class="o">.</span><span class="n">Network</span><span class="p">()</span>
@@ -403,6 +426,8 @@
 <span class="sd">            mathes the one of images.</span>
 <span class="sd">        </span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> -- Setting up populations.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">ctime</span><span class="p">()))</span>
+        
         <span class="bp">self</span><span class="o">.</span><span class="n">pops</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">pop_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pops_cfg</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="n">gs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pops_cfg</span><span class="p">[</span><span class="n">pop_name</span><span class="p">][</span><span class="s1">&#39;gs&#39;</span><span class="p">]</span> <span class="c1"># grid size</span>
@@ -444,7 +469,8 @@
 <span class="sd">        Landscapes are accessible via the `lscp` attribute of the ``Simulate``</span>
 <span class="sd">        object, in form of a dictionary keyed by the population&#39;s name.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> -- Setting up ladscapes.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">ctime</span><span class="p">()))</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">lscp</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">conn_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="n">src</span><span class="p">,</span> <span class="n">trg</span> <span class="o">=</span> <span class="n">conn_name</span>
@@ -452,10 +478,7 @@
             <span class="n">lscp_cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="p">[</span><span class="n">conn_name</span><span class="p">][</span><span class="s1">&#39;anisotropy&#39;</span><span class="p">]</span>
             <span class="n">gs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pops_cfg</span><span class="p">[</span><span class="n">src</span><span class="p">][</span><span class="s1">&#39;gs&#39;</span><span class="p">]</span> <span class="c1"># grid size</span>
             
-            <span class="n">rs</span><span class="p">,</span> <span class="n">phis</span> <span class="o">=</span> <span class="n">make_landscape</span><span class="p">(</span><span class="n">gs</span><span class="o">=</span><span class="n">gs</span><span class="p">,</span>
-                                      <span class="n">ls_type</span> <span class="o">=</span> <span class="n">lscp_cfg</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span> 
-                                      <span class="n">ls_params</span> <span class="o">=</span> <span class="n">lscp_cfg</span><span class="p">[</span><span class="s1">&#39;params&#39;</span><span class="p">])</span>
-            
+            <span class="n">rs</span><span class="p">,</span> <span class="n">phis</span> <span class="o">=</span> <span class="n">make_landscape</span><span class="p">(</span><span class="n">gs</span><span class="o">=</span><span class="n">gs</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">lscp_cfg</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">lscp</span><span class="p">[</span><span class="n">conn_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;phi&#39;</span> <span class="p">:</span> <span class="n">phis</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span> <span class="p">:</span><span class="n">rs</span><span class="p">}</span>
             
         
@@ -478,7 +501,8 @@
 <span class="sd">        .. _[1]: https://doi.org/10.1371/journal.pcbi.1007432</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> -- Setting up synapses ...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">ctime</span><span class="p">()))</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">syns</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
             <span class="n">src</span><span class="p">,</span> <span class="n">trg</span> <span class="o">=</span> <span class="n">key</span>
@@ -518,13 +542,13 @@
                                <span class="n">scol</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">spop</span><span class="p">))),</span>
                                <span class="n">trow</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tpop</span><span class="p">))),</span>
                                <span class="n">tcol</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tpop</span><span class="p">))),</span>
-                               <span class="n">shift</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;phi&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">lscp</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;phi&#39;</span><span class="p">][</span><span class="n">s_idx</span><span class="p">],</span> 
-                                        <span class="s1">&#39;r&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">lscp</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;r&#39;</span><span class="p">][</span><span class="n">s_idx</span><span class="p">]},</span>
                                <span class="n">profile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">],</span>
+                               <span class="n">landscape</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;phi&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">lscp</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;phi&#39;</span><span class="p">][</span><span class="n">s_idx</span><span class="p">],</span> 
+                                             <span class="s1">&#39;r&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">lscp</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;r&#39;</span><span class="p">][</span><span class="n">s_idx</span><span class="p">]},</span>
                                <span class="n">self_link</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn_cfg</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;self_link&#39;</span><span class="p">],</span>
                                <span class="n">recurrent</span> <span class="o">=</span> <span class="n">trg</span><span class="o">==</span><span class="n">src</span><span class="p">,</span>
                                <span class="p">)</span>
-                    <span class="n">s_coord</span><span class="p">,</span> <span class="n">t_coords</span> <span class="o">=</span> <span class="n">sample_post_syns</span><span class="p">(</span><span class="o">**</span><span class="n">kws</span><span class="p">)</span> <span class="c1"># projects s_coord</span>
+                    <span class="n">s_coord</span><span class="p">,</span> <span class="n">t_coords</span> <span class="o">=</span> <span class="n">draw_posts</span><span class="p">(</span><span class="o">**</span><span class="n">kws</span><span class="p">)</span> <span class="c1"># projects s_coord</span>
                     <span class="n">t_idxs</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">coord2idx</span><span class="p">(</span><span class="n">t_coords</span><span class="p">,</span> <span class="n">tpop</span><span class="p">)</span>
                     
                 <span class="n">syn</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="n">s_idx</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">t_idxs</span><span class="p">)</span>
@@ -560,6 +584,8 @@
 <span class="sd">        :rtype: TYPE</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> -- Configuring monitors&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">ctime</span><span class="p">()))</span>
+        
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;mons&#39;</span><span class="p">):</span>
             <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">mons</span>
             
@@ -604,7 +630,7 @@
             <span class="n">pop</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="mi">0</span><span class="o">*</span><span class="n">b2</span><span class="o">.</span><span class="n">pA</span> <span class="c1"># turning background off</span>
             <span class="n">pop</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">warmup_std</span> <span class="c1"># warm up noise</span>
             
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Starting warm-up.&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> -- Starting warm-up ...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">ctime</span><span class="p">()))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">warmup_dur</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">pop</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pops</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="n">pop</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="n">mus</span><span class="p">[</span><span class="n">pop</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">*</span><span class="n">b2</span><span class="o">.</span><span class="n">pA</span>
@@ -729,15 +755,15 @@
         
         
 <span class="k">if</span> <span class="vm">__name__</span><span class="o">==</span><span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-
+    <span class="c1">#b2.defaultclock.dt = 2000*b2.us</span>
     <span class="c1"># I_net</span>
-    <span class="n">sim</span> <span class="o">=</span> <span class="n">Simulate</span><span class="p">(</span><span class="s1">&#39;I_net&#39;</span><span class="p">,</span> <span class="n">scalar</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">load_connectivity</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
-                    <span class="n">to_event_driven</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">sim</span> <span class="o">=</span> <span class="n">Simulate</span><span class="p">(</span><span class="s1">&#39;I_net&#39;</span><span class="p">,</span> <span class="n">scalar</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">load_connectivity</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+                    <span class="n">to_event_driven</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="p">)</span>
     <span class="n">sim</span><span class="o">.</span><span class="n">setup_net</span><span class="p">()</span>
     <span class="n">sim</span><span class="o">.</span><span class="n">warmup</span><span class="p">()</span>
     <span class="n">sim</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="mi">4000</span><span class="o">*</span><span class="n">b2</span><span class="o">.</span><span class="n">ms</span><span class="p">,</span> <span class="n">batch_dur</span><span class="o">=</span><span class="mi">2000</span><span class="o">*</span><span class="n">b2</span><span class="o">.</span><span class="n">ms</span><span class="p">,</span> 
               <span class="n">restore</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="c1"># sim.post_process(overlay=True)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">post_process</span><span class="p">(</span><span class="n">overlay</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># EI_net</span>
     <span class="c1"># sim = Simulate(&#39;EI_net&#39;, scalar=2.5, load_connectivity=False,</span>

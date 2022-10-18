@@ -83,7 +83,16 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">anisonet</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="anisofy.html">anisofy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="anisofy.html">anisofy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#enforcing-anisotropy">Enforcing anisotropy</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#dispalcement-based">Dispalcement-based</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#rotation-based">Rotation-based</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#positive-rotation">Positive rotation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#squeeze-positive-rotation">Squeeze positive rotation</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="configs.html">configs module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="configs.html#population-s-configuration">Population’s configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="configs.html#pathways-configuration">Pathways’ configuration</a><ul>
@@ -131,7 +140,7 @@
 
       <div class="wy-nav-content">
         
-        <div class="rst-content">
+        <div class="rst-content style-external-links">
         
           
 
@@ -236,11 +245,7 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="anisofy.html#anisofy.draw_post_syns">draw_post_syns() (in module anisofy)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="anisofy.html#anisofy.draw_post_syns_simple">draw_post_syns_simple() (in module anisofy)</a>
+      <li><a href="anisofy.html#anisofy.draw_posts">draw_posts() (in module anisofy)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -270,6 +275,8 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="equations.html#equations.get_nrn_eqs">get_nrn_eqs() (in module equations)</a>
+</li>
+      <li><a href="anisofy.html#anisofy.get_radial_profile">get_radial_profile() (in module anisofy)</a>
 </li>
       <li><a href="equations.html#equations.get_syn_eqs">get_syn_eqs() (in module equations)</a>
 </li>
@@ -302,6 +309,8 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="anisofy.html#anisofy.make_anisotropic">make_anisotropic() (in module anisofy)</a>
+</li>
       <li><a href="landscape.html#landscape.make_landscape">make_landscape() (in module landscape)</a>
 </li>
       <li><a href="simulate.html#simulate.Simulate.make_txy">make_txy() (simulate.Simulate method)</a>
@@ -349,10 +358,10 @@
 </li>
       <li><a href="viz.html#viz.plot_firing_rates_dist">plot_firing_rates_dist() (in module viz)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="viz.html#viz.plot_firing_snapshots">plot_firing_snapshots() (in module viz)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="viz.html#viz.plot_in_out_deg">plot_in_out_deg() (in module viz)</a>
 </li>
       <li><a href="viz.html#viz.plot_landscape">plot_landscape() (in module viz)</a>
@@ -363,6 +372,8 @@
 </li>
       <li><a href="simulate.html#simulate.Simulate.post_process">post_process() (simulate.Simulate method)</a>
 </li>
+      <li><a href="simulate.html#simulate.Simulate.process_configs">process_configs() (simulate.Simulate method)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -370,6 +381,10 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="simulate.html#simulate.Simulate.reset_monitors">reset_monitors() (simulate.Simulate method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="configs.html#configs.round_to_even">round_to_even() (in module configs)</a>
 </li>
   </ul></td>
 </tr></table>

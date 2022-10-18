@@ -30,21 +30,35 @@ in cases where autapse is not allowed, we symmetrically shift the aformentioed
 PDFs such that distances less than a controllable ``gap`` are improbable. 
 
 **Anisotropy**: We attribute an angle :math:`\phi` to each neuron that specifies its angular
-bias (a.k.a. anisotropy) by the following strategies:
+bias (a.k.a. anisotropy landscape) by the following strategies:
     
     #. uniform (isotropic)
     #. constant or homogenous
     #. Perlin-noise-based: A unifromly random method with spatioal correlation
 
 
-Having the ``anisotropy landscape`` specified, we now explain how connections 
+Having the landscape specified, we now explain how connections 
 are actually formed.
 
+Enforcing anisotropy
+====================
+Anisotropy is induced in two major steps. The first one, which is shared among
+all methods, is generating an *iso*-tropic set of posible postsynaptic locations.
+based on the radius drew before. These locations make an angle-independent 
+presynapse-centric point cloud. The next step natually is to induce anisotropy
+in this cloud. The API accepts the following values which are explained below:
+    
+    #. ``shift``: A displacement-based method
+    #. ``squeeze-rotate``: A rotation-based method that first squeezes the point
+       cloud
+    #. ``positive-rotate``: A rotation-based method that constraints the point 
+       cloud to positive x values before rotation. Thus, differentiates between 
+       angle :math:`\\theta` and :math:`2\pi - \\theta`. 
+    #. ``squeeze-positive-rotate``: combination of last two methods.
+     
 Dispalcement-based
 ~~~~~~~~~~~~~~~~~~
-This method is similar to `[1]`_ and works as follows. Based on the radius drew
-before, a set of angle-independent locations will be picked. These locations
-form an *iso*-tropic point cloud centered at the presynapse. To enforce 
+This method is similar to `[1]`_ and works as follows. To enforce 
 anisotropy, this point cloud is shifted be a displacement vector determined by
 a length :math:`r > 0`  and angle  :math:`\phi` (the landscape). We keep this 
 length constant for all neurons (although it can be very well change too).
@@ -57,8 +71,23 @@ point could according to the angle provided in the landscape. Squeezing is
 controlled by the :math:`r > 0` property of the landscape -- now interpreted as
 the `reshpae` factor: The x-axis of the point cloud is up-scaled by :math:`1+r`
 while the y-axis is down-scaled by the same factor (so that the area stays 
-constant). Then the ellipse is rotated along the z-axis. 
+constant). Then the ellipse is rotated along the z-axis. Note that for these
+method, complementary angles lead to the identical distributions.
 
+
+Positive rotation
+~~~~~~~~~~~~~~~~~
+To discern between complementary angles :math:`\\theta` and :math:`\\theta' = 2\pi - \\theta` 
+this method first coverts all the locations with the negative-x to positive ones.
+Then, it rotates the (now half-circular) point cloud without squeezign it.
+
+Squeeze positive rotation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+Combines the two method above by first squeezing, then converting to positive
+x values, and then rotating.
+
+
+Other methods can be exercised as well.
     
 .. _[1]: https://doi.org/10.1371/journal.pcbi.1007432
 .. _[3]: https://doi.org/10.1523/ENEURO.0348-16.2017
@@ -442,7 +471,7 @@ def make_anisotropic(x,y, lscp, method='shift'):
         
         x, y = rot @ sqz @ r0
 
-    elif method=='postive-rotate':
+    elif method=='positive-rotate':
         r0[0,:] = np.abs(r0[0,:]) 
         rot = R.from_euler('z', phi).as_matrix()[:2,:2]
         
