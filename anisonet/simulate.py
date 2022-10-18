@@ -21,8 +21,8 @@ import utils
 import configs # default configurations
 import equations as eq
 from landscape import make_landscape
-from anisofy import draw_post_syns as sample_post_syns
-# from anisofy import draw_post_syns_simple as sample_post_syns
+#from anisofy import draw_post_syns as draw_posts
+from anisofy import draw_posts as draw_posts
 
 b2.seed(8)
 
@@ -59,6 +59,7 @@ class Simulate(object):
                 
         # initialize with defaults
         self.pops_cfg , self.conn_cfg = configs.get_config(net_name, scalar=scalar)
+        self.process_configs()
         
         # extract the synaptic base
         if to_event_driven :
@@ -67,7 +68,7 @@ class Simulate(object):
             
         self.load_connectivity = load_connectivity
         
-        self.name = self.generate_name(scalar)
+        self.name = self.generate_name(scalar, net_name)
         self.res_path = osjoin(root, self.name)#+'results')
         self.data_path = osjoin(root, self.name)#+'data')
         
@@ -139,30 +140,34 @@ class Simulate(object):
         #         pop_cfg['cell']['tau'] *= 1
                 
             
-    def generate_name(self, scalar):
+    def generate_name(self, scalar, net_name):
         # specifies the network scale
-        name = 'S%.3f_'%(scalar)
+        name = 'S%.1f_'%(scalar)
+        print('Initializing network: '+net_name)
+        print('\t* scaled down by a factor: {}'.format(scalar))
         
         # specifies the network type
+        pop_str = ''
         for pop in self.pops_cfg.keys():
-            name += pop
-        name += '_'
+            pop_str += pop
+        name += pop_str+'_'
         
+        print('\t* populations: '+', '.join(pop_str))
+        print('\t* pathways: ')
         for item in self.conn_cfg.items():
             pw_name, pw_cfg = item
+            
             name += pw_name
             
-            
-            if pw_cfg['profile'] == None:
-                name+='ISO'
+        # I factor the GA out becasue it's shared in Gamma and Gaussian
+            if pw_cfg['profile']['type']=='Gaussian':
+                name += 'U' 
+            elif pw_cfg['profile']['type']=='Gamma':
+                name += 'M'
+            elif pw_cfg['profile']['type']=='homog':
+                name += 'H'
             else:
-                # I factor the GA out becasue it's shared in Gamma and Gaussian
-                if pw_cfg['profile']['type']=='Gaussian':
-                    name += 'U' 
-                elif pw_cfg['profile']['type']=='Gamma':
-                    name += 'M'
-                else:
-                    raise
+                raise
                 
             # I factor the GA out becasue it's shared in Gamma and Gaussian
             if pw_cfg['anisotropy']['type']=='perlin':
@@ -171,15 +176,31 @@ class Simulate(object):
                 name += 'H'
             elif pw_cfg['anisotropy']['type']=='random':
                 name += 'R'
-            elif pw_cfg['anisotropy']['type']=='symmetric':
-                name += 'S'
+            elif pw_cfg['anisotropy']['type']=='iso':
+                name += 'I'
             else:
                 raise
             
-            name+='-'
+            print('\t\t{}: Connectivity profle {} - anisotropy pattern {}'.format(
+                pw_name, pw_cfg['profile']['type'], pw_cfg['anisotropy']['type']))
             
+            name+='-'
+        
+        print('\nThe network is abbreviated to : '+ name[:-1]+'\n')
         return name[:-1] #dropping the last seperator
     
+    def process_configs(self):
+        for pathway in self.conn_cfg.keys():
+            src, trg = pathway
+            config = self.conn_cfg[pathway]
+            
+            if config['profile']==None:
+                self.conn_cfg[pathway]['profile'] = {'type': 'homog', 'params':{}}
+            
+            if config['anisotropy']==None:
+                self.conn_cfg[pathway]['anisotropy'] = {'type':'iso', 'params':{}}
+
+        
     def setup_net(self):
         """
         Sets up a network by the following steps:
@@ -278,10 +299,7 @@ class Simulate(object):
             lscp_cfg = self.conn_cfg[conn_name]['anisotropy']
             gs = self.pops_cfg[src]['gs'] # grid size
             
-            rs, phis = make_landscape(gs=gs,
-                                      ls_type = lscp_cfg['type'], 
-                                      ls_params = lscp_cfg['params'])
-            
+            rs, phis = make_landscape(gs=gs, config=lscp_cfg)
             self.lscp[conn_name] = {'phi' : phis, 'r' :rs}
             
         
@@ -345,13 +363,13 @@ class Simulate(object):
                                scol = int(np.sqrt(len(spop))),
                                trow = int(np.sqrt(len(tpop))),
                                tcol = int(np.sqrt(len(tpop))),
-                               shift = {'phi': self.lscp[key]['phi'][s_idx], 
-                                        'r' : self.lscp[key]['r'][s_idx]},
                                profile = self.conn_cfg[key]['profile'],
+                               landscape = {'phi': self.lscp[key]['phi'][s_idx], 
+                                             'r' : self.lscp[key]['r'][s_idx]},
                                self_link = self.conn_cfg[key]['self_link'],
                                recurrent = trg==src,
                                )
-                    s_coord, t_coords = sample_post_syns(**kws) # projects s_coord
+                    s_coord, t_coords = draw_posts(**kws) # projects s_coord
                     t_idxs = utils.coord2idx(t_coords, tpop)
                     
                 syn.connect(i = s_idx, j = t_idxs)
@@ -558,10 +576,10 @@ class Simulate(object):
         
         
 if __name__=='__main__':
-
+    #b2.defaultclock.dt = 2000*b2.us
     # I_net
-    sim = Simulate('I_net', scalar=1, load_connectivity=False, 
-                    to_event_driven=0)
+    sim = Simulate('I_net', scalar=1.5, load_connectivity=False, 
+                    to_event_driven=1, )
     sim.setup_net()
     sim.warmup()
     sim.start(duration=4000*b2.ms, batch_dur=2000*b2.ms, 
