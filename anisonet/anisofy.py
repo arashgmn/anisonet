@@ -374,8 +374,9 @@ def draw_posts(s_coord, ncons,
     # initialzing containers for postsynapse coordiantes
     x = np.zeros(ncons, dtype=int)
     y = np.zeros(ncons, dtype=int)
-    redraw = (x==0) & (y==0)  # index of those who must be redrawn. Now, all.
+    delays = np.zeros(ncons, dtype=float)
     
+    redraw = (x==0) & (y==0)  # index of those who must be redrawn. Now, all.
     while sum(redraw)>0:
         ncon = sum(redraw)
         
@@ -395,6 +396,7 @@ def draw_posts(s_coord, ncons,
         # make coordinates periodic around the presynapse
         x[redraw] = (x_ + tcol/2) % tcol - tcol/2
         y[redraw] = (y_ + trow/2) % trow - trow/2
+        delays[redraw] = np.sqrt(x_**2 + y_**2)
         
         # mark self-links for redraw, if necessary
         if (recurrent) and (not self_link):
@@ -409,7 +411,7 @@ def draw_posts(s_coord, ncons,
     y = (y + s_coord[1]) % trow
     t_coords = np.array([x,y]).T 
     
-    return s_coord, t_coords.astype(int)
+    return s_coord, t_coords.astype(int), delays
 
 
 def get_radial_profile(nconn, profile, gap=0):

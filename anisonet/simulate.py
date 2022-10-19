@@ -5,6 +5,9 @@ This is the main module to set up and simulate an anisotropic network. Other
 modules are auxillary utilities used here. 
 """
 
+#TODO: define the threshold, refractory and rest as equation variables and give
+# them to the equation as a namespace. It's cleaner and similar to the synapse.
+
 import os 
 osjoin = os.path.join # an alias for convenient
 
@@ -79,8 +82,8 @@ class Simulate(object):
             os.makedirs(self.data_path)
 
         # warm-up settings
-        self.warmup_std = 10*b2.pA
-        self.warmup_dur = 5.5*b2.ms
+        self.warmup_std = 500*b2.pA
+        self.warmup_dur = 500*b2.ms
         
         
     def get_synaptic_base(self):
@@ -218,10 +221,9 @@ class Simulate(object):
         
         print('Net setup started.')
         self.setup_pops()
-        
         self.setup_landscape()
-        
         self.setup_syns()
+        #utils.state_initializer(self, mode='ss')
         
         self.configure_monitors()
         
@@ -268,6 +270,7 @@ class Simulate(object):
                                  )
             pop.mu = noise_cfg['mu']
             pop.sigma = noise_cfg['sigma']
+            #self.state_initializer(pop, self.pops_cfg[pop_name], mode='rand')
             pop.v = np.random.uniform(cell_cfg['rest']/b2.mV,
                                       cell_cfg['thr']/b2.mV,
                                       pop.N) *b2.mV
@@ -307,7 +310,7 @@ class Simulate(object):
         del rs, phis, gs, lscp_cfg, src, trg
         
         
-    def setup_syns(self, visualize=False):
+    def setup_syns(self, visualize=False, init='rand'):
         """
         Sets up the synapses of all pathways (keys) in ``conns_cfg``; a nested 
         dictionary whose detail is given in ``configs`` module. To understand 
@@ -355,6 +358,7 @@ class Simulate(object):
                     self.load_connectivity = False
                     
             # computing anisotropic post-synapses
+            delays = []
             for s_idx in range(len(spop)):
                 if self.load_connectivity:
                     t_idxs = w.col[w.row==s_idx]
@@ -371,14 +375,21 @@ class Simulate(object):
                                self_link = self.conn_cfg[key]['self_link'],
                                recurrent = trg==src,
                                )
-                    s_coord, t_coords = draw_posts(**kws) # projects s_coord
+                    s_coord, t_coords, delay = draw_posts(**kws) # projects s_coord
                     t_idxs = utils.coord2idx(t_coords, tpop)
+                    delays.append(delay)
                     
                 syn.connect(i = s_idx, j = t_idxs)
                 
-            # set synaptic weight
+            # initializing the values
             syn.J = self.conn_cfg[key]['synapse']['params']['J']
-            syn.g = 'rand()' # initially the kernel is 0 for all
+            syn.delay = 7*b2.ms#np.array(delays).ravel()*b2.ms*0/2.
+            #syn.g = 'rand()'
+            #syn.u = 'rand()'
+            #syn.x = 'rand()'
+            #syn.delay = np.random.uniform(0.5, 2.5, len(syn.delay))*b2.ms
+            #self.state_initializer(syn, self.conn_cfg[key], mode='rand')
+            
             
             # append to the class
             self.syns.append(syn)
@@ -420,7 +431,7 @@ class Simulate(object):
             #                                  record=True))
             self.mons.append(b2.SpikeMonitor(self.pops[pop_name], 
                                              record=True, name='mon_'+pop_name))
-            self.mons.append(b2.StateMonitor(self.syns[0], variables=['x','u','g'], record=True, name='syn_'+pop_name))
+            #self.mons.append(b2.StateMonitor(self.syns[0], variables=['x','u','g'], record=True, name='syn_'+pop_name))
         
     def warmup(self):
         """
@@ -460,9 +471,7 @@ class Simulate(object):
         for pop in self.pops.values():
             pop.mu = mus[pop.name]*b2.pA
             pop.sigma = stds[pop.name]*b2.pA
-        print(self.syns[0].g[:11])
         self.net.run(self.warmup_dur/2)
-        print(self.syns[0].g[:11])
         print('Finished warm up. Storing results.')
         
         self.net.store(name= self.name, 
@@ -476,7 +485,7 @@ class Simulate(object):
     
         
     def start(self, duration=1000*b2.ms, batch_dur=200*b2.ms, 
-              restore=True, profile=False, plot_snapshots=False):
+              restore=True, profile=False, plot_snapshots=True):
         """
         Starts a long simulation by breaking it down to several batches. After
         each ``batch_dur``, the monitors will be saved on disk, and simulation
@@ -579,30 +588,36 @@ class Simulate(object):
         viz.plot_connectivity(sim)
         viz.plot_firing_rates_dist(sim)
         viz.plot_animation(sim, overlay=overlay) 
-        
-        
+         
+            
+            
+            
 if __name__=='__main__':
     #b2.defaultclock.dt = 2000*b2.us
     # I_net
-    sim = Simulate('STSP_TM_I_net', scalar=10, load_connectivity=False, 
-                    to_event_driven=0, )
+    sim = Simulate('I_net', scalar=2, load_connectivity=True, 
+                    to_event_driven=1, )
     sim.setup_net()
     sim.warmup()
-    #sim.start(duration=100*b2.ms, batch_dur=2000*b2.ms, 
-    #          restore=False, profile=False)
-    #sim.post_process(overlay=True)
-    import matplotlib.pyplot as plt
+    sim.start(duration=4000*b2.ms, batch_dur=2000*b2.ms, 
+              restore=False, profile=False)
+    sim.post_process(overlay=True)
+    # import matplotlib.pyplot as plt
     
-    m = sim.mons[1]
-    s = sim.syns[0]
+    # m = sim.mons[1]
+    # s = sim.syns[0]
     
-    print(s.g[:11])
-    for i in range(10):
-        plt.plot(m.t, m.x[i*s.N_outgoing_pre[0]], 'r', label='x', alpha=1-i/10.)
-        plt.plot(m.t, m.u[i*s.N_outgoing_pre[0]], 'b', label='u', alpha=1-i/10.)
-        plt.plot(m.t, m.g[i*s.N_outgoing_pre[0]], 'g', label='g', alpha=1-i/10.)
-    print(m.g.max(), m.g.min())
-    #plt.legend()
+    # print(s.g[:11])
+    # for i in range(10):
+    #     plt.plot(m.t, m.x[i], 'r', alpha=1-i/10.)
+    #     plt.plot(m.t, m.u[i], 'b', alpha=1-i/10.)
+    #     plt.plot(m.t, m.g[i], 'g', alpha=1-i/10.)
+    # print(m.g.max(), m.g.min())
+    
+    # plt.plot([],[], 'r', label='x',)
+    # plt.plot([],[], 'b', label='u',)
+    # plt.plot([],[], 'g', label='g',)
+    # plt.legend()
     # EI_net
     # sim = Simulate('EI_net', scalar=2.5, load_connectivity=False,
     #                 voltage_base_syn=1)
