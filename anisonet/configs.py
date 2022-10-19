@@ -304,7 +304,30 @@ def get_config(name='EI_net', scalar=3):
                    'anisotropy': None
                    },
         }    
-    
+    elif name=='STSP_TM_I_net':
+        pops_cfg = {
+            'I': {'gs': round_to_even(100, scalar), 
+                  'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
+                  'cell': {'type': 'LIF', 
+                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                           'tau':10*ms, 'C': 250*pF}
+                          }
+            }
+
+        conn_cfg = {
+            'II': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
+                   'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
+                   #'profile': {'type':'Gaussian', 'params': {'std': 3} },
+                   #'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'synapse': {'type':'tsodysk-markram_jump', 
+                               'params': {'J': -0.221*mV*(scalar**2), 'delay':1*ms, 
+                                          'tau_f': 150*ms, 'tau_d': 20*ms, 'U':0.5}},
+                   'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}}
+                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/6.}}
+                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
+                   #'anisotropy': {'type': 'symmetric', 'params': {}}
+                   },
+        }    
     else:
         raise
     

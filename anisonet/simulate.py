@@ -79,8 +79,8 @@ class Simulate(object):
             os.makedirs(self.data_path)
 
         # warm-up settings
-        self.warmup_std = 500*b2.pA
-        self.warmup_dur = 500*b2.ms
+        self.warmup_std = 10*b2.pA
+        self.warmup_dur = 5.5*b2.ms
         
         
     def get_synaptic_base(self):
@@ -115,6 +115,7 @@ class Simulate(object):
             kernel, model = syn_cfg['type'].split('_') # identify kernel and model
             assert model == 'current'
             assert kernel != 'const'
+            assert kernel != 'tsodysk_markram'
             
             if kernel=='exp':
                 C_m = self.pops_cfg[src]['cell']['C']
@@ -328,16 +329,17 @@ class Simulate(object):
         for key in sorted(self.conn_cfg.keys()):
             src, trg = key
             
-            eqs, on_pre, on_post = eq.get_syn_eqs(key, self.conn_cfg, self.base)
+            eqs, on_pre, on_post, namespace = eq.get_syn_eqs(key, self.conn_cfg, self.base)
             ncons = self.conn_cfg[key]['ncons']
             spop = self.pops[src]
             tpop = self.pops[trg]
+            
             
             syn = b2.Synapses(spop, tpop, 
                               model=eqs, 
                               on_pre=on_pre,
                               on_post=on_post,
-                              delay=self.conn_cfg[key]['synapse']['params']['delay'],
+                              namespace = namespace,
                               method='exact',
                               name = 'syn_'+key
                               )
@@ -373,9 +375,10 @@ class Simulate(object):
                     t_idxs = utils.coord2idx(t_coords, tpop)
                     
                 syn.connect(i = s_idx, j = t_idxs)
-            
+                
             # set synaptic weight
             syn.J = self.conn_cfg[key]['synapse']['params']['J']
+            syn.g = 'rand()' # initially the kernel is 0 for all
             
             # append to the class
             self.syns.append(syn)
@@ -417,6 +420,7 @@ class Simulate(object):
             #                                  record=True))
             self.mons.append(b2.SpikeMonitor(self.pops[pop_name], 
                                              record=True, name='mon_'+pop_name))
+            self.mons.append(b2.StateMonitor(self.syns[0], variables=['x','u','g'], record=True, name='syn_'+pop_name))
         
     def warmup(self):
         """
@@ -436,10 +440,9 @@ class Simulate(object):
         
         # resetting the time
         self.net.t_ = 0
-        
         # we don't need to record warm-up activities        
-        for mon in self.mons:
-            mon.active = False
+        # for mon in self.mons:
+        #     mon.active = False
         
         # Let's save mu and sigma for later and swich them off for now
         mus ={}
@@ -452,25 +455,28 @@ class Simulate(object):
             pop.sigma = self.warmup_std # warm up noise
             
         print('{} -- Starting warm-up ...'.format(time.ctime()))
+        
         self.net.run(self.warmup_dur/2)
         for pop in self.pops.values():
             pop.mu = mus[pop.name]*b2.pA
             pop.sigma = stds[pop.name]*b2.pA
+        print(self.syns[0].g[:11])
         self.net.run(self.warmup_dur/2)
+        print(self.syns[0].g[:11])
         print('Finished warm up. Storing results.')
         
         self.net.store(name= self.name, 
                        filename= osjoin(self.data_path, self.name+'.wup'))
         
         # switch on monitors        
-        for mon in self.mons:
-            mon.active = True
+        # for mon in self.mons:
+        #     mon.active = True
         
         del mus, stds            
     
         
     def start(self, duration=1000*b2.ms, batch_dur=200*b2.ms, 
-              restore=True, profile=False, plot_snapshots=True):
+              restore=True, profile=False, plot_snapshots=False):
         """
         Starts a long simulation by breaking it down to several batches. After
         each ``batch_dur``, the monitors will be saved on disk, and simulation
@@ -578,14 +584,25 @@ class Simulate(object):
 if __name__=='__main__':
     #b2.defaultclock.dt = 2000*b2.us
     # I_net
-    sim = Simulate('I_net', scalar=1.5, load_connectivity=False, 
-                    to_event_driven=1, )
+    sim = Simulate('STSP_TM_I_net', scalar=10, load_connectivity=False, 
+                    to_event_driven=0, )
     sim.setup_net()
     sim.warmup()
-    sim.start(duration=4000*b2.ms, batch_dur=2000*b2.ms, 
-              restore=True, profile=False)
-    sim.post_process(overlay=True)
-
+    #sim.start(duration=100*b2.ms, batch_dur=2000*b2.ms, 
+    #          restore=False, profile=False)
+    #sim.post_process(overlay=True)
+    import matplotlib.pyplot as plt
+    
+    m = sim.mons[1]
+    s = sim.syns[0]
+    
+    print(s.g[:11])
+    for i in range(10):
+        plt.plot(m.t, m.x[i*s.N_outgoing_pre[0]], 'r', label='x', alpha=1-i/10.)
+        plt.plot(m.t, m.u[i*s.N_outgoing_pre[0]], 'b', label='u', alpha=1-i/10.)
+        plt.plot(m.t, m.g[i*s.N_outgoing_pre[0]], 'g', label='g', alpha=1-i/10.)
+    print(m.g.max(), m.g.min())
+    #plt.legend()
     # EI_net
     # sim = Simulate('EI_net', scalar=2.5, load_connectivity=False,
     #                 voltage_base_syn=1)
