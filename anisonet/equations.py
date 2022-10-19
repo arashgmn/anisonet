@@ -214,6 +214,7 @@ def get_nrn_eqs(pop_name, pops_cfg, syn_base):
     tmp = tmp.replace('noise_dt', str(noise_dt/b2.ms)+'*ms')
     
     kernel, model = syn_base.split('_') # identify kernel and model
+    
     if model in ['conductance', 'current']:
         eqs_str= tmp + '''dv/dt = (E-v)/tau + (noise_pop + I_syn)/C : volt (unless refractory)\n'''
         I_syn_components = []
@@ -327,7 +328,7 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
         eqs_str += '''I_syn_{}_post = J*g: amp  (summed)\n'''.format(conn_name[0])
     
     elif model=='jump':
-    	eqs_str = eqs_str#.replace('clock-driven', 'event-driven')
+    	eqs_str = eqs_str.replace('clock-driven', 'event-driven')
     	eqs_str += '''\nJ: volt (shared)'''
     	on_pre += '''\nv_post += J*g'''        
     
