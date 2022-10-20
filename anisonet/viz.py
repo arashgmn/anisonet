@@ -43,11 +43,11 @@ def plot_in_out_deg(sim):
         src = syn.source
         trg = syn.target
         
-        gs_src = np.round(np.sqrt(src.N)).astype(int)
-        gs_trg = np.round(np.sqrt(trg.N)).astype(int)
+        gs_src = src.gs
+        gs_trg = trg.gs
         
-        in_deg = syn.N_incoming_post.reshape((gs_trg,gs_trg))
-        out_deg = syn.N_outgoing_pre.reshape((gs_src,gs_src))
+        in_deg = syn.N_incoming_post.reshape(tuple(np.repeat(gs_trg, sim.dim)))
+        out_deg = syn.N_outgoing_pre.reshape(tuple(np.repeat(gs_src, sim.dim)))
         
         fig, axs = plt.subplots(2,2, figsize=(7,4), constrained_layout=True,
                                 gridspec_kw={'height_ratios':[1,.5]})

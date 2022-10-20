@@ -10,9 +10,9 @@ a few assertion.
 """
 
 import numpy as np
-from noise import pnoise2 as perlin    
+from noise import pnoise3 as perlin    
 
-def make_landscape(gs, config, digitize=False) :
+def make_landscape(gs, config, digitize=False, dim=2) :
     """
     Makes a landscape according for neural network placed on a square grid of 
     size ``gs``. The landscape has two components `rs` (the radial 
@@ -44,24 +44,36 @@ def make_landscape(gs, config, digitize=False) :
         ls_type = config['type']
         ls_params = config['params']
     
+    
     if ls_type=='homogeneous':
         assert 'phi' in ls_params.keys(), "phi value is needed for landscape "+ls_type
         assert 'r' in ls_params.keys(), "r value is needed for landscape "+ls_type
         
-        phis = np.ones(gs**2, dtype=float)*ls_params['phi']
-        rs = np.ones(gs**2, dtype=int)*ls_params['r']
+        phis = np.ones(gs**dim, dtype=float)*ls_params['phi']
+        rs = np.ones(gs**dim, dtype=int)*ls_params['r']
     
     elif ls_type=='perlin':
         assert 'scale' in ls_params.keys(),"scale value is needed for landscape "+ls_type
         assert 'r' in ls_params.keys(), "r value is needed for landscape "+ls_type
         
-        x = y = np.linspace(0, ls_params['scale'], gs)
-        phis = [[perlin(i, j, repeatx=ls_params['scale'], repeaty=ls_params['scale']) 
-                 for j in y] for i in x]
-        phis = np.concatenate(phis)
         
-        # to flatten the histogram of phis, one has to adjust the 
-        # phi values
+        x = y = z = np.linspace(0, ls_params['scale'], gs)
+        phis = [[[perlin(i, j, k, 
+                        repeatx=ls_params['scale'], 
+                        repeaty=ls_params['scale'],
+                        repeatz=ls_params['scale']) 
+                 for k in z] for j in y] for i in x]
+        
+        phis = np.array(phis).reshape((gs,gs,gs))
+        if dim==1:
+            phis = phis[0,0,:]
+        elif dim==2:
+            phis = phis[0,:,:]
+        else:
+            pass
+        phis = np.ravel(phis)
+        
+        # to flatten the histogram of phis, one has to adjust the phi values
         sorted_idx = np.argsort(phis)
         max_val = gs * 2
         idx = len(phis) // max_val
@@ -74,15 +86,15 @@ def make_landscape(gs, config, digitize=False) :
         phis *= 2*np.pi/(np.max(phis)+1e-12)
         phis -= np.pi
         
-        rs = np.ones(gs**2, dtype=int)*ls_params['r']
+        rs = np.ones(gs**dim, dtype=int)*ls_params['r']
    
     elif ls_type=='random':
-        phis = np.random.uniform(-np.pi, np.pi, size=gs**2)
-        rs = np.ones(gs**2, dtype=int)*ls_params['r']
+        phis = np.random.uniform(-np.pi, np.pi, size=gs**dim)
+        rs = np.ones(gs**dim, dtype=int)*ls_params['r']
    
     elif ls_type=='iso':
-        phis = np.random.uniform(-np.pi, np.pi, size=gs**2)
-        rs = np.zeros(gs**2, dtype=int)
+        phis = np.random.uniform(-np.pi, np.pi, size=gs**dim)
+        rs = np.zeros(gs**dim, dtype=int)
         
     else:
         raise 'Landscape type not recognized!'

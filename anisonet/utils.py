@@ -15,7 +15,7 @@ from brian2 import mV, nS, pA, ms
 
 root = './'
 
-def coord2idx(coords, pop):
+def coord2idx(coords, pop, dim=2):
     """
     Transforms the coordinates to the indices for a given population.
     
@@ -27,13 +27,17 @@ def coord2idx(coords, pop):
     :rtype: numpy array 
 
     """
-    gs = int(np.sqrt(len(pop))) # gridsize
+    gs = pop.gs # gridsize
     
-    coords = np.asarray(coords).reshape(-1,2)
-    idxs = coords[:,1]*gs + coords[:,0]
+    coords = np.array(coords).reshape(-1, dim)
+    
+    idxs = np.zeros(coords.shape[0])
+    for d in range(dim):
+        idxs += coords[:,d] * gs**d
+    # idxs = coords[:,1]*gs + coords[:,0]
     return idxs
     
-def idx2coords(idxs, net):
+def idx2coords(idxs, pop, dim=2):
     """
     Transforms the a list of indices of the given population to coordinates.
     
@@ -45,12 +49,18 @@ def idx2coords(idxs, net):
     :rtype: numpy array
 
     """
-    gs = int(np.sqrt(len(net))) # gridsize
+    gs = pop.gs # gridsize
     
-    idxs = np.asarray(idxs)
-    y,x = np.divmod(idxs, gs)
-    coords = np.array([x,y]).T
-    return coords
+    idxs = np.array(idxs)
+    coords = np.zeros((dim, len(idxs)))
+    
+    devid = np.copy(idxs)
+    for d in range(dim):
+        devid, coords[d,:] = np.divmod(devid, gs)
+        
+    # y,x = np.divmod(idxs, gs)
+    # coords = np.array([x,y]).T
+    return coords.T
 
 
 def aggregate_mons(data_path, name_pattern):

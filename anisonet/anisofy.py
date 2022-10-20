@@ -351,7 +351,8 @@ import numpy as np
 
 
 def draw_posts(s_coord, ncons,
-              srow, scol, trow, tcol, 
+              gs_s, gs_t,
+               # srow, scol, trow, tcol, 
               profile, landscape, 
               method='shift', gap=2,
               self_link= False, recurrent=True, 
@@ -368,50 +369,69 @@ def draw_posts(s_coord, ncons,
     
    
     # source neuron's location on the target population
-    scale_x, scale_y = 1.*trow/srow, 1.*tcol/scol
-    s_coord = np.round([s_coord[0]*scale_x, s_coord[1]*scale_y]).astype(int) 
+    dim = len(s_coord)
+    scale = 1.*gs_t/gs_s
+    s_coord =  np.round(s_coord*scale).astype(int)
+    
+    # scale_x, scale_y = 1.*trow/srow, 1.*tcol/scol
+    # s_coord = np.round([s_coord[0]*scale_x, s_coord[1]*scale_y]).astype(int) 
     
     # initialzing containers for postsynapse coordiantes
-    x = np.zeros(ncons, dtype=int)
-    y = np.zeros(ncons, dtype=int)
+    # x = np.zeros(ncons, dtype=int)
+    # y = np.zeros(ncons, dtype=int)
+    t_coords = np.zeros((ncons, dim), dtype=int)
     delays = np.zeros(ncons, dtype=float)
     
-    redraw = (x==0) & (y==0)  # index of those who must be redrawn. Now, all.
+    # redraw = (x==0) & (y==0)  # index of those who must be redrawn. Now, all.
+    redraw = t_coords.sum(axis=1) == 0# index of those who must be redrawn. Now, all.
     while sum(redraw)>0:
         ncon = sum(redraw)
         
         # making a (for now isotropic) point cloud around the presynapse
         if profile['type']=='homog':
-            x_= np.random.randint(0,tcol, size=ncon)-s_coord[0]
-            y_= np.random.randint(0,trow, size=ncon)-s_coord[1]
+            coords_ = np.random.randint(0, gs_t, size = (ncon, dim)) - s_coord
+            coords_  = coords_.T # just for conveniance 
+            
+            # x_= np.random.randint(0,tcol, size=ncon)-s_coord[0]
+            # y_= np.random.randint(0,trow, size=ncon)-s_coord[1]
         
         else:
-            alpha = np.random.uniform(-np.pi, np.pi, ncon)
+            psi = np.random.uniform(0, 2*np.pi, ncon)
+            theta = np.random.uniform(-np.pi, np.pi, ncon)
             radius = get_radial_profile(ncon, profile, gap=gap)
-            x_, y_ = radius*np.cos(alpha), radius*np.sin(alpha) 
-        
+            x_ = radius*np.sin(psi)*np.cos(theta) 
+            y_ = radius*np.sin(psi)*np.sin(theta)
+            z_ = radius*np.cos(psi)
+            coords_ =  np.array([x_,y_,z_])[:dim,:]
+            
         # making anisotropic
-        x_, y_ = make_anisotropic(x_, y_, landscape)#, method)    
+        coords_ = make_anisotropic(coords_, landscape)#, method)    
         
         # make coordinates periodic around the presynapse
-        x[redraw] = (x_ + tcol/2) % tcol - tcol/2
-        y[redraw] = (y_ + trow/2) % trow - trow/2
-        delays[redraw] = np.sqrt(x_**2 + y_**2)
+        
+        t_coords = (coords_ + gs_t/2 ) % gs_t - gs_t/2
+        delays[redraw] = np.linalg.norm(coords_, axis=0)
+        # x[redraw] = (x_ + tcol/2) % tcol - tcol/2
+        # y[redraw] = (y_ + trow/2) % trow - trow/2
+        # delays[redraw] = np.sqrt(x_**2 + y_**2)
         
         # mark self-links for redraw, if necessary
         if (recurrent) and (not self_link):
-            redraw = (x==0) & (y==0)
+            # redraw = (x==0) & (y==0)
+            redraw = np.linalg.norm(t_coords, axis=0) == 0
         else:
             # source and target populations are different.
             # No self-link can possibly occur. 
-            redraw = np.zeros_like(x, dtype=bool)
+            redraw = np.zeros_like(t_coords[0,:], dtype=bool)
             
     # translating the coordinates w.r.t. source coordinates
-    x = (x + s_coord[0]) % tcol
-    y = (y + s_coord[1]) % trow
-    t_coords = np.array([x,y]).T 
+    t_coords = (t_coords + s_coord) % gs_t
+    # t_coords = np.array([x,y]).T 
+    # x = (x + s_coord[0]) % tcol
+    # y = (y + s_coord[1]) % trow
+    # t_coords = np.array([x,y]).T 
     
-    return s_coord, t_coords.astype(int), delays
+    return s_coord, t_coords.astype(int).T, delays
 
 
 def get_radial_profile(nconn, profile, gap=0):
@@ -443,54 +463,66 @@ def get_radial_profile(nconn, profile, gap=0):
     return radius
 
 
-def make_anisotropic(x,y, lscp, method='shift'):
+def make_anisotropic(coord, lscp, method='shift'):
     """
     takes an isotropic set of coordinates and transforms them
     into anisotropic ones according to the provided ``method``.
+    
+    coord shape: dim*nconn
     """
+    #TODO: In 3D, displacement/squeeze/... are still done in x-y plane. TO be
+    #      extended.
+    
     from scipy.spatial.transform import Rotation as R
     
+    dim = coord.shape[0]
+        
     # for convenience
     r = lscp['r']
     phi = lscp['phi']
-    r0 = np.array([x, y])
     
     
     if method=='shift':
-        x = x + r*np.cos(phi)
-        y = y + r*np.sin(phi)
+        if dim == 1:
+            coord[0, :] += r*np.cos(phi)
+        if dim == 2: 
+            coord[1, :] += r*np.sin(phi)
+    
         
-
-    elif method=='shift-rotate': # identical to shift. It's written for testing
-        r0[0,:] += r
-        rot = R.from_euler('z', phi).as_matrix()[:2,:2]
+    # elif method=='shift-rotate': # identical to shift. It's written for testing
+    #     coord[:, 0] += r
+    #     rot = R.from_euler('z', phi).as_matrix()[:dim,:dim]
         
-        x, y = rot @ r0
+    #     x, y = rot @ r0
     
     elif method=='squeeze-rotate':
-        sqz = np.diag([1+r, 1/(1+r)])
-        rot = R.from_euler('z', phi).as_matrix()[:2,:2]
+        sqz = np.diag([1+r, 1/(1+r), 1])
+        rot = R.from_euler('z', phi).as_matrix()
         
-        x, y = rot @ sqz @ r0
+        # x, y = rot @ sqz @ r0 
+        coord = rot[:dim,:dim] @ sqz[:dim,:dim] @ coord[:dim, :]
 
     elif method=='positive-rotate':
-        r0[0,:] = np.abs(r0[0,:]) 
-        rot = R.from_euler('z', phi).as_matrix()[:2,:2]
+        coord[:, 0] = np.abs(coord[:, 0]) 
+        rot = R.from_euler('z', phi).as_matrix()
         
-        x, y = rot @ r0
+        # x, y = rot @ r0
+        coord = rot[:dim,:dim] @ coord[:dim, :]
 
     elif method=='positive-squeeze-rotate':
-        r0[0,:] = np.abs(r0[0,:]) 
-        sqz = np.diag([1+r, 1/(1+r)])
-        rot = R.from_euler('z', phi).as_matrix()[:2,:2]
+        coord[:, 0] = np.abs(coord[:, 0]) 
+        sqz = np.diag([1+r, 1/(1+r), 1])
+        rot = R.from_euler('z', phi).as_matrix()
         
-        x, y = rot @ sqz @ r0
-    
+        # x, y = rot @ sqz @ r0
+        coord = rot[:dim,:dim] @ sqz[:dim,:dim] @ coord[:dim, :]
+        
     elif method=='iso':
         pass
     
     else:
         raise
     
-    return np.round(x).astype(int), np.round(y).astype(int)
+    # return np.round(x).astype(int), np.round(y).astype(int)
+    return np.round(coord).astype(int)
     

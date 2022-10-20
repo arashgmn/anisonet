@@ -35,7 +35,7 @@ class Simulate(object):
     """
     
     def __init__(self, net_name='I_net', load_connectivity=True,  scalar=1,
-                 result_path=None, to_event_driven = True):
+                 result_path=None, to_event_driven = True, dim=2):
         """
         Initializes the simulator object for the given network configuration. 
         By default, tries to load the connectivity matrix from disk, otherwise
@@ -59,7 +59,9 @@ class Simulate(object):
         if result_path==None:
             result_path = os.getcwd()
         root = osjoin(result_path, net_name)
-                
+        
+        self.dim = dim
+        
         # initialize with defaults
         self.pops_cfg , self.conn_cfg = configs.get_config(net_name, scalar=scalar)
         self.process_configs()
@@ -276,13 +278,25 @@ class Simulate(object):
                                       pop.N) *b2.mV
 
             
+            # add grid size 
+            pop.add_attribute('gs')
+            pop.gs = gs
+
             # add coordinates
             pop.add_attribute('coord')
-            y,x = np.indices((gs,gs))
-            pop.coord = list(zip(x.ravel(),y.ravel()))
-            
+            if sim.dim==1:
+                x = np.arange(gs)
+                pop.coord = list(x)
+            elif sim.dim==2:
+                y,x = np.indices((gs,gs))
+                pop.coord = list(zip(x.ravel(),y.ravel()))
+            elif sim.dim==3:
+                z,y,x = np.indices((gs,gs,gs))
+                pop.coord = list(zip(x.ravel(),y.ravel(), z.ravel()))
+            else:
+                raise NotImplementedError('Only dimensions up to 3 are possible.')
+                
             self.pops[pop_name] = pop
-            del x,y, cell_cfg, noise_cfg, gs, eqs
             
     
     def setup_landscape(self):
@@ -303,10 +317,9 @@ class Simulate(object):
             lscp_cfg = self.conn_cfg[conn_name]['anisotropy']
             gs = self.pops_cfg[src]['gs'] # grid size
             
-            rs, phis = make_landscape(gs=gs, config=lscp_cfg)
+            rs, phis = make_landscape(gs=gs, config=lscp_cfg, dim = sim.dim)
             self.lscp[conn_name] = {'phi' : phis, 'r' :rs}
             
-        
         del rs, phis, gs, lscp_cfg, src, trg
         
         
@@ -337,7 +350,6 @@ class Simulate(object):
             spop = self.pops[src]
             tpop = self.pops[trg]
             
-            
             syn = b2.Synapses(spop, tpop, 
                               model=eqs, 
                               on_pre=on_pre,
@@ -346,6 +358,7 @@ class Simulate(object):
                               method='exact',
                               name = 'syn_'+key
                               )
+            
             # load or save connectivity 
             w_name = self.name+'_w_'+key
             if self.load_connectivity:
@@ -365,10 +378,11 @@ class Simulate(object):
                 else:
                     kws = dict(s_coord = spop.coord[s_idx],
                                ncons = ncons,
-                               srow = int(np.sqrt(len(spop))),
-                               scol = int(np.sqrt(len(spop))),
-                               trow = int(np.sqrt(len(tpop))),
-                               tcol = int(np.sqrt(len(tpop))),
+                               # srow = spop.gs,
+                               # scol = spop.gs,
+                               # trow = tpop.gs,
+                               # tcol = tpop.gs,
+                               gs_s = spop.gs, gs_t = tpop.gs,
                                profile = self.conn_cfg[key]['profile'],
                                landscape = {'phi': self.lscp[key]['phi'][s_idx], 
                                              'r' : self.lscp[key]['r'][s_idx]},
@@ -482,7 +496,7 @@ class Simulate(object):
     
         
     def start(self, duration=1000*b2.ms, batch_dur=200*b2.ms, 
-              restore=True, profile=False, plot_snapshots=True):
+              restore=True, profile=False, plot_snapshots=False):
         """
         Starts a long simulation by breaking it down to several batches. After
         each ``batch_dur``, the monitors will be saved on disk, and simulation
@@ -579,13 +593,13 @@ class Simulate(object):
     
     def post_process(self, overlay=True):
         print('{} -- Starting postprocessing ...'.format(time.ctime()))
-        viz.plot_landscape(sim, overlay=overlay)
         viz.plot_in_out_deg(sim)
-        viz.plot_realized_landscape(sim)
-        viz.plot_connectivity(sim)
         viz.plot_firing_rates_dist(sim)
-        viz.plot_animation(sim, overlay=overlay) 
+        viz.plot_connectivity(sim)
+        viz.plot_landscape(sim, overlay=overlay)
         viz.plot_R(sim)
+        viz.plot_animation(sim, overlay=overlay) 
+        viz.plot_realized_landscape(sim)
         
     def state_initializer(self, mode='ss'):
         """
@@ -667,8 +681,8 @@ class Simulate(object):
 if __name__=='__main__':
     #b2.defaultclock.dt = 2000*b2.us
     # I_net
-    sim = Simulate('I_net', scalar=1, load_connectivity=True, 
-                    to_event_driven=1, )
+    sim = Simulate('I_net', scalar=5, load_connectivity=True, 
+                    to_event_driven=1, dim=1)
     sim.setup_net()
     sim.warmup()
     sim.start(duration=4000*b2.ms, batch_dur=2000*b2.ms, 
