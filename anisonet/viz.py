@@ -512,3 +512,26 @@ def plot_animation(sim, ss_dur=25, fps=10, overlay=True):
     anim.save(path , writer=writergif)
     plt.close()
     
+def plot_R(sim):
+    dt = sim.mons[0].clock.dt_ # in SI
+    dt /= 1e-3 # aggregated times are always in ms
+    
+    fig, axs = plt.subplots(1, len(sim.pops))
+    if  len(sim.pops)==1:
+        axs = [axs]
+    
+    for id_, mon in enumerate(sim.mons):
+        idxs, ts = utils.aggregate_mons(sim.data_path, 
+                                        sim.name+ '_'+ mon.name+'_*.dat')
+        
+        
+        t, phis = utils.phase_estimator(idxs, ts, dt)
+        R_rad, R_arg = utils.estimate_order_parameter(phis) 
+        
+        axs[id_].plot(t, R_rad,)
+        axs[id_].set_title('Population '+mon.name[-1])
+        
+    figpath = osjoin(sim.res_path, sim.name + '_order_param.png')
+    plt.savefig(figpath, bbox_inches='tight', dpi=200)
+    plt.close()
+    

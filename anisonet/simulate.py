@@ -223,7 +223,7 @@ class Simulate(object):
         self.setup_pops()
         self.setup_landscape()
         self.setup_syns()
-        #utils.state_initializer(self, mode='ss')
+        self.state_initializer(mode='rand')
         
         self.configure_monitors()
         
@@ -382,11 +382,8 @@ class Simulate(object):
                 syn.connect(i = s_idx, j = t_idxs)
                 
             # initializing the values
-            syn.J = self.conn_cfg[key]['synapse']['params']['J']
-            syn.delay = 7*b2.ms#np.array(delays).ravel()*b2.ms*0/2.
-            #syn.g = 'rand()'
-            #syn.u = 'rand()'
-            #syn.x = 'rand()'
+            # syn.J = self.conn_cfg[key]['synapse']['params']['J']
+            #syn.delay = np.array(delays).ravel()*b2.ms
             #syn.delay = np.random.uniform(0.5, 2.5, len(syn.delay))*b2.ms
             #self.state_initializer(syn, self.conn_cfg[key], mode='rand')
             
@@ -588,14 +585,89 @@ class Simulate(object):
         viz.plot_connectivity(sim)
         viz.plot_firing_rates_dist(sim)
         viz.plot_animation(sim, overlay=overlay) 
-         
+        viz.plot_R(sim)
+        
+    def state_initializer(self, mode='ss'):
+        """
+        A smart function that intializes the synaptic or cellular state according 
+        to the desired mode, based on the provided config file.
+        
+        :param config: DESCRIPTION
+        :type config: TYPE
+        :param mode: DESCRIPTION, defaults to 'ss'
+        :type mode: TYPE, optional
+        :return: DESCRIPTION
+        :rtype: TYPE
+        """
+        
+        msg0 = 'I am smart but ... \n'
+        
+        msg_mode = '''
+            I only regonize steady state (ss) and random (rand) modes for now. 
+            '''
+        
+        msg_kernel = '''
+            The kernel "{}" is not among the regonized kernels. Have a look at the
+            documentation.
+            '''
+        
+        msg_cell = '''
+            I only regonize LIF neuron for now.
+            '''
+        
+        for pop, pop_cfg in zip(self.pops, self.pops_cfg.values()):         
+            if pop_cfg['cell']['type']=='LIF':
+                minV = pop_cfg['cell']['rest']
+                maxV = pop_cfg['cell']['thr']
+            else:
+                raise NotImplementedError(msg0 + msg_cell)
+            
+            if mode=='ss':
+                self.pops[pop].v = minV
+            elif mode=='rand':
+                self.pops[pop].v = '({}+ rand()*({}))*mV'.format(minV/b2.mV, (maxV-minV)/b2.mV)
+            else:
+                raise NotImplementedError(msg0 + msg_mode)
+            
+        for id_, conn_cfg in zip(range(len(self.syns)), self.conn_cfg.values()):
+            self.syns[id_].J = conn_cfg['synapse']['params']['J']
+            kernel, model = conn_cfg['synapse']['type'].split('_')
+            
+            if mode=='ss':
+                if kernel=='tsodysk-markram':
+                    self.syns[id_].u = conn_cfg['synapse']['params']['U']
+                    self.syns[id_].x = 1
+                    self.syns[id_].g = conn_cfg['synapse']['params']['U'] #u*x
+                elif kernel in ['alpha','exp','biexp']:
+                    self.syns[id_].g = 0
+                elif kernel == 'const':
+                    pass
+                else:
+                    raise NotImplementedError(msg0 + msg_kernel.format(kernel))
+                
+            
+            elif mode=='rand':
+                if kernel=='tsodysk-markram':
+                    self.syns[id_].u = 'rand()'
+                    self.syns[id_].x = 'rand()'
+                    self.syns[id_].g = 'rand()'
+                elif kernel in ['alpha','exp','biexp']:
+                    self.syns[id_].g = 'rand()'
+                elif kernel == 'const':
+                    pass
+                else:
+                    raise NotImplementedError(msg0 + msg_kernel.format(kernel))
+            
+            
+            else:
+                raise NotImplementedError(msg0 + msg_mode)
             
             
             
 if __name__=='__main__':
     #b2.defaultclock.dt = 2000*b2.us
     # I_net
-    sim = Simulate('I_net', scalar=2, load_connectivity=True, 
+    sim = Simulate('I_net', scalar=1, load_connectivity=True, 
                     to_event_driven=1, )
     sim.setup_net()
     sim.warmup()

@@ -3,8 +3,8 @@ anisonet/.ipynb_checkpoints
 anisonet/tmp
 anisonet/results/
 anisonet/*_net/
+anisonet/obs
 anisonet/__init__.py # it intervenes the sphinx-apidoc locally
-                                                                                                                                                                                                                                                                                                                                                                                            
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

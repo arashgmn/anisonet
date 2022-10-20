@@ -79,6 +79,41 @@ def aggregate_mons(data_path, name_pattern):
     del files_list
     return idxs, ts
 
+
+def phase_estimator(idxs, ts, dt):
+    t = np.linspace(0, ts.max(), int(ts.max()//dt) + 1)
+    phis = np.zeros(shape= (len(set(idxs)), len(t)))
+    
+    for num, idx in enumerate(sorted(set(idxs))):
+        phi = np.zeros_like(t)
+        
+        t_spk = sorted(ts[idxs == idx])
+        
+        if len(t_spk)>1:
+            t_dif = np.diff(t_spk)
+            
+            head = int(t_spk[0]//dt)
+            
+            for chunk_id, dif in  enumerate(t_dif):
+                #set_trace()
+                chunk_len = int(dif//dt)
+                phi[ head: head + chunk_len] = np.linspace(0, 2*np.pi, chunk_len) 
+                head += chunk_len
+            
+            phis[num] = phi
+    
+    return t, phis
+
+def estimate_order_parameter(phis, k=None):
+
+    if k==None:
+        k = np.ones(phis.shape[0])
+    else:
+        assert len(k)==phis.shape[0]
+        
+    R = np.average(np.exp(1j*phis), weights=k, axis=0)
+    return np.abs(R), np.angle(R)
+
 # if __name__=='__main__':
 #     import brian2 as b2
     
