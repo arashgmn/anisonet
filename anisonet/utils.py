@@ -35,7 +35,7 @@ def coord2idx(coords, pop, dim=2):
     for d in range(dim):
         idxs += coords[:,d] * gs**d
     # idxs = coords[:,1]*gs + coords[:,0]
-    return idxs
+    return idxs.astype(int)
     
 def idx2coords(idxs, pop, dim=2):
     """
@@ -60,7 +60,7 @@ def idx2coords(idxs, pop, dim=2):
         
     # y,x = np.divmod(idxs, gs)
     # coords = np.array([x,y]).T
-    return coords.T
+    return coords.T.astype(int)
 
 
 def aggregate_mons(data_path, name_pattern):

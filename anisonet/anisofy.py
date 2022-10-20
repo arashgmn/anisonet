@@ -369,28 +369,33 @@ def draw_posts(s_coord, ncons,
     
    
     # source neuron's location on the target population
-    dim = len(s_coord)
     scale = 1.*gs_t/gs_s
-    s_coord =  np.round(s_coord*scale).astype(int)
+    s_coord = np.array(s_coord) * scale 
     
+    try:
+        dim = len(s_coord)
+    except Exception:
+        dim = 1
+        
+    #print(dim)
     # scale_x, scale_y = 1.*trow/srow, 1.*tcol/scol
     # s_coord = np.round([s_coord[0]*scale_x, s_coord[1]*scale_y]).astype(int) 
     
     # initialzing containers for postsynapse coordiantes
     # x = np.zeros(ncons, dtype=int)
     # y = np.zeros(ncons, dtype=int)
-    t_coords = np.zeros((ncons, dim), dtype=int)
+    t_coords = np.zeros((dim, ncons), dtype=int)
     delays = np.zeros(ncons, dtype=float)
     
     # redraw = (x==0) & (y==0)  # index of those who must be redrawn. Now, all.
-    redraw = t_coords.sum(axis=1) == 0# index of those who must be redrawn. Now, all.
+    redraw = t_coords.sum(axis=0) == 0# index of those who must be redrawn. Now, all.
     while sum(redraw)>0:
         ncon = sum(redraw)
         
         # making a (for now isotropic) point cloud around the presynapse
         if profile['type']=='homog':
             coords_ = np.random.randint(0, gs_t, size = (ncon, dim)) - s_coord
-            coords_  = coords_.T # just for conveniance 
+            coords_  = coords_.T # to match t_coords shape order
             
             # x_= np.random.randint(0,tcol, size=ncon)-s_coord[0]
             # y_= np.random.randint(0,trow, size=ncon)-s_coord[1]
@@ -406,11 +411,14 @@ def draw_posts(s_coord, ncons,
             
         # making anisotropic
         coords_ = make_anisotropic(coords_, landscape)#, method)    
-        
+    
         # make coordinates periodic around the presynapse
-        
-        t_coords = (coords_ + gs_t/2 ) % gs_t - gs_t/2
+        t_coords[:,redraw] = (coords_ + gs_t/2 ) % gs_t - gs_t/2
         delays[redraw] = np.linalg.norm(coords_, axis=0)
+        # except IndexError as e:
+        #     print(coords_, coords_.shape)
+        #     print(redraw, redraw.shape, sum(redraw))
+            
         # x[redraw] = (x_ + tcol/2) % tcol - tcol/2
         # y[redraw] = (y_ + trow/2) % trow - trow/2
         # delays[redraw] = np.sqrt(x_**2 + y_**2)
@@ -425,7 +433,7 @@ def draw_posts(s_coord, ncons,
             redraw = np.zeros_like(t_coords[0,:], dtype=bool)
             
     # translating the coordinates w.r.t. source coordinates
-    t_coords = (t_coords + s_coord) % gs_t
+    t_coords = (t_coords.T + s_coord).T % gs_t
     # t_coords = np.array([x,y]).T 
     # x = (x + s_coord[0]) % tcol
     # y = (y + s_coord[1]) % trow

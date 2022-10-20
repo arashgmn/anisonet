@@ -173,7 +173,7 @@ def plot_firing_snapshots(sim, tmin=None, tmax=None, alpha=0.1):
     for id_, mon in enumerate(sim.mons):
         exposure_time = (mon.it[1]>=tmin) * (mon.it[1]<tmax)
         idxs = mon.it[0][exposure_time]
-        coords = utils.idx2coords(idxs, mon.source)
+        coords = utils.idx2coords(idxs, mon.source, sim.dim)
         plt.scatter(coords[:,0], coords[:,1], alpha=alpha, marker='o', s=2)
         ax = plt.gca()
         ax.set_aspect('equal')
@@ -227,8 +227,8 @@ def plot_periodicity(sim, N=10):
         pres = sim.syns[id_].i.__array__()
         for plot_id, s_idx in enumerate(periodicity_idxs):
             t_idxs = posts[pres==s_idx]
-            t_coords = utils.idx2coords(t_idxs, tpop)
-            s_coord = utils.idx2coords(s_idx, spop)
+            t_coords = utils.idx2coords(t_idxs, tpop, sim.dim)
+            s_coord = utils.idx2coords(s_idx, spop, sim.dim)
             
             post_cntr = (t_coords-s_coord).astype(float) # centers
             post_cntr -= np.fix(post_cntr/(gs/2)) *gs # make periodic
@@ -321,8 +321,8 @@ def plot_realized_landscape(sim):
         
         for _, s_idx in enumerate(sorted(set(pres))):
             t_idxs = posts[pres==s_idx]
-            t_coords = utils.idx2coords(t_idxs, tpop)
-            s_coord = utils.idx2coords(s_idx, spop)*gs_t/gs_s
+            t_coords = utils.idx2coords(t_idxs, tpop, sim.dim)
+            s_coord = utils.idx2coords(s_idx, spop, sim.dim)*gs_t/gs_s
             
             post_cntr = (t_coords-s_coord).astype(float) # centers
             post_cntr -= np.fix(post_cntr/(gs_t/2)) *gs_t # make periodic

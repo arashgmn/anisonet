@@ -262,7 +262,7 @@ class Simulate(object):
             
             # initialize population
             eqs = eq.get_nrn_eqs(pop_name, self.pops_cfg, syn_base=self.base)
-            pop = b2.NeuronGroup(N = gs**2, 
+            pop = b2.NeuronGroup(N = gs**self.dim, 
                                  name = pop_name, 
                                  model = eqs, 
                                  refractory = cell_cfg['ref'], #2*b2.ms, 
@@ -390,9 +390,10 @@ class Simulate(object):
                                recurrent = trg==src,
                                )
                     s_coord, t_coords, delay = draw_posts(**kws) # projects s_coord
-                    t_idxs = utils.coord2idx(t_coords, tpop)
+                    print(s_coord.shape, t_coords.shape)
+                    t_idxs = utils.coord2idx(t_coords, tpop, self.dim)
                     delays.append(delay)
-                    
+                
                 syn.connect(i = s_idx, j = t_idxs)
                 
             # initializing the values
@@ -496,7 +497,7 @@ class Simulate(object):
     
         
     def start(self, duration=1000*b2.ms, batch_dur=200*b2.ms, 
-              restore=True, profile=False, plot_snapshots=False):
+              restore=True, profile=False, plot_snapshots=True):
         """
         Starts a long simulation by breaking it down to several batches. After
         each ``batch_dur``, the monitors will be saved on disk, and simulation
@@ -570,7 +571,7 @@ class Simulate(object):
                 f = f.read()
                 data = pickle.loads(f)
                 
-                xy = utils.idx2coords(data['i'], sim.pops[pop_name])
+                xy = utils.idx2coords(data['i'], sim.pops[pop_name], self.dim)
                 txy.append(np.hstack((data['t'].reshape(-1,1), xy)))
                 del data,xy
                 
@@ -597,7 +598,7 @@ class Simulate(object):
         viz.plot_firing_rates_dist(sim)
         viz.plot_connectivity(sim)
         viz.plot_landscape(sim, overlay=overlay)
-        viz.plot_R(sim)
+        #viz.plot_R(sim)
         viz.plot_animation(sim, overlay=overlay) 
         viz.plot_realized_landscape(sim)
         
@@ -681,8 +682,8 @@ class Simulate(object):
 if __name__=='__main__':
     #b2.defaultclock.dt = 2000*b2.us
     # I_net
-    sim = Simulate('I_net', scalar=5, load_connectivity=True, 
-                    to_event_driven=1, dim=1)
+    sim = Simulate('I_net', scalar=3, load_connectivity=False, 
+                    to_event_driven=1, dim=2)
     sim.setup_net()
     sim.warmup()
     sim.start(duration=4000*b2.ms, batch_dur=2000*b2.ms, 
