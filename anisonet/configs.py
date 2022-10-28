@@ -341,9 +341,14 @@ def get_config(name='EI_net', scalar=3):
                    'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
                    #'profile': {'type':'Gaussian', 'params': {'std': 3} },
                    #'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'synapse': {'type':'tsodysk-markram_jump', 
-                               'params': {'J': -0.221*mV*(scalar**2), 'delay':1*ms, 
-                                          'tau_f': 1500*ms, 'tau_d': 200*ms, 'U':0.25}},
+                    # 'synapse': {'type':'tsodysk-markram_jump', 
+                    #             'params': {'J': -0.221*mV*(scalar**2), 'delay':1*ms, 
+                    #                        'tau_f': 1500*ms, 'tau_d': 200*ms, 'U':0.5}},
+                    'synapse': {'type':'tsodysk-markram_current', 
+                                'params': {'J': -10*pA*(scalar**2), 'delay':1*ms, 
+                                           'tau_f': 1500*ms, 'tau_d': 200*ms, 'U':1}},
+                   
+                   
                    'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}}
                    #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/6.}}
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}

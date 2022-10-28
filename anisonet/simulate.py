@@ -428,8 +428,9 @@ class Simulate(object):
             #                                  record=True))
             self.mons.append(b2.SpikeMonitor(self.pops[pop_name], 
                                              record=True, name='mon_'+pop_name))
-            #self.mons.append(b2.StateMonitor(self.syns[0], variables=['x','u','g'], record=True, name='syn_'+pop_name))
-        
+            #self.mons.append(b2.StateMonitor(self.syns[0], variables=['x','u','g','g_tmp'], record=True, name='syn_'+pop_name))
+            #self.mons.append(b2.StateMonitor(self.pops['I'], variables=['I_syn_I'], record=True, name='pop_'+pop_name))
+    
     def warmup(self):
         """
         Warms up the neurons for 500 ms. In the first half neurons receive no
@@ -630,7 +631,6 @@ class Simulate(object):
                 raise NotImplementedError(msg0 + msg_mode)
             
         for id_, conn_cfg in zip(range(len(self.syns)), self.conn_cfg.values()):
-            self.syns[id_].J = conn_cfg['synapse']['params']['J']
             kernel, model = conn_cfg['synapse']['type'].split('_')
             
             if mode=='ss':
@@ -650,7 +650,8 @@ class Simulate(object):
                 if kernel=='tsodysk-markram':
                     self.syns[id_].u = 'rand()'
                     self.syns[id_].x = 'rand()'
-                    self.syns[id_].g = 'rand()'
+                    #self.syns[id_].w = self.syns[id_].x * self.syns[id_].u
+                    
                 elif kernel in ['alpha','exp','biexp']:
                     self.syns[id_].g = 'rand()'
                 elif kernel == 'const':
@@ -662,16 +663,21 @@ class Simulate(object):
             else:
                 raise NotImplementedError(msg0 + msg_mode)
             
+            self.syns[id_].J = conn_cfg['synapse']['params']['J']
             
+            # The following ensures that the stationary response of synapse is
+            # equal to the prescribed J.
+            if kernel=='tsodysk-markram':
+                self.syns[id_].J /= conn_cfg['synapse']['params']['U']
             
 if __name__=='__main__':
     #b2.defaultclock.dt = 2000*b2.us
     # I_net
-    sim = Simulate('I_net', scalar=1, load_connectivity=True, 
-                    to_event_driven=1, )
+    sim = Simulate('STSP_TM_I_net', scalar=3.5, load_connectivity=True, 
+                    to_event_driven=0, )
     sim.setup_net()
     sim.warmup()
-    sim.start(duration=4000*b2.ms, batch_dur=2000*b2.ms, 
+    sim.start(duration=500*b2.ms, batch_dur=2000*b2.ms, 
               restore=False, profile=False)
     sim.post_process(overlay=True)
     # import matplotlib.pyplot as plt
@@ -698,3 +704,10 @@ if __name__=='__main__':
     # sim.start(duration=2000*b2.ms, batch_dur=1000*b2.ms, 
     #           restore=False, profile=False)
     # sim.post_process()
+    
+    # import matplotlib.pyplot as plt
+    
+    # ms = sim.mons[1]; mp = sim.mons[2]
+    # plt.plot(mp.t[:100], mp.I_syn_I[0,:100]/mp.I_syn_I.max()/30)
+    # for i in np.where(sim.syns[0].j==0)[0]:
+    #     plt.plot(ms.t[:100], ms.g[i,:100])

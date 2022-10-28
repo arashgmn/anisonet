@@ -105,8 +105,10 @@ def plot_firing_rates(sim, suffix='',
     
     if len(sim.pops)==1:
         axs=axs.reshape(-1,1)
-        
-    for id_, mon in enumerate(sim.mons):
+    
+    
+    mons = [mon for mon in sim.mons if 'SpikeMonitor' in str(type(mon))] # only spikeMons
+    for id_, mon in enumerate(mons):
         src = mon.source
         gs = np.round(np.sqrt(src.N)).astype(int)
         counts = np.asarray(mon.count).reshape((gs,gs))

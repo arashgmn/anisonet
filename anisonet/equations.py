@@ -282,8 +282,8 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
     tmp_tsodysk_markram = '''
         dx/dt = (1-x)/tau_d: 1 (clock-driven)
         du/dt = (U-u)/tau_f: 1 (clock-driven)
-        g: 1
-    '''
+        g = u * x: 1
+        '''
     
     # Constructing equations
     kernel, model = syn_base.split('_') # identify kernel and model
@@ -309,8 +309,8 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
         eqs_str = tmp_tsodysk_markram
         on_pre = '''
             u += U * (1 - u)
-            g = u * x
-            x = x-g
+            w = u * x
+            x = x - w
         '''
     
     else:
@@ -328,10 +328,15 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
         eqs_str += '''I_syn_{}_post = J*g: amp  (summed)\n'''.format(conn_name[0])
     
     elif model=='jump':
-    	eqs_str = eqs_str.replace('clock-driven', 'event-driven')
-    	eqs_str += '''\nJ: volt (shared)'''
-    	on_pre += '''\nv_post += J*g'''        
-    
+        eqs_str = eqs_str.replace('clock-driven', 'event-driven')
+        eqs_str += '''\nJ: volt (shared)'''
+        
+        kernel_variable = 'g'
+        if kernel=='tsodysk-markram':
+            kernel_variable  = 'w'
+            
+        on_pre += '''\nv_post += J*'''+kernel_variable
+        
     else:
         raise NotImplementedError('synaptic model type "{}" is not recognized!'.format(model))
     
