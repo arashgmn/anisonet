@@ -9,6 +9,7 @@ modules are auxillary utilities used here.
 # them to the equation as a namespace. It's cleaner and similar to the synapse.
 
 import os 
+import logging
 osjoin = os.path.join # an alias for convenient
 
 import pickle
@@ -22,12 +23,16 @@ import time
 import viz
 import utils 
 import configs # default configurations
+import analyze
 import equations as eq
 from landscape import make_landscape
 #from anisofy import draw_post_syns as draw_posts
 from anisofy import draw_posts as draw_posts
 
 b2.seed(8)
+
+_plastic_models = ['tsodysk-markram']
+
 
 class Simulate(object):
     """
@@ -68,7 +73,8 @@ class Simulate(object):
         if to_event_driven :
             self.current_to_voltage()
         self.base = self.get_synaptic_base()
-            
+        self.has_plastic = self.check_plasticity()
+        
         self.load_connectivity = load_connectivity
         
         self.name = self.generate_name(scalar, net_name)
@@ -116,29 +122,52 @@ class Simulate(object):
             src, trg = pathway
             
             kernel, model = syn_cfg['type'].split('_') # identify kernel and model
-            assert model == 'current'
-            assert kernel != 'const'
-            assert kernel != 'tsodysk_markram'
             
-            if kernel=='exp':
-                C_m = self.pops_cfg[src]['cell']['C']
-                tau_s = syn_cfg['params']['tau']
-                syn_cfg['params']['J']*= (tau_s/C_m)
+            if model == 'jump':
+                continue # no modification needed.
+                msg = """
+                    Pathway {} is already configured as voltage-based. Noting
+                    was converted.""".format(pathway)
+                logging.info(msg)
+                
+            elif model =='conductance':
+                msg = """
+                    Pathway {} is configured as conductance-based. But only 
+                    current-based models can be converted to voltage-based.
+                    """.format(pathway)
+                logging.critical(msg)
+                raise TypeError(msg)
+                
+            else: #model is indeed conductance-based
+                # invalid kernels
+                msg = """
+                    kernel type {} will cause an infinite charge transfer and 
+                    is not a valid option for conversion to a voltage-based 
+                    model""".format(kernel)
+                
+                assert kernel != 'const', msg
+                assert kernel != 'tsodysk_markram', msg
+                
+                # compute conversion factor for valid kernels
+                if kernel=='exp':
+                    C_m = self.pops_cfg[src]['cell']['C']
+                    tau_s = syn_cfg['params']['tau']
+                    syn_cfg['params']['J']*= (tau_s/C_m)
+                
+                elif kernel=='alpha':
+                    C_m = self.pops_cfg[src]['cell']['C']
+                    tau_s = syn_cfg['params']['tau']
+                    syn_cfg['params']['J']*= (tau_s/C_m)*np.exp(1)
+                
+                else:
+                    # TODO: need to find the correct conversion 
+                    tau_r = syn_cfg['params']['tau'] # tau_r instead of tau
+                    tau_d = syn_cfg['params']['tau'] # tau_d instead of tau
+                
+                syn_cfg['type'] = 'const_jump'
+                
+                self.conn_cfg[pathway]['synapse'] = syn_cfg # update
             
-            elif kernel=='alpha':
-                C_m = self.pops_cfg[src]['cell']['C']
-                tau_s = syn_cfg['params']['tau']
-                syn_cfg['params']['J']*= (tau_s/C_m)*np.exp(1)
-            
-            else:
-                # TODO: need to find the correct conversion 
-                tau_r = syn_cfg['params']['tau'] # tau_r instead of tau
-                tau_d = syn_cfg['params']['tau'] # tau_d instead of tau
-            
-            syn_cfg['type'] = 'const_jump'
-            
-            self.conn_cfg[pathway]['synapse'] = syn_cfg # update
-        
         # if increase_tau_m:
         #     for pop_cfg in self.pops_cfg.values():
         #         pop_cfg['cell']['tau'] *= 1
@@ -223,7 +252,7 @@ class Simulate(object):
         self.setup_pops()
         self.setup_landscape()
         self.setup_syns()
-        self.state_initializer(mode='rand')
+        self.state_initializer(mode='ss')
         
         self.configure_monitors()
         
@@ -386,6 +415,11 @@ class Simulate(object):
             #syn.delay = np.array(delays).ravel()*b2.ms
             #syn.delay = np.random.uniform(0.5, 2.5, len(syn.delay))*b2.ms
             #self.state_initializer(syn, self.conn_cfg[key], mode='rand')
+            syn.add_attribute('is_plastic')
+            syn.is_plastic = False
+            for plastic_model in _plastic_models:
+                if plastic_model in self.conn_cfg[key]['synapse']['type']:
+                    syn.is_plastic = True 
             
             
             # append to the class
@@ -428,6 +462,13 @@ class Simulate(object):
             #                                  record=True))
             self.mons.append(b2.SpikeMonitor(self.pops[pop_name], 
                                              record=True, name='mon_'+pop_name))
+
+        if 'tsodysk-markram' in self.base:
+            for syn in sorted(self.syns):
+                self.mons.append(b2.StateMonitor(syn, variables=['u','x'], 
+                                                 record=True, dt = 500*b2.ms,
+                                                 name='mon_'+syn.name))        
+            
             #self.mons.append(b2.StateMonitor(self.syns[0], variables=['x','u','g','g_tmp'], record=True, name='syn_'+pop_name))
             #self.mons.append(b2.StateMonitor(self.pops['I'], variables=['I_syn_I'], record=True, name='pop_'+pop_name))
     
@@ -521,6 +562,8 @@ class Simulate(object):
         if (duration-nbatch*batch_dur)/(b2.defaultclock.dt)>0:
             nbatch += 1
         
+        fmt = '{:0>%d}'%(np.log10(nbatch)+1) #suffix_format
+        
         for n in range(nbatch):
             self.reset_monitors()
             
@@ -533,15 +576,15 @@ class Simulate(object):
             
             if plot_snapshots:
                 viz.plot_firing_rates(sim=self, suffix='_'+str(n))
-            
-            self.save_monitors(n)
+                
+            self.save_monitors(suffix = fmt.format(n+1))
             
     
-    def save_monitors(self, number):
+    def save_monitors(self, suffix):
         for mon in self.mons:
             data = mon.get_states()
             with open (osjoin(self.data_path, 
-                              self.name+'_'+mon.name+'_'+str(number+1)+'.dat'), 'wb') as f:
+                              self.name+'_'+mon.name+'_'+suffix+'.dat'), 'wb') as f:
                 pickle.dump(data, f)
         del mon, data
     
@@ -578,15 +621,31 @@ class Simulate(object):
         self.net.add(self.mons)
         
     
-    def post_process(self, overlay=True):
+    def post_process(self, overlay=True, ss_dur=10):
         print('{} -- Starting postprocessing ...'.format(time.ctime()))
+        
+        logging.info('Visualizing landscape, degress, and connectivity.')
         viz.plot_landscape(sim, overlay=overlay)
         viz.plot_in_out_deg(sim)
         viz.plot_realized_landscape(sim)
         viz.plot_connectivity(sim)
+        
+        logging.info('Visualizing firing rate distribution.')
         viz.plot_firing_rates_dist(sim)
-        viz.plot_animation(sim, overlay=overlay) 
+        
+        logging.info('Making activity animation.')
+        viz.plot_animation(sim, overlay=overlay, ss_dur=ss_dur) 
+
+        logging.info('Computing synchrony order parameter.')
         viz.plot_R(sim)
+        
+        if self.has_plastic:
+            viz.plot_relative_weights(sim)
+        
+        analyze.find_bumps(sim, plot=True)
+        
+        
+        
         
     def state_initializer(self, mode='ss'):
         """
@@ -637,7 +696,6 @@ class Simulate(object):
                 if kernel=='tsodysk-markram':
                     self.syns[id_].u = conn_cfg['synapse']['params']['U']
                     self.syns[id_].x = 1
-                    self.syns[id_].g = conn_cfg['synapse']['params']['U'] #u*x
                 elif kernel in ['alpha','exp','biexp']:
                     self.syns[id_].g = 0
                 elif kernel == 'const':
@@ -650,7 +708,6 @@ class Simulate(object):
                 if kernel=='tsodysk-markram':
                     self.syns[id_].u = 'rand()'
                     self.syns[id_].x = 'rand()'
-                    #self.syns[id_].w = self.syns[id_].x * self.syns[id_].u
                     
                 elif kernel in ['alpha','exp','biexp']:
                     self.syns[id_].g = 'rand()'
@@ -669,16 +726,43 @@ class Simulate(object):
             # equal to the prescribed J.
             if kernel=='tsodysk-markram':
                 self.syns[id_].J /= conn_cfg['synapse']['params']['U']
+        
+    def get_syn_mons(self):
+        syn_mons = []
+        for mon in self.mons:
+            if 'syn' in mon.name:
+                syn_mons.append(mon)
+                
+        return syn_mons
             
+    def get_pop_mons(self):
+        syn_mons = []
+        for mon in self.mons:
+            if 'syn' not in mon.name:
+                syn_mons.append(mon)
+                
+        return syn_mons
+        
+    def check_plasticity(self):
+        has_plasticity = False
+        
+        for pathway_cfg in self.conn_cfg.values():
+            for model in _plastic_models:
+                if model in pathway_cfg['synapse']['type']:
+                    has_plasticity = True
+    
+        return has_plasticity 
+    
+    
 if __name__=='__main__':
     #b2.defaultclock.dt = 2000*b2.us
     # I_net
-    sim = Simulate('STSP_TM_I_net', scalar=3.5, load_connectivity=True, 
-                    to_event_driven=0, )
+    sim = Simulate('E_net', scalar=4., load_connectivity=True, 
+                    to_event_driven=1, )
     sim.setup_net()
     sim.warmup()
-    sim.start(duration=500*b2.ms, batch_dur=2000*b2.ms, 
-              restore=False, profile=False)
+    sim.start(duration=4000*b2.ms, batch_dur=1000*b2.ms, 
+              restore=False, profile=False, plot_snapshots=True)
     sim.post_process(overlay=True)
     # import matplotlib.pyplot as plt
     

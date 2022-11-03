@@ -10,10 +10,12 @@ osjoin = os.path.join # an alias for convenient
 
 import pickle
 import numpy as np
-from brian2 import Equations 
-from brian2 import mV, nS, pA, ms
+from collections import defaultdict
 
-root = './'
+from brian2 import Equations 
+from brian2 import mV, nS, pA, ms, second
+
+from pdb import set_trace
 
 def coord2idx(coords, pop):
     """
@@ -53,7 +55,7 @@ def idx2coords(idxs, net):
     return coords
 
 
-def aggregate_mons(data_path, name_pattern):
+def aggregate_mons(sim, mon_name, SI=False):
     """
     Aggregates the indices and timings of the spiking events from disk.
     
@@ -64,21 +66,36 @@ def aggregate_mons(data_path, name_pattern):
 
     """
     
-    files_list = sorted(glob.glob( osjoin(data_path, name_pattern+'*')))
-    idxs = []
-    ts = []
+    data_path = sim.data_path
+    name_pattern = sim.name+ '_'+ mon_name+'_*.dat'
+    
+    files_list = sorted(glob.glob( osjoin(data_path, name_pattern)))
+    mon = {}
     for file in sorted(files_list):
         with open(file, 'rb') as f:
             data = pickle.load(f)
-            idxs.append(list(data['i']))
-            ts.append(list(data['t']/ms))
+            
+            for key, value in data.items():
+                if key in mon:
+                    mon[key] = np.append(mon[key], value)
+                else:
+                    mon[key] = value
+            # ts.append(list(data['t']/ms))
+            
+            # idxs.append(list(data['i']))
     
-    idxs = np.concatenate(idxs)
-    ts = np.concatenate(ts)
-    
-    del files_list
-    return idxs, ts
+    # if not SpikeMonitor, then we have to reshape the monitors
+    if 'syn' in mon_name:
+        for key, value in mon.items():
+            if key not in ['t', 'N']:
+                mon[key] = value.reshape(len(mon['t']),-1)
+                
+    # if SI:
+    #     mon['t'] /= (1*second)
+    # # idxs = np.concatenate(idxs)
+    # # ts = np.concatenate(ts)
 
+    return mon
 
 def phase_estimator(idxs, ts, dt):
     t = np.linspace(0, ts.max(), int(ts.max()//dt) + 1)
@@ -95,7 +112,7 @@ def phase_estimator(idxs, ts, dt):
             head = int(t_spk[0]//dt)
             
             for chunk_id, dif in  enumerate(t_dif):
-                #set_trace()
+                # set_trace()
                 chunk_len = int(dif//dt)
                 phi[ head: head + chunk_len] = np.linspace(0, 2*np.pi, chunk_len) 
                 head += chunk_len
@@ -113,11 +130,3 @@ def estimate_order_parameter(phis, k=None):
         
     R = np.average(np.exp(1j*phis), weights=k, axis=0)
     return np.abs(R), np.angle(R)
-
-# if __name__=='__main__':
-#     import brian2 as b2
-    
-#     G = b2.NeuronGroup(N=100**2, model="dv/dt=1:1")
-    
-#     i2c = idx2coords([1,102], G)
-#     c2i = coord2idx(i2c, G)

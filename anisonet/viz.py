@@ -11,12 +11,20 @@ name (inherited from the simulation object).
 
 import matplotlib.pyplot as plt
 from matplotlib import animation
-import numpy as np
-from brian2.units import ms
-import utils 
+from matplotlib.colors import Normalize
+from matplotlib.cm import ScalarMappable
+import seaborn as sns
 
+from brian2.units import ms, second
+
+import numpy as np
+import time
 import os
 osjoin = os.path.join # an alias for convenient
+
+import utils 
+
+from pdb import set_trace
 
 def get_cax(ax):
     """
@@ -107,7 +115,7 @@ def plot_firing_rates(sim, suffix='',
         axs=axs.reshape(-1,1)
     
     
-    mons = [mon for mon in sim.mons if 'SpikeMonitor' in str(type(mon))] # only spikeMons
+    mons = sim.get_pop_mons()
     for id_, mon in enumerate(mons):
         src = mon.source
         gs = np.round(np.sqrt(src.N)).astype(int)
@@ -163,7 +171,7 @@ def plot_firing_snapshots(sim, tmin=None, tmax=None, alpha=0.1):
     if tmin==None:
         tmin = 0*ms
     if tmax==None:
-        tmax = sim.mons[0].t[-1]
+        tmax = sim.net.t[-1]
     
     
     fig, axs = plt.subplots(2, len(sim.pops), 
@@ -171,8 +179,9 @@ def plot_firing_snapshots(sim, tmin=None, tmax=None, alpha=0.1):
     
     if len(sim.pops)==1:
         axs=axs.reshape(-1,1)
-        
-    for id_, mon in enumerate(sim.mons):
+    
+    pop_mons = sim.get_pop_mons()
+    for id_, mon in enumerate(pop_mons):
         exposure_time = (mon.it[1]>=tmin) * (mon.it[1]<tmax)
         idxs = mon.it[0][exposure_time]
         coords = utils.idx2coords(idxs, mon.source)
@@ -402,7 +411,6 @@ def overlay_phis(phis, ax, size=5, color='k', scale=0.3, **kwargs):
             adjust_needed = True
         counter+= 1
             
-    print('gridsize: {}   gating size: {}'.format(gs, size))
     s = np.sin(phi).reshape(gs//size, size, gs//size, size).mean(axis=(1, 3))
     c = np.cos(phi).reshape(gs//size, size, gs//size, size).mean(axis=(1, 3))
     
@@ -423,10 +431,13 @@ def plot_firing_rates_dist(sim):
     if len(sim.pops)==1:
         axs = [axs]
     
-    for id_, mon in enumerate(sim.mons):
-        idxs, ts = utils.aggregate_mons(sim.data_path, 
-                                        sim.name +'_'+ mon.name+'_*.dat')
-        T = (np.max(ts) - np.min(ts))/1000. # ts is in ms
+    # we only need population SpikeMonitors
+    pop_mons = sim.get_pop_mons()
+    for id_, mon in enumerate(pop_mons):
+        mon_dict = utils.aggregate_mons(sim, mon.name)
+        idxs, ts = mon_dict['i'], mon_dict['t']
+        
+        T = np.max(ts) - np.min(ts)
         rates = value_counts(idxs)/T
         axs[id_].hist(rates, bins=50, density=True,)
         axs[id_].set_xlabel('Firing rate [Hz]')
@@ -456,7 +467,7 @@ def animator(fig, axs, imgs, vals, ts_bins=[]):
             imgs[0].set_array(vals[0][frame_id])
             
         if len(ts_bins) > 0:
-            fig.suptitle('%s ms' % ts_bins[frame_id])
+            fig.suptitle('%s' % ts_bins[frame_id])
         else:
             fig.suptitle('%s' % frame_id)
         
@@ -484,13 +495,17 @@ def plot_animation(sim, ss_dur=25, fps=10, overlay=True):
     if  len(sim.pops)==1:
         axs = [axs]
     
-    ts_bins = np.arange(0, sim.net.t/ms + 1, ss_dur)
+    ts_bins = np.arange(0, sim.net.t/ms + 1, ss_dur) * ms
     
     field_imgs = []
     field_vals = []
-    for id_, mon in enumerate(sim.mons):
-        idxs, ts = utils.aggregate_mons(sim.data_path, 
-                                        sim.name+ '_'+ mon.name+'_*.dat')
+    
+    pop_mons = sim.get_pop_mons()        
+    for id_, mon in enumerate(pop_mons):
+        # idxs, ts = utils.aggregate_mons(sim, mon.name)
+        mon_dict = utils.aggregate_mons(sim, mon.name)
+        idxs, ts = mon_dict['i'], mon_dict['t']
+        
         gs = int(np.sqrt(sim.pops[mon.name[-1]].N))
         
         h = np.histogram2d(ts, idxs, bins=[ts_bins, range(gs**2 + 1)])[0]
@@ -516,24 +531,129 @@ def plot_animation(sim, ss_dur=25, fps=10, overlay=True):
     
 def plot_R(sim):
     dt = sim.mons[0].clock.dt_ # in SI
-    dt /= 1e-3 # aggregated times are always in ms
+    # dt /= 1e-3 # aggregated times are always in ms
     
     fig, axs = plt.subplots(1, len(sim.pops))
     if  len(sim.pops)==1:
         axs = [axs]
     
-    for id_, mon in enumerate(sim.mons):
-        idxs, ts = utils.aggregate_mons(sim.data_path, 
-                                        sim.name+ '_'+ mon.name+'_*.dat')
-        
-        
-        t, phis = utils.phase_estimator(idxs, ts, dt)
-        R_rad, R_arg = utils.estimate_order_parameter(phis) 
+    pop_mons = sim.get_pop_mons()
+    for id_, mon in enumerate(pop_mons):
+        mon_dict = utils.aggregate_mons(sim, mon.name)
+        idxs, ts = mon_dict['i'], mon_dict['t']
+    
+        t, phis = utils.phase_estimator(idxs, ts, dt) # TODO: fix this!
+        R_rad, R_arg = utils.estimate_order_parameter(phis)  # TODO: fix this!
         
         axs[id_].plot(t, R_rad,)
         axs[id_].set_title('Population '+mon.name[-1])
-        
+            
     figpath = osjoin(sim.res_path, sim.name + '_order_param.png')
     plt.savefig(figpath, bbox_inches='tight', dpi=200)
     plt.close()
+   
+    
+def plot_3d_clusters(sim, txy, db, name):
+    norm = Normalize(vmin=db.labels_.min(), vmax=db.labels_.max())
+    smap = ScalarMappable(norm=norm, cmap='tab20') #
+    colors = smap.to_rgba(db.labels_)
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    is_member = db.labels_>=0
+    ax.scatter(txy[is_member,0], txy[is_member,1], txy[is_member,2], 
+               color=colors[is_member], marker='.',s=1)
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')  
+    ax.set_zlabel('time')
+
+    figpath = osjoin(sim.res_path, sim.name + '_3D_clusters_'+name+'.png')
+    plt.savefig(figpath, bbox_inches='tight', dpi=200)
+    plt.close()
+    
+def plot_bump_speed(sim, disp, name):
+    """
+    Only the distribution of velocities matter, not the one of a specific 
+    cluster. So, I do not plot the legend.
+    """
+    plt.figure()
+    ax = plt.gca()
+    for bump_id, group in disp.groupby('label'):
+        ax.hist(group.v, bins=50, histtype='step', label=bump_id, 
+                alpha=0.4, density = True, color='k')
+    
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_xlabel('velocity')
+    ax.set_ylabel('density distribution')
+    # fig = plt.figure()
+    # ax = fig.add_subplot()
+    # sns.scatterplot(data=disp[disp.index>-1], x='t', y='v', hue='label', ax=ax)    
+    
+    figpath = osjoin(sim.res_path, sim.name + '_bumpspeed_'+name+'.png')
+    plt.savefig(figpath, bbox_inches='tight', dpi=200)
+    plt.close()
+    
+def plot_relative_weights(sim, logx=False):
+    fig, axs = plt.subplots(3, len(sim.syns), sharex=True)
+    axs = np.reshape(axs, (3,-1))
+        
+    for id_, syn in enumerate(sim.syns):
+        mon = utils.aggregate_mons(sim, 'mon_'+syn.name)
+        
+        for idx_t in range(len(mon['t'])):
+            alpha = (idx_t+1.)/len(mon['t'])
+            
+            axs[0, id_].hist(mon['u'][idx_t,:]*mon['x'][idx_t,:], bins=100, 
+                             histtype='step', color='b', alpha=alpha)
+            
+            axs[1, id_].hist(mon['u'][idx_t,:], bins=100, 
+                             histtype='step', color='g', alpha=alpha)
+            
+            axs[2, id_].hist(mon['x'][idx_t,:]*mon['x'][idx_t,:], bins=100, 
+                             histtype='step', color='r', alpha=alpha)
+        
+        for ax in axs[:,id_]:
+            ax.set_ylim(1e-1, 10**( int( np.log10(len(syn.u)) )+1 ) )
+            
+            # vertical lines of stationary states 
+            # ylims = ax.get_ylim()
+            # ax.vlines(syn.namespace['U'], ylims[0], ylims[1], 
+            #           colors='darkgreen', linestyle='--')
+            # ax.vlines(1, ylims[0], ylims[1], 
+            #           colors='darkred', linestyle='--')
+            
+            
+    for syn_id, syn in enumerate(sim.syns):
+        ylims = axs[0, syn_id].get_ylim()
+        
+        axs[0, syn_id].plot([],[],'b', label='w=ux')
+        axs[1, syn_id].plot([],[],'g', label='u')
+        axs[2, syn_id].plot([],[],'r', label='x')
+
+        axs[0, syn_id].vlines(syn.namespace['U'], ylims[0], ylims[1], 
+                  colors='b', linestyle='--')
+        
+        axs[1, syn_id].vlines(syn.namespace['U'], ylims[0], ylims[1], 
+                  colors='g', linestyle='--')
+        
+        axs[2, syn_id].vlines(1, ylims[0], ylims[1], 
+                  colors='r', linestyle='--')
+        
+        
+    for ax in axs[:,0]:
+        ax.set_ylabel('frequency')
+    
+    for ax in axs.ravel():
+        ax.set_yscale('log')
+        ax.set_xlim(-.05, 1.05)
+        ax.legend(loc='best')
+        
+        if logx:
+            ax.set_xscale('log')
+    
+    figpath = osjoin(sim.res_path, sim.name + '_weight_modulation.png')
+    plt.savefig(figpath, bbox_inches='tight', dpi=200)
+    plt.close()
+    
     
