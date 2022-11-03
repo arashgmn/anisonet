@@ -282,7 +282,6 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
     tmp_tsodysk_markram = '''
         dx/dt = (1-x)/tau_d: 1 (clock-driven)
         du/dt = (U-u)/tau_f: 1 (clock-driven)
-        g = u * x: 1
         '''
     
     # Constructing equations
@@ -306,11 +305,19 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
     	on_pre = '' # no 
     
     elif kernel=='tsodysk-markram':
+        msg = """
+            tsodysk-markram model is defined only for the jump kernel. i.e. 
+            incremental in the membrane voltage whenever there is a spike. It 
+            is possible to extend this kernel to current/conductance models but
+            it would be a novel kernel.
+            """
+        assert model=='jump', msg
+        
         eqs_str = tmp_tsodysk_markram
         on_pre = '''
             u += U * (1 - u)
-            w = u * x
-            x = x - w
+            g = u * x
+            x = x - g
         '''
     
     else:
@@ -331,11 +338,7 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
         eqs_str = eqs_str.replace('clock-driven', 'event-driven')
         eqs_str += '''\nJ: volt (shared)'''
         
-        kernel_variable = 'g'
-        if kernel=='tsodysk-markram':
-            kernel_variable  = 'w'
-            
-        on_pre += '''\nv_post += J*'''+kernel_variable
+        on_pre += '''\nv_post += J*g'''
         
     else:
         raise NotImplementedError('synaptic model type "{}" is not recognized!'.format(model))
