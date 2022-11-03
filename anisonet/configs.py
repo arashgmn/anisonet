@@ -110,13 +110,13 @@ Use either of the following structures for the value of ``profile`` key:
      'anisotropy': {'type': 'perlin', 'params': {'r': ..., 'scale': ...}}
      'anisotropy': {'type': 'homogeneous', 'params': {'r': ..., 'phi': ...}}
      'anisotropy': {'type': 'random', 'params': {'r':  ...,}}
-     'anisotropy': {'type': 'symmetric', 'params': {}}
+     'anisotropy': {'type': 'iso', 'params': {}}
     }
     
-#. ``type``: name of anisotropy profile. For now only one of the ``['perlin, homogeneous, random, symmetric']`` are possible. (str)
+#. ``type``: name of anisotropy profile. For now only one of the ``['perlin, homogeneous, random, iso']`` are possible. (str)
 #. ``params``:
 
-   * ``r``: displacement (float) -- not important for symmetric type,
+   * ``r``: displacement (float) -- not important for iso type,
    * ``scale``: perlin scale if type is ``"perlin"`` (int)
    * ``phi``: uniform anisotropic angle if type is ``"homogeneous"`` (float)
 
@@ -125,7 +125,7 @@ Use either of the following structures for the value of ``profile`` key:
 .. _[1]: https://doi.org/10.1371/journal.pcbi.1007432
 """
 
-from brian2.units import pA, mV, ms, pF
+from brian2.units import pA, mV, ms, pF, nA
 import numpy as np
 
 np.random.seed(18)
@@ -196,13 +196,13 @@ def get_config(name='EI_net', scalar=3):
                    'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}}
                    #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/6.}}
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
-                   #'anisotropy': {'type': 'symmetric', 'params': {}}
+                   #'anisotropy': {'type': 'iso', 'params': {}}
                    },
         }    
     elif name=='E_net':
         pops_cfg = {
             'E': {'gs': round_to_even(100, scalar), 
-                  'noise': {'mu': 275*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
+                  'noise': {'mu': 300*pA, 'sigma': 0*pA, 'noise_dt': 1.*ms},
                   'cell': {'type': 'LIF', 
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
                            'tau':10*ms, 'C': 250*pF}
@@ -217,7 +217,7 @@ def get_config(name='EI_net', scalar=3):
                    #'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}}
                    'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/6.}}
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
-                   #'anisotropy': {'type': 'symmetric', 'params': {}}
+                   #'anisotropy': {'type': 'iso', 'params': {}}
                    },
         }    
     
@@ -246,7 +246,7 @@ def get_config(name='EI_net', scalar=3):
                   'profile': {'type':'Gaussian', 'params': {'std': 9/scalar} },
                   'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms} },
                   #'anisotropy': {'type': 'perlin', 'params': {'scale': 3, 'r':np.sqrt(2)}},
-                  #'anisotropy': {'type': 'symmetric', 'params': {}}
+                  #'anisotropy': {'type': 'iso', 'params': {}}
                   'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':np.pi/6.}}
                   },
             
@@ -340,19 +340,21 @@ def get_config(name='EI_net', scalar=3):
             'II': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
                    'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
                    #'profile': {'type':'Gaussian', 'params': {'std': 3} },
+                   #'profile': {'type':'homog', 'params': {} },
                    #'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                    # 'synapse': {'type':'tsodysk-markram_jump', 
-                    #             'params': {'J': -0.221*mV*(scalar**2), 'delay':1*ms, 
-                    #                        'tau_f': 1500*ms, 'tau_d': 200*ms, 'U':0.5}},
-                    'synapse': {'type':'tsodysk-markram_current', 
-                                'params': {'J': -10*pA*(scalar**2), 'delay':1*ms, 
-                                           'tau_f': 1500*ms, 'tau_d': 200*ms, 'U':1}},
+                   #'synapse': {'type':'tsodysk-markram_jump', 
+                   #            'params': {'J': -0.221*mV*(scalar**2), 'delay':1*ms, 
+                   #                       'tau_f': 1500*ms, 'tau_d': 200*ms, 'U':0.5}},
+                   'synapse': {'type':'tsodysk-markram_jump', 
+                               'params': {'J': -0.221*mV*(scalar**2), 'delay':1*ms, 
+                                          'tau': 10*ms, 'tau_f': 1500.*ms, 'tau_d': 200.*ms, 
+                                          'U':2/3.}},
                    
                    
                    'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}}
                    #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/6.}}
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
-                   #'anisotropy': {'type': 'symmetric', 'params': {}}
+                   #'anisotropy': {'type': 'iso', 'params': {}}
                    },
         }
         
@@ -377,7 +379,7 @@ def get_config(name='EI_net', scalar=3):
                    'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}}
                    #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/6.}}
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
-                   #'anisotropy': {'type': 'symmetric', 'params': {}}
+                   #'anisotropy': {'type': 'iso', 'params': {}}
                    },
             }
     else:
