@@ -66,13 +66,13 @@ class Simulate(object):
         root = osjoin(result_path, net_name)
                 
         # initialize with defaults
-        self.pops_cfg , self.conn_cfg = configs.get_config(net_name, scalar=scalar)
-        self.process_configs()
+        self.pops_cfg, self.conn_cfg, self.stim_cfgs = configs.get_config(net_name, scalar=scalar)
         
-        # extract the synaptic base
-        if to_event_driven :
-            self.current_to_voltage()
-        self.base = self.get_synaptic_base()
+        # processing configs
+        self.process_configs(to_event_driven) 
+        
+        
+        #self.base = self.get_synaptic_base()
         self.has_plastic = self.check_plasticity()
         
         self.load_connectivity = load_connectivity
@@ -92,6 +92,100 @@ class Simulate(object):
         self.warmup_dur = 500*b2.ms
         
         
+    def state_initializer(self, mode='ss'):
+        """
+        A smart function that intializes the synaptic or cellular state according 
+        to the desired mode, based on the provided config file.
+        
+        :param config: DESCRIPTION
+        :type config: TYPE
+        :param mode: DESCRIPTION, defaults to 'ss'
+        :type mode: TYPE, optional
+        :return: DESCRIPTION
+        :rtype: TYPE
+        """
+        
+        msg0 = 'I am smart but ... \n'
+        
+        msg_mode = '''
+            I only regonize steady state (ss) and random (rand) modes for now. 
+            '''
+        
+        msg_kernel = '''
+            The kernel "{}" is not among the regonized kernels. Have a look at the
+            documentation.
+            '''
+        
+        msg_cell = '''
+            I only regonize LIF neuron for now.
+            '''
+        
+        for pop, pop_cfg in zip(self.pops, self.pops_cfg.values()):         
+            # setting up voltage
+            if pop_cfg['cell']['type']=='LIF':
+                minV = pop_cfg['cell']['rest']
+                maxV = pop_cfg['cell']['thr']
+            else:
+                raise NotImplementedError(msg0 + msg_cell)
+            
+            if mode=='ss':
+                self.pops[pop].v = minV
+            elif mode=='rand':
+                self.pops[pop].v = '({}+ rand()*({}))*mV'.format(minV/b2.mV, (maxV-minV)/b2.mV)
+            else:
+                raise NotImplementedError(msg0 + msg_mode)
+            
+            
+            # setting up noise level
+            self.pops[pop].mu = pop_cfg['noise']['mu']
+            self.pops[pop].sigma = pop_cfg['noise']['sigma']
+            
+            # setting up the stimuli
+            if len(pop_cfg['stim'].keys())==0:
+                self.pops[pop].I_stim = 0*b2.nA
+            
+        
+        # for id_, conn_cfg in zip(range(len(self.syns)), self.conn_cfg.values()):
+        #     kernel, model = conn_cfg['synapse']['type'].split('_')
+        for syn_name in self.syns.keys():
+            conn_cfg = self.conn_cfg[syn_name]
+            kernel, model = conn_cfg['synapse']['type'].split('_')
+        
+            if mode=='ss':
+                if kernel=='tsodysk-markram':
+                    self.syns[syn_name].u = conn_cfg['synapse']['params']['U']
+                    self.syns[syn_name].x = 1
+                elif kernel in ['alpha','exp','biexp']:
+                    self.syns[syn_name].g = 0
+                elif kernel == 'const':
+                    pass
+                else:
+                    raise NotImplementedError(msg0 + msg_kernel.format(kernel))
+                
+            
+            elif mode=='rand':
+                if kernel=='tsodysk-markram':
+                    self.syns[syn_name].u = 'rand()'
+                    self.syns[syn_name].x = 'rand()'
+                    
+                elif kernel in ['alpha','exp','biexp']:
+                    self.syns[syn_name].g = 'rand()'
+                elif kernel == 'const':
+                    pass
+                else:
+                    raise NotImplementedError(msg0 + msg_kernel.format(kernel))
+            
+            
+            else:
+                raise NotImplementedError(msg0 + msg_mode)
+            
+            self.syns[syn_name].J = conn_cfg['synapse']['params']['J']
+            
+            # The following ensures that the stationary response of synapse is
+            # equal to the prescribed J.
+            if kernel=='tsodysk-markram':
+                self.syns[syn_name].J /= conn_cfg['synapse']['params']['U']
+                
     def get_synaptic_base(self):
         """
         Synaptic inputs can be defined in different ways. This method reads the
@@ -111,7 +205,8 @@ class Simulate(object):
         # else:
         #     raise
     
-    def current_to_voltage(self, increase_tau_m=True):
+    def current_to_voltage(self):
+        # TODO: maybe it is better to move it to utils.
         """
         Transfaers the current-based synapses into an (almost) equivalent 
         voltage jump increment model. Look at ``Equation`` module for more info.
@@ -167,10 +262,6 @@ class Simulate(object):
                 syn_cfg['type'] = 'const_jump'
                 
                 self.conn_cfg[pathway]['synapse'] = syn_cfg # update
-            
-        # if increase_tau_m:
-        #     for pop_cfg in self.pops_cfg.values():
-        #         pop_cfg['cell']['tau'] *= 1
                 
             
     def generate_name(self, scalar, net_name):
@@ -222,7 +313,9 @@ class Simulate(object):
         print('\nThe network is abbreviated to : '+ name[:-1]+'\n')
         return name[:-1] #dropping the last seperator
     
-    def process_configs(self):
+    def process_configs(self, to_event_driven):
+        
+        # filling the None with appropriate values
         for pathway in self.conn_cfg.keys():
             src, trg = pathway
             config = self.conn_cfg[pathway]
@@ -232,8 +325,31 @@ class Simulate(object):
             
             if config['anisotropy']==None:
                 self.conn_cfg[pathway]['anisotropy'] = {'type':'iso', 'params':{}}
-
         
+        for pop in self.pops_cfg.keys():
+            if 'stim' not in self.pops_cfg[pop]:
+                self.pops_cfg[pop]['stim'] = {}
+        
+        # converting to models to jump
+        if to_event_driven:
+            self.current_to_voltage()
+        
+        # checking if consistent current models
+        for pop in self.pops_cfg.keys():
+            for pathway in self.conn_cfg.keys():
+                src, trg = pathway
+                
+                if trg == pop:
+                    _, model = self.conn_cfg[pathway]['synapse']['type'].split('_')
+                    
+                    if 'input_model' in self.pops_cfg[pop]:
+                        msg = """ Synaptic input models impinging on population {} are not consistent: {} and {} are both given in the pathways configuration.
+                        """.format(pop, model, self.pops_cfg[pop]['input_model'])
+                        assert model == self.pops_cfg[pop]['input_model'], msg
+                    else:
+                        self.pops_cfg[pop]['input_model'] = model
+            
+            
     def setup_net(self):
         """
         Sets up a network by the following steps:
@@ -258,7 +374,7 @@ class Simulate(object):
         
         self.net = b2.Network()
         self.net.add(self.pops.values())
-        self.net.add(self.syns)
+        self.net.add(self.syns.values())
         self.net.add(self.mons)
         print('Net set up.')
         
@@ -288,7 +404,7 @@ class Simulate(object):
             noise_cfg = self.pops_cfg[pop_name]['noise']
             
             # initialize population
-            eqs = eq.get_nrn_eqs(pop_name, self.pops_cfg, syn_base=self.base)
+            eqs = eq.get_nrn_eqs(pop_name, self.pops_cfg,)
             pop = b2.NeuronGroup(N = gs**2, 
                                  name = pop_name, 
                                  model = eqs, 
@@ -297,18 +413,21 @@ class Simulate(object):
                                  reset='v={}*mV'.format(cell_cfg['rest']/b2.mV),
                                  method='euler'
                                  )
-            pop.mu = noise_cfg['mu']
-            pop.sigma = noise_cfg['sigma']
-            #self.state_initializer(pop, self.pops_cfg[pop_name], mode='rand')
-            pop.v = np.random.uniform(cell_cfg['rest']/b2.mV,
-                                      cell_cfg['thr']/b2.mV,
-                                      pop.N) *b2.mV
+            # pop.mu = noise_cfg['mu']
+            # pop.sigma = noise_cfg['sigma']
+            # self.state_initializer(pop, self.pops_cfg[pop_name], mode='rand')
+            # pop.v = np.random.uniform(cell_cfg['rest']/b2.mV,
+            #                           cell_cfg['thr']/b2.mV,
+            #                           pop.N) *b2.mV
 
             
             # add coordinates
             pop.add_attribute('coord')
             y,x = np.indices((gs,gs))
             pop.coord = list(zip(x.ravel(),y.ravel()))
+            
+            pop.add_attribute('gs')
+            pop.gs = gs
             
             self.pops[pop_name] = pop
             del x,y, cell_cfg, noise_cfg, gs, eqs
@@ -357,11 +476,11 @@ class Simulate(object):
         """
         print('{} -- Setting up synapses ...'.format(time.ctime()))
 
-        self.syns = []
+        self.syns = {}
         for key in sorted(self.conn_cfg.keys()):
             src, trg = key
             
-            eqs, on_pre, on_post, namespace = eq.get_syn_eqs(key, self.conn_cfg, self.base)
+            eqs, on_pre, on_post, namespace = eq.get_syn_eqs(key, self.conn_cfg)
             ncons = self.conn_cfg[key]['ncons']
             spop = self.pops[src]
             tpop = self.pops[trg]
@@ -423,7 +542,7 @@ class Simulate(object):
             
             
             # append to the class
-            self.syns.append(syn)
+            self.syns[key] = syn
             
             # save if not saved
             if not self.load_connectivity:
@@ -463,8 +582,8 @@ class Simulate(object):
             self.mons.append(b2.SpikeMonitor(self.pops[pop_name], 
                                              record=True, name='mon_'+pop_name))
 
-        if 'tsodysk-markram' in self.base:
-            for syn in sorted(self.syns):
+        for syn in self.syns.values():
+            if syn.is_plastic:    
                 self.mons.append(b2.StateMonitor(syn, variables=['u','x'], 
                                                  record=True, dt = 500*b2.ms,
                                                  name='mon_'+syn.name))        
@@ -523,7 +642,7 @@ class Simulate(object):
         del mus, stds            
     
         
-    def start(self, duration=1000*b2.ms, batch_dur=200*b2.ms, 
+    def start(self, duration=2000*b2.ms, batch_dur=1000*b2.ms, 
               restore=True, profile=False, plot_snapshots=True):
         """
         Starts a long simulation by breaking it down to several batches. After
@@ -637,95 +756,13 @@ class Simulate(object):
         viz.plot_animation(sim, overlay=overlay, ss_dur=ss_dur) 
 
         logging.info('Computing synchrony order parameter.')
-        viz.plot_R(sim)
+        #viz.plot_R(sim)
         
         if self.has_plastic:
             viz.plot_relative_weights(sim)
         
         analyze.find_bumps(sim, plot=True)
         
-        
-        
-        
-    def state_initializer(self, mode='ss'):
-        """
-        A smart function that intializes the synaptic or cellular state according 
-        to the desired mode, based on the provided config file.
-        
-        :param config: DESCRIPTION
-        :type config: TYPE
-        :param mode: DESCRIPTION, defaults to 'ss'
-        :type mode: TYPE, optional
-        :return: DESCRIPTION
-        :rtype: TYPE
-        """
-        
-        msg0 = 'I am smart but ... \n'
-        
-        msg_mode = '''
-            I only regonize steady state (ss) and random (rand) modes for now. 
-            '''
-        
-        msg_kernel = '''
-            The kernel "{}" is not among the regonized kernels. Have a look at the
-            documentation.
-            '''
-        
-        msg_cell = '''
-            I only regonize LIF neuron for now.
-            '''
-        
-        for pop, pop_cfg in zip(self.pops, self.pops_cfg.values()):         
-            if pop_cfg['cell']['type']=='LIF':
-                minV = pop_cfg['cell']['rest']
-                maxV = pop_cfg['cell']['thr']
-            else:
-                raise NotImplementedError(msg0 + msg_cell)
-            
-            if mode=='ss':
-                self.pops[pop].v = minV
-            elif mode=='rand':
-                self.pops[pop].v = '({}+ rand()*({}))*mV'.format(minV/b2.mV, (maxV-minV)/b2.mV)
-            else:
-                raise NotImplementedError(msg0 + msg_mode)
-            
-        for id_, conn_cfg in zip(range(len(self.syns)), self.conn_cfg.values()):
-            kernel, model = conn_cfg['synapse']['type'].split('_')
-            
-            if mode=='ss':
-                if kernel=='tsodysk-markram':
-                    self.syns[id_].u = conn_cfg['synapse']['params']['U']
-                    self.syns[id_].x = 1
-                elif kernel in ['alpha','exp','biexp']:
-                    self.syns[id_].g = 0
-                elif kernel == 'const':
-                    pass
-                else:
-                    raise NotImplementedError(msg0 + msg_kernel.format(kernel))
-                
-            
-            elif mode=='rand':
-                if kernel=='tsodysk-markram':
-                    self.syns[id_].u = 'rand()'
-                    self.syns[id_].x = 'rand()'
-                    
-                elif kernel in ['alpha','exp','biexp']:
-                    self.syns[id_].g = 'rand()'
-                elif kernel == 'const':
-                    pass
-                else:
-                    raise NotImplementedError(msg0 + msg_kernel.format(kernel))
-            
-            
-            else:
-                raise NotImplementedError(msg0 + msg_mode)
-            
-            self.syns[id_].J = conn_cfg['synapse']['params']['J']
-            
-            # The following ensures that the stationary response of synapse is
-            # equal to the prescribed J.
-            if kernel=='tsodysk-markram':
-                self.syns[id_].J /= conn_cfg['synapse']['params']['U']
         
     def get_syn_mons(self):
         syn_mons = []
@@ -753,16 +790,34 @@ class Simulate(object):
     
         return has_plasticity 
     
-    
+    def set_protocol(self):
+        stim_cfgs = utils.stimulator(self, self.stim_cfgs)
+        for stim_id, stim_cfg in stim_cfgs.items():
+            pop, id_ = stim_id.split('_')
+            
+            self.pops[pop].I_stim[ stim_cfg['idxs'] ] = stim_cfg['I_stim']#.values[0]
+        
+        
 if __name__=='__main__':
     #b2.defaultclock.dt = 2000*b2.us
     # I_net
-    sim = Simulate('E_net', scalar=4., load_connectivity=True, 
+    sim = Simulate('STSP_TM_I_net', scalar=2., load_connectivity=1, 
                     to_event_driven=1, )
+    
     sim.setup_net()
-    sim.warmup()
-    sim.start(duration=4000*b2.ms, batch_dur=1000*b2.ms, 
-              restore=False, profile=False, plot_snapshots=True)
+    #sim.warmup()
+    sim.set_protocol()
+    sim.start(duration=2000*b2.ms, batch_dur=1000*b2.ms, 
+               restore=False, profile=False, plot_snapshots=True)
+    
+    # sim.reset_monitors()
+    # sim.net.run(10*b2.ms, )
+    # for pop in sim.pops.values():
+    #     pop.I_stim = 0*b2.pA
+    # sim.net.run(3900*b2.ms, )
+    # viz.plot_firing_rates(sim, suffix='_all')
+    # sim.save_monitors(suffix ='all')
+    
     sim.post_process(overlay=True)
     # import matplotlib.pyplot as plt
     
