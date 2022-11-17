@@ -186,7 +186,7 @@ ones is implemented as a method of ``Simulate`` class.
 import brian2 as b2
 import copy
 
-def get_nrn_eqs(pop_name, pops_cfg, syn_base):    
+def get_nrn_eqs(pop_name, pops_cfg):    
     """
     It matters how the synapse inputs are modeled. Seemingly, the one used in
     NEST and the paper are using a "current-alpha", as opposed to "voltage-" or
@@ -207,16 +207,17 @@ def get_nrn_eqs(pop_name, pops_cfg, syn_base):
     tmp = '''
         mu: amp (shared)
         sigma: amp (shared)
-        noise_pop = mu + sigma*sqrt(noise_dt)*xi_pop: amp 
+        noise_pop = mu + sigma*sqrt(noise_dt)*xi_pop: amp
+        I_stim: amp
         '''
         
     noise_dt = pops_cfg[pop_name]['noise']['noise_dt']
     tmp = tmp.replace('noise_dt', str(noise_dt/b2.ms)+'*ms')
     
-    kernel, model = syn_base.split('_') # identify kernel and model
+    model = pops_cfg[pop_name]['input_model']
     
     if model in ['conductance', 'current']:
-        eqs_str= tmp + '''dv/dt = (E-v)/tau + (noise_pop + I_syn)/C : volt (unless refractory)\n'''
+        eqs_str= tmp + '''dv/dt = (E-v)/tau + (noise_pop + I_syn + I_stim)/C : volt (unless refractory)\n'''
         I_syn_components = []
         for src_name in pops_cfg.keys():
             eqs_str+= '''I_syn_{}: amp \n'''.format(src_name)
@@ -224,7 +225,7 @@ def get_nrn_eqs(pop_name, pops_cfg, syn_base):
         eqs_str+= 'I_syn = '+ '+'.join(I_syn_components) +': amp \n'''
         
     else:
-        eqs_str= tmp + '''dv/dt = (E-v)/tau + (noise_pop)/C : volt (unless refractory)\n'''
+        eqs_str= tmp + '''dv/dt = (E-v)/tau + (noise_pop + I_stim)/C : volt (unless refractory)\n'''
         
     eqs_str = eqs_str.replace('_pop', '_'+pop_name)
     eqs = b2.Equations(eqs_str, 
@@ -234,7 +235,7 @@ def get_nrn_eqs(pop_name, pops_cfg, syn_base):
     
     return eqs
 
-def get_syn_eqs(conn_name, conn_cfg, syn_base):
+def get_syn_eqs(conn_name, conn_cfg):
     """
     It matters how the synapse inputs are modeled. Seemingly, the one used in
     NEST and the paper are using a "current-alpha", as opposed to "voltage-" or
@@ -285,8 +286,8 @@ def get_syn_eqs(conn_name, conn_cfg, syn_base):
         '''
     
     # Constructing equations
-    kernel, model = syn_base.split('_') # identify kernel and model
-    print(kernel, model)
+    kernel, model = conn_cfg[conn_name]['synapse']['type'].split('_') # identify kernel and model
+    
     # kernel related components (only traces updates are given here)
     if kernel == 'alpha':
     	eqs_str = tmp_alpha
