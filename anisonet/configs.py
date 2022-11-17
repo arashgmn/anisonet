@@ -143,7 +143,7 @@ def round_to_even(gs, scaler):
 def get_config(name='EI_net', scalar=3):
     """
     Generates the population and pathways config dictuinary only by providing 
-    the name of the desired network.
+    the name of the desired network. 
     
     .. note::
         One should differetiate between homogeneity/randomness in angle and 
@@ -165,8 +165,21 @@ def get_config(name='EI_net', scalar=3):
         Also note that these structures are independent from how anisotropy is 
         imposed.
 
+    .. note::
+        It is possible to decrease the network's grid size by a factor of 
+        ``scalar``. However, such shrinkage has different effects on different
+        networks. One uni-population networks, the synaptic strenght is 
+        enlarged by a factor of ``scalar**2`` to account for lower number of 
+        afferents. However, syanptic weights are left intact for the 
+        two-population networks, since they are set up in balance and afferents
+        will effectively cancel each other. An exception from this rule is the
+        signle-population excitatory network. This network is inherently 
+        unstable. So, we did not enlarged the synaptic weights partially to 
+        avoid blow-up. In other words, the synaptic weights is large enough to
+        trigger spike but not large enough to propagate it too far.
 
-    :param name: nework name. Either "I_net" or "EI_net", defaults to 'EI_net'
+
+    :param name: nework name
     :type name: str, optional
     :param scalar: scales down the network by a factor. The network must be 
         divisble to the factor. Number of connections, their strenghts, and the
@@ -193,16 +206,23 @@ def get_config(name='EI_net', scalar=3):
                    'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
                    #'profile': {'type':'Gaussian', 'params': {'std': 3} },
                    'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}}
-                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/6.}}
+                   # 'synapse': {'type':'tsodysk-markram_jump', 
+                   #             'params': {'J': -0.221*mV*(scalar**2), 'delay':1*ms, 
+                   #                        'tau': 10*ms, 'tau_f': 1500.*ms, 'tau_d': 200.*ms, 
+                   #                        'U':1/3.}},
+                   #'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}}
+                   'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':np.pi/6.}}
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    #'anisotropy': {'type': 'iso', 'params': {}}
                    },
-        }    
+        }
+        
+        stim_cfg = {}
+        
     elif name=='E_net':
         pops_cfg = {
             'E': {'gs': round_to_even(100, scalar), 
-                  'noise': {'mu': 300*pA, 'sigma': 0*pA, 'noise_dt': 1.*ms},
+                  'noise': {'mu': 50*pA, 'sigma': 400*pA, 'noise_dt': 1.*ms},
                   'cell': {'type': 'LIF', 
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
                            'tau':10*ms, 'C': 250*pF}
@@ -213,27 +233,27 @@ def get_config(name='EI_net', scalar=3):
             'EE': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
                    'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
                    #'profile': {'type':'Gaussian', 'params': {'std': 3} },
-                   'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   #'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}}
-                   'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/6.}}
+                   'synapse': {'type':'alpha_current', 'params': {'J': 2.5*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}}
+                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/6.}}
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    #'anisotropy': {'type': 'iso', 'params': {}}
                    },
         }    
     
+        stim_cfg = {}
+        
     elif name=='EI_net':
-        noiser = 1.
-        meaner = 1
         pops_cfg = {
             'I': {'gs': round_to_even(60, scalar), 
-                  'noise': {'mu': 350*pA/meaner, 'sigma': 100*pA/noiser, 'noise_dt': 1*ms},
+                  'noise': {'mu': 350*pA, 'sigma': 100*pA, 'noise_dt': 1*ms},
                   'cell': {'type': 'LIF', 
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
                            'tau': 10*ms, 'C': 250*pF}
                   },
             
             'E': {'gs': round_to_even(120, scalar), 
-                  'noise': {'mu': 350*pA/meaner, 'sigma': 100*pA/noiser, 'noise_dt': 1*ms},
+                  'noise': {'mu': 350*pA, 'sigma': 100*pA, 'noise_dt': 1*ms},
                   'cell': {'type': 'LIF', 
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
                            'tau': 10*ms, 'C': 250*pF}
@@ -244,7 +264,7 @@ def get_config(name='EI_net', scalar=3):
             'EE': {'ncons': round_to_even(720, scalar**2), 'self_link':False, 
                   #'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
                   'profile': {'type':'Gaussian', 'params': {'std': 9/scalar} },
-                  'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms} },
+                  'synapse': {'type':'alpha_current', 'params': {'J': 10*pA, 'delay':1*ms, 'tau': 5*ms} },
                   #'anisotropy': {'type': 'perlin', 'params': {'scale': 3, 'r':np.sqrt(2)}},
                   #'anisotropy': {'type': 'iso', 'params': {}}
                   'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':np.pi/6.}}
@@ -252,25 +272,27 @@ def get_config(name='EI_net', scalar=3):
             
             'EI': {'ncons': round_to_even(180, scalar**2), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 4.5/scalar}},
-                   'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'synapse': {'type':'alpha_current', 'params': {'J': 10*pA, 'delay':1*ms, 'tau': 5*ms}},
                    'anisotropy': {'type': 'random', 'params': {'r': 1,}},
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    },
             
             'IE': {'ncons': round_to_even(720, scalar**2), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 12/scalar}},
-                   'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'synapse': {'type':'alpha_current', 'params': {'J': -80*pA, 'delay':1*ms, 'tau': 5*ms}},
                    'anisotropy': {'type': 'random', 'params': {'r': 1,}},
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    },
 
             'II': {'ncons': round_to_even(180, scalar**2), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 6/scalar}},
-                   'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'synapse': {'type':'alpha_current', 'params': {'J': -80*pA, 'delay':1*ms, 'tau': 5*ms}},
                    'anisotropy': {'type': 'random', 'params': {'r': 1,}},
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    },
         }
+        
+        stim_cfg = {}
         
     elif name=='homo_net':
         pops_cfg = {
@@ -290,7 +312,9 @@ def get_config(name='EI_net', scalar=3):
                    'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}}
                    },
         }    
-        
+
+        stim_cfg = {}
+                
     elif name=='iso_net':
         pops_cfg = {
             'I': {'gs': round_to_even(100, scalar), 
@@ -309,6 +333,8 @@ def get_config(name='EI_net', scalar=3):
                    },
         }    
 
+        stim_cfg = {}
+        
     elif name=='homiso_net':
         pops_cfg = {
             'I': {'gs': round_to_even(100, scalar), 
@@ -326,6 +352,9 @@ def get_config(name='EI_net', scalar=3):
                    'anisotropy': None
                    },
         }    
+    
+        stim_cfg = {}
+        
     elif name=='STSP_TM_I_net':
         pops_cfg = {
             'I': {'gs': round_to_even(100, scalar), 
@@ -348,20 +377,80 @@ def get_config(name='EI_net', scalar=3):
                    'synapse': {'type':'tsodysk-markram_jump', 
                                'params': {'J': -0.221*mV*(scalar**2), 'delay':1*ms, 
                                           'tau': 10*ms, 'tau_f': 1500.*ms, 'tau_d': 200.*ms, 
-                                          'U':2/3.}},
+                                          'U':.33}},
                    
                    
-                   'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}}
-                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/6.}}
+                   #'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}}
+                   'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/6.}}
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    #'anisotropy': {'type': 'iso', 'params': {}}
                    },
         }
-        
-    elif name=='STSP_TM_E_net':
+     
+        stim_cfg = {}
+           
+    elif name=='STSP_TM_EI_net':
         pops_cfg = {
-            'E': {'gs': round_to_even(100, scalar), 
-                  'noise': {'mu': 325*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
+            'I': {'gs': round_to_even(60, scalar), 
+                  'noise': {'mu': 350*pA, 'sigma': 100*pA, 'noise_dt': 1*ms},
+                  'cell': {'type': 'LIF', 
+                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                           'tau': 10*ms, 'C': 250*pF}
+                  },
+            
+            'E': {'gs': round_to_even(120, scalar), 
+                  'noise': {'mu': 350*pA, 'sigma': 100*pA, 'noise_dt': 1*ms},
+                  'cell': {'type': 'LIF', 
+                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                           'tau': 10*ms, 'C': 250*pF}
+                 }
+            }
+
+        conn_cfg = {
+            'EE': {'ncons': round_to_even(720, scalar**2), 'self_link':False, 
+                  #'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
+                  'profile': {'type':'Gaussian', 'params': {'std': 9/scalar} },
+                  #'synapse': {'type':'alpha_current', 'params': {'J': 10*pA, 'delay':1*ms, 'tau': 5*ms} },
+                  'synapse': {'type':'tsodysk-markram_jump', 
+                              'params': {'J': 0.221*mV*(scalar**2), 'delay':1*ms, 
+                                         'tau_f': 1500*ms, 'tau_d': 600*ms, 'U':0.1}},
+                  #'anisotropy': {'type': 'perlin', 'params': {'scale': 3, 'r':np.sqrt(2)}},
+                  #'anisotropy': {'type': 'iso', 'params': {}}
+                  'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':np.pi/6.}}
+                  },
+            
+            'EI': {'ncons': round_to_even(180, scalar**2), 'self_link':False, 
+                   'profile': {'type':'Gaussian', 'params': {'std': 4.5/scalar}},
+                   #'synapse': {'type':'alpha_current', 'params': {'J': 10*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'synapse': {'type':'tsodysk-markram_jump', 
+                               'params': {'J': 0.221*mV*(scalar**2), 'delay':1*ms, 
+                                          'tau_f': 1500*ms, 'tau_d': 600*ms, 'U':0.5}},
+                   'anisotropy': {'type': 'iso', 'params': {}},
+                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
+                   },
+            
+            'IE': {'ncons': round_to_even(720, scalar**2), 'self_link':False, 
+                   'profile': {'type':'Gaussian', 'params': {'std': 12/scalar}},
+                   'synapse': {'type':'alpha_current', 'params': {'J': -40*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'anisotropy': {'type': 'iso', 'params': {}},
+                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
+                   },
+
+            'II': {'ncons': round_to_even(180, scalar**2), 'self_link':False, 
+                   'profile': {'type':'Gaussian', 'params': {'std': 6/scalar}},
+                   'synapse': {'type':'alpha_current', 'params': {'J': -40*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'anisotropy': {'type': 'iso', 'params': {}},
+                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
+                   },
+            
+            }
+    
+        stim_cfg = {}
+        
+    elif name=='I_net_focal_stim':
+        pops_cfg = {
+            'I': {'gs': round_to_even(100, scalar), 
+                  'noise': {'mu': 0*pA, 'sigma': 350*pA, 'noise_dt': 1.*ms},
                   'cell': {'type': 'LIF', 
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
                            'tau':10*ms, 'C': 250*pF}
@@ -369,22 +458,113 @@ def get_config(name='EI_net', scalar=3):
             }
 
         conn_cfg = {
-            'EE': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
+            'II': {'ncons': 1000, 'self_link':False, 
                    'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
                    #'profile': {'type':'Gaussian', 'params': {'std': 3} },
-                   #'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'synapse': {'type':'tsodysk-markram_jump', 
-                               'params': {'J': .4*mV*(scalar**2), 'delay':1*ms, 
-                                          'tau_f': 1500*ms, 'tau_d': 600*ms, 'U':0.5}},
+                   #'profile': {'type':'homog', 'params': {} },
+                   'synapse': {'type':'alpha_current', 'params': {'J': -10*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   #'synapse': {'type':'tsodysk-markram_jump', 
+                   #            'params': {'J': -0.221*mV*(scalar**2), 'delay':1*ms, 
+                   #                       'tau_f': 1500*ms, 'tau_d': 200*ms, 'U':0.5}},
+                   #'synapse': {'type':'tsodysk-markram_jump', 
+                               # 'params': {'J': -0.221*mV*(scalar**2), 'delay':1*ms, 
+                               #            'tau': 10*ms, 'tau_f': 1500.*ms, 'tau_d': 200.*ms, 
+                               #            'U':1/3.}},
+                   
+                   
                    'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}}
                    #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/6.}}
                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
                    #'anisotropy': {'type': 'iso', 'params': {}}
-                   },
+                   }
             }
+            
+        stim_cfg = {
+            'I_0': {'type': 'const', 'I_stim': 700,
+                    'domain': {'type': 'r', 'x0': 42, 'y0': 23, 'r':2.5}
+                    },
+            
+            # 'I_1': {'type': 'const', 'I_stim': 700,
+            #         'domain': {'type': 'r', 'x0': 3, 'y0': 10, 'r': 7}
+            #         }
+            
+            }
+            
+    elif name=='EI_net_focal_stim':
+        pops_cfg = {
+            'I': {'gs': round_to_even(60, scalar), 
+                  'noise': {'mu': 0*pA, 'sigma': 0*pA, 'noise_dt': 1*ms},
+                  'cell': {'type': 'LIF', 
+                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                           'tau': 10*ms, 'C': 250*pF}
+                  },
+            
+            'E': {'gs': round_to_even(120, scalar), 
+                  'noise': {'mu': 100*pA, 'sigma': 0*pA, 'noise_dt': 1*ms},
+                  'cell': {'type': 'LIF', 
+                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                           'tau': 10*ms, 'C': 250*pF}
+                  }
+        }
+
+        conn_cfg = {
+            'EE': {'ncons': round_to_even(720, scalar**2), 'self_link':False, 
+                  #'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
+                  'profile': {'type':'Gaussian', 'params': {'std': 9/scalar} },
+                  'synapse': {'type':'tsodysk-markram_jump', 
+                              'params': {'J': -0.221*mV, 'delay':1*ms, 
+                                         'tau_f': 1500*ms, 'tau_d': 200*ms, 'U':0.5}},
+                  
+                  # 'synapse': {'type':'alpha_current', 'params': {'J': 10*pA, 'delay':1*ms, 'tau': 5*ms} },
+                  'anisotropy': {'type': 'perlin', 'params': {'scale': 3, 'r':np.sqrt(2)}},
+                  #'anisotropy': {'type': 'iso', 'params': {}}
+                  #'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':np.pi/6.}}
+                  },
+            
+            'EI': {'ncons': round_to_even(180, scalar**2), 
+                    'self_link':False, 
+                    'profile': {'type':'Gaussian', 'params': {'std': 4.5/scalar}},
+                    #'profile': {'type':'homog', 'params': {}},
+                    'synapse': {'type':'alpha_current', 'params': {'J': 10*pA, 'delay':1*ms, 'tau': 5*ms}},
+                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}},
+                    'anisotropy': {'type': 'iso', 'params':{}}
+                    },
+            
+            'IE': {'ncons': round_to_even(720, scalar**2), 
+                    'self_link':False, 
+                    'profile': {'type':'Gaussian', 'params': {'std': 12/scalar}},
+                    #'profile': {'type':'homog', 'params': {}},
+                    'synapse': {'type':'alpha_current', 'params': {'J': -80*pA, 'delay':1*ms, 'tau': 5*ms}},
+                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}},
+                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
+                    'anisotropy': {'type': 'iso', 'params':{}}
+                    },
+
+            'II': {'ncons': round_to_even(180, scalar**2), 'self_link':False, 
+                   'profile': {'type':'Gaussian', 'params': {'std': 6/scalar}},
+                   #'profile': {'type':'homog', 'params': {}},
+                   'synapse': {'type':'alpha_current', 'params': {'J': -80*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}},
+                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
+                   'anisotropy': {'type': 'iso', 'params':{}}
+                   },
+        }
+            
+        stim_cfg = {
+            'E_0': {'type': 'const', 'I_stim': 500,
+                    'domain': {'type': 'r', 'x0': 15, 'y0': 20, 'r':5}
+                    },
+            
+            # 'I_1': {'type': 'const', 'I_stim': -0,
+            #         'domain': {'type': 'random', 'p': 1}
+            #         }
+            
+            }
+            
+    
     else:
         raise
     
-    return pops_cfg, conn_cfg
+    return pops_cfg, conn_cfg, stim_cfg
 
 
