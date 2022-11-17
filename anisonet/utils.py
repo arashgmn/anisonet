@@ -12,7 +12,7 @@ import pickle
 import numpy as np
 from collections import defaultdict
 
-from brian2 import Equations 
+import brian2 as b2
 from brian2 import mV, nS, pA, ms, second
 
 from pdb import set_trace
@@ -97,6 +97,49 @@ def aggregate_mons(sim, mon_name, SI=False):
 
     return mon
 
+
+def stimulator(sim, stim_cfgs):
+    stims = {}
+    for stim_id, stim_cfg in stim_cfgs.items():
+        domain = stim_cfg['domain']
+        ampli = stim_cfg['domain'] 
+        pop = stim_id.strip('_')[0] # assuming ids like I_1, I_2
+        gs = sim.pops[pop].gs 
+        
+        # finding domain
+        if domain['type']=='random':
+            idxs = np.random.randint(0, gs**2, round(gs**2 * domain['p']))
+        else:
+            if domain['type']=='xy':
+                x = np.arange(domain['x_min'], domain['x_max'])
+                y = np.arange(domain['y_min'], domain['y_max'])
+                x,y = np.meshgrid(x,y)
+                coords = np.array(list(zip(x.ravel(),y.ravel())))
+            
+            elif domain['type']=='r':
+                coords = []
+                for x in range(-round(domain['r'])-1, round(domain['r'])+1):
+                    for y in range(-round(domain['r'])-1, round(domain['r'])+1):
+                        if x**2 + y**2 <= domain['r']**2:
+                            coords.append( [(x + domain['x0'])%gs, 
+                                            (y + domain['y0'])%gs] ) 
+                coords = np.array(coords).reshape(-1,2)
+            
+            idxs = coord2idx(coords, sim.pops[pop])
+            
+
+        # finding amplitude
+        if stim_cfg['type']=='const':
+            I_stim = stim_cfg['I_stim']*pA
+            # b2.TimedArray([stim_cfg['I_stim']]*pA,
+            #                                dt=sim.pops[pop].clock.dt)
+        else:
+            raise NotImplementedError('Only constant stimulation is supported now.')
+        
+        stims[stim_id] = {'idxs': idxs, 'I_stim': I_stim}
+    
+    return stims
+
 def phase_estimator(idxs, ts, dt):
     t = np.linspace(0, ts.max(), int(ts.max()//dt) + 1)
     phis = np.zeros(shape= (len(set(idxs)), len(t)))
@@ -130,3 +173,108 @@ def estimate_order_parameter(phis, k=None):
         
     R = np.average(np.exp(1j*phis), weights=k, axis=0)
     return np.abs(R), np.angle(R)
+
+
+def make_circular(r, r_max):
+    return 2*np.pi*r/r_max
+
+def make_planar(angle, r_max):
+    return angle/(2*np.pi) * r_max
+    
+def plane2torus(p_coords, gs, method='lin'):
+    #set_trace()
+    # coords must have the shape (n_coords,2)
+    assert p_coords.shape[1] == 2 # shape must be 
+    
+    t_coords = np.zeros((p_coords.shape[0],4), dtype=float)
+    phi, psi = make_circular(p_coords, gs).T
+    
+    if method=='tri':
+        # morphing x
+        t_coords[:,0] = np.sin(phi)
+        t_coords[:,1] = np.cos(phi)
+        
+        # morphing y
+        t_coords[:,2] = np.sin(psi)
+        t_coords[:,3] = np.cos(psi)
+    
+    elif method=='lin':
+        for id_, ang in enumerate([phi, psi]):
+            # Sin component
+            choice0 = ang/(np.pi/2)     
+            choice1 = -ang/(np.pi/2) + 2
+            choice2 = ang/(np.pi/2) - 4
+            
+            index = np.zeros(ang.shape, dtype=int)
+            index[ang <= np.pi/2] = 0
+            index[(np.pi/2 < ang) & (ang <= 3*np.pi/2)] = 1
+            index[ang > 3*np.pi/2] = 2
+            
+            t_coords[:,2*id_] = np.choose(index, [choice0, choice1, choice2])
+                
+            # cos component
+            choice0 = -ang/(np.pi/2) + 1     
+            choice1 = +ang/(np.pi/2) - 3
+            
+            index = np.zeros(ang.shape, dtype=int)
+            index[ang <= np.pi] = 0
+            index[ang > np.pi] = 1
+            
+            t_coords[:,2*id_ +1] = np.choose(index, [choice0, choice1])
+            
+    else:
+        raise NotImplementedError("At the moment only triangulumetric and linear morphing is possible.")
+    
+    return t_coords
+
+
+def torus2plane(t_coords, gs, method='tri'):
+    # coords must have the shape (n_coords,4)
+    assert t_coords.shape[1] == 4 # (s_x, c_x, s_y, c_y)
+    
+    p_coords = np.zeros((t_coords.shape[0],2), dtype=float)
+    
+    if method=='tri':
+        phi = np.arctan2(t_coords[:,0], t_coords[:,1])
+        psi = np.arctan2(t_coords[:,2], t_coords[:,3])
+        
+        p_coords[:,0] = make_planar(phi, gs)
+        p_coords[:,1] = make_planar(psi, gs)
+    else:
+        raise NotImplementedError("At the moment only triangular morphing is possible.")
+    
+    return np.round(p_coords).astype(int)
+    
+        
+def balance_dist(t0, t_min=0, t_max=1):
+    t = t0-t0.min()
+    t /= t.max()
+    
+    percents = np.linspace(0,1, len(t))
+    sorted_idx = np.argsort(t)
+    
+    for idx, val in enumerate(percents):
+        t[sorted_idx[idx]] = val
+        
+    t = t_min + (t_max - t_min) * t
+    # n_quantiles = len(set(t))
+    # quant_size = len(t)//n_quantiles 
+    # print(n_quantiles, quant_size)
+    
+    # for quant_idx, quant_val in enumerate(np.linspace(t_min, t_max, n_quantiles+1)):
+    #     t[ sorted_idx[quant_idx*quant_size : (quant_idx+ 1)*quant_size] ] = quant_val
+    
+    return t
+    
+    # sorted_idx = np.argsort(phis)
+    # max_val = gs * 2
+    # idx = len(phis) // max_val
+    # for ii, val in enumerate(range(max_val)):
+    #     phis[sorted_idx[ii * idx:(ii + 1) * idx]] = val
+    # phis = (phis - gs) / gs
+    
+    # # to push between -pi and pi
+    # phis -= np.min(phis)
+    # phis *= 2*np.pi/(np.max(phis)+1e-12)
+    # phis -= np.pi
+
