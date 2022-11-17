@@ -11,7 +11,7 @@ name (inherited from the simulation object).
 
 import matplotlib.pyplot as plt
 from matplotlib import animation
-from matplotlib.colors import Normalize
+from matplotlib.colors import Normalize, LogNorm
 from matplotlib.cm import ScalarMappable
 import seaborn as sns
 
@@ -47,7 +47,7 @@ def plot_in_out_deg(sim):
     :param sim: ``simulate`` object
     :type sim: object
     """
-    for syn in sim.syns:
+    for syn in sim.syns.values():
         src = syn.source
         trg = syn.target
         
@@ -80,7 +80,7 @@ def plot_in_out_deg(sim):
             ax.get_yaxis().set_ticks([])
         
         #plt.tight_layout()
-        path = osjoin(sim.res_path, sim.name+'_degs_'+src.name+trg.name+'.png')
+        path = osjoin(sim.res_path, 'degs_'+src.name+trg.name+'.png')
         plt.savefig(path, dpi=200, bbox_inches='tight')
         plt.close()
         
@@ -157,7 +157,7 @@ def plot_firing_rates(sim, suffix='',
             for ax in axs[:, id_]:
                 overlay_phis(phis, ax)
                 
-    path = osjoin(sim.res_path, sim.name+'_rates'+suffix+'.png')
+    path = osjoin(sim.res_path, 'rates'+suffix+'.png')
     plt.savefig(path, dpi=200, bbox_inches='tight')
     plt.close()
     
@@ -192,7 +192,7 @@ def plot_firing_snapshots(sim, tmin=None, tmax=None, alpha=0.1):
                       ', '+str(tmax/ms)+'] | '+mon.source.name)    
         
         #plt.tight_layout()
-        path = osjoin(sim.res_path, sim.name+'_snapshot_'+mon.source.name+'.png')
+        path = osjoin(sim.res_path, 'snapshot_'+mon.source.name+'.png')
         plt.savefig(path, dpi=200, bbox_inches='tight')
         plt.close()
         
@@ -284,7 +284,7 @@ def plot_periodicity(sim, N=10):
             axs[0].set_title(str(s_idx)+' Before '+src+r'$\to$'+trg)
             axs[1].set_title(str(s_idx)+' After '+src+r'$\to$'+trg)
             
-            path = osjoin(sim.res_path, sim.name+'_periodicity_'+ key + '_'+ 
+            path = osjoin(sim.res_path, 'periodicity_'+ key + '_'+ 
                                         str(plot_id+1)+'.png'
                                         )
             plt.savefig(path, bbox_inches='tight', dpi=200)
@@ -302,7 +302,7 @@ def plot_landscape(sim, overlay=True):
     """
     for id_, key in enumerate(sim.conn_cfg.keys()):
         phis = sim.lscp[key]['phi']
-        figpath = osjoin(sim.res_path, sim.name+'_gen_phi_'+key+'.png')
+        figpath = osjoin(sim.res_path, 'gen_phi_'+key+'.png')
         if overlay:	    
             plot_field(phis.reshape((int(np.sqrt(len(phis))), -1)), figpath, 
                        vmin=-np.pi, vmax = np.pi, 
@@ -319,16 +319,17 @@ def plot_realized_landscape(sim):
     :param sim: ``simulate`` object
     :type sim: object
     """
-    for id_, key in enumerate(sim.conn_cfg.keys()):
-        src, trg = key
-        spop = sim.pops[src]
-        tpop = sim.pops[trg]
-        gs_s = int(np.sqrt(spop.N)) # source pop grid size
-        gs_t = int(np.sqrt(tpop.N)) # target pop grid size
-
+    # for id_, key in enumerate(sim.conn_cfg.keys()):
+    for syn in sim.syns.values():
+        spop = syn.source
+        tpop = syn.target
+        gs_s = spop.gs # source pop grid size
+        gs_t = tpop.gs # target pop grid size
+        key = syn.name.split('_')[-1]
+        
         phis = np.zeros(spop.N) # containts realized phi        
-        posts = sim.syns[id_].j.__array__()
-        pres = sim.syns[id_].i.__array__()
+        posts = syn.j.__array__()
+        pres = syn.i.__array__()
         
         for _, s_idx in enumerate(sorted(set(pres))):
             t_idxs = posts[pres==s_idx]
@@ -340,7 +341,7 @@ def plot_realized_landscape(sim):
             phis[s_idx] = np.arctan2(post_cntr[:,1].mean(), post_cntr[:,0].mean())
             #phis[s_idx] = np.arctan2(post_cntr[:,1], post_cntr[:,0]).mean()
         
-        figpath = osjoin(sim.res_path, sim.name + '_realized_phi_'+ key+'.png')
+        figpath = osjoin(sim.res_path, 'realized_phi_'+ key+'.png')
         plot_field(phis.reshape(gs_s, gs_s), figpath=figpath, vmin=-np.pi, vmax=np.pi)
         
         # density plot
@@ -351,7 +352,7 @@ def plot_realized_landscape(sim):
         plt.tight_layout()
         plt.xlim(-np.pi, np.pi)
         
-        figpath = osjoin(sim.res_path, sim.name + '_realized_phi_density_'+ key+'.png')
+        figpath = osjoin(sim.res_path, 'realized_phi_density_'+ key+'.png')
         plt.savefig(figpath, bbox_inches='tight', dpi=200)
         plt.close()
         del post_cntr, pres, posts
@@ -376,7 +377,7 @@ def plot_connectivity(sim):
         plt.ylabel('sources (pre-synapse)')
         plt.title(' '.join(sim.name.split('_')[:2]))
         
-        figpath = osjoin(sim.res_path, sim.name+'_w_'+pathway+'.png')
+        figpath = osjoin(sim.res_path, 'w_'+pathway+'.png')
         plt.savefig(figpath, bbox_inches='tight', dpi=200)
         plt.close()
 
@@ -448,7 +449,7 @@ def plot_firing_rates_dist(sim):
     
     axs[0].set_ylabel('Probability density')
     
-    path = osjoin(sim.res_path, sim.name+'_rates_desnsity.png')
+    path = osjoin(sim.res_path, 'rates_distribution.png')
     plt.savefig(path,bbox_inches='tight', dpi=200)
     plt.close()
 
@@ -510,8 +511,10 @@ def plot_animation(sim, ss_dur=25, fps=10, overlay=True):
         
         h = np.histogram2d(ts, idxs, bins=[ts_bins, range(gs**2 + 1)])[0]
         field_val = h.reshape(-1, gs, gs)
-        field_img = axs[id_].imshow(field_val[0], vmin=0, vmax=np.max(field_val), 
-                                    origin='lower' # to match field snapshots 
+        field_img = axs[id_].imshow(field_val[0], 
+                                    vmin=0, vmax=np.max(field_val), 
+                                    # norm = LogNorm(vmin=1e0, vmax=np.max(field_val)), 
+                                    origin='lower' # to match snapshots 
                                     )
         axs[id_].set_title('Population '+mon.name[-1])
         
@@ -525,7 +528,7 @@ def plot_animation(sim, ss_dur=25, fps=10, overlay=True):
     anim = animator(fig, axs, field_imgs, field_vals, ts_bins)
     
     writergif = animation.PillowWriter(fps=fps) 
-    path = osjoin(sim.res_path, sim.name+'_animation_rate.gif')
+    path = osjoin(sim.res_path, 'animation_rate.gif')
     anim.save(path , writer=writergif)
     plt.close()
     
@@ -548,28 +551,71 @@ def plot_R(sim):
         axs[id_].plot(t, R_rad,)
         axs[id_].set_title('Population '+mon.name[-1])
             
-    figpath = osjoin(sim.res_path, sim.name + '_order_param.png')
+    figpath = osjoin(sim.res_path, 'order_param.png')
     plt.savefig(figpath, bbox_inches='tight', dpi=200)
     plt.close()
    
     
-def plot_3d_clusters(sim, txy, db, name):
-    norm = Normalize(vmin=db.labels_.min(), vmax=db.labels_.max())
-    smap = ScalarMappable(norm=norm, cmap='tab20') #
-    colors = smap.to_rgba(db.labels_)
+def plot_3d_clusters(sim, txy, labels, name):
+    norm = Normalize(vmin=labels.min(), vmax=labels.max())
+    smap = ScalarMappable(norm=norm, cmap='tab20') 
+    colors = smap.to_rgba(labels)
     
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
-    is_member = db.labels_>=0
+    
+    # by default plot all
+    is_member = np.ones_like(labels, dtype=bool)
+    color = 'k'    
+    
+    # if more than noise is detected, don't plot noise clusters
+    if len(set(labels))>1:
+        is_member[labels==-1] = False
+        color = colors[is_member]
+        
     ax.scatter(txy[is_member,0], txy[is_member,1], txy[is_member,2], 
-               color=colors[is_member], marker='.',s=1)
+               color=color, marker='.',s=1)
+    
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')  
+    ax.set_zlabel('time')
+    # ax.set_zlim3d(0,4)
+    # ax.set_ylim3d(-1,1)
+    # ax.set_xlim3d(-1,1)
+    
+    
+    figpath = osjoin(sim.res_path, '3D_clusters_'+name+'.png')
+    plt.savefig(figpath, bbox_inches='tight', dpi=200)
+    plt.close()
+    
+    
+def plot_spline_trace(sim, spls, ts, t_range, name):
+    
+    norm = Normalize(vmin=0, vmax=len(spls))
+    smap = ScalarMappable(norm=norm, cmap='tab20') #
+    colors = smap.to_rgba(range(len(spls)))
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    
+    # viz.plot_spline_trace(spls, ts, t_range, name=pop)
+    #set_trace()
+    for id_ , (spl, t) in enumerate(zip(spls, ts)):
+        x,y = spl(t_range).T
+        ax.plot(x, y, t_range, color=colors[id_])
+        
+        x,y = spl(t).T
+        ax.scatter(x, y, t, color=colors[id_], marker='o')
+        
     ax.set_xlabel('x')
     ax.set_ylabel('y')  
     ax.set_zlabel('time')
 
-    figpath = osjoin(sim.res_path, sim.name + '_3D_clusters_'+name+'.png')
+    figpath = osjoin(sim.res_path, name+'.png')
     plt.savefig(figpath, bbox_inches='tight', dpi=200)
     plt.close()
+        
+    
     
 def plot_bump_speed(sim, disp, name):
     """
@@ -590,17 +636,19 @@ def plot_bump_speed(sim, disp, name):
     # ax = fig.add_subplot()
     # sns.scatterplot(data=disp[disp.index>-1], x='t', y='v', hue='label', ax=ax)    
     
-    figpath = osjoin(sim.res_path, sim.name + '_bumpspeed_'+name+'.png')
+    figpath = osjoin(sim.res_path, 'bumpspeed_'+name+'.png')
     plt.savefig(figpath, bbox_inches='tight', dpi=200)
     plt.close()
     
 def plot_relative_weights(sim, logx=False):
-    fig, axs = plt.subplots(3, len(sim.syns), sharex=True)
+    plastic_syns = [syn for syn in sim.syns.values() if syn.is_plastic]
+    
+    fig, axs = plt.subplots(3, len(plastic_syns) , sharex=True)
     axs = np.reshape(axs, (3,-1))
-        
-    for id_, syn in enumerate(sim.syns):
+    
+    for id_, syn in enumerate(plastic_syns):
+    
         mon = utils.aggregate_mons(sim, 'mon_'+syn.name)
-        
         for idx_t in range(len(mon['t'])):
             alpha = (idx_t+1.)/len(mon['t'])
             
@@ -622,9 +670,9 @@ def plot_relative_weights(sim, logx=False):
             #           colors='darkgreen', linestyle='--')
             # ax.vlines(1, ylims[0], ylims[1], 
             #           colors='darkred', linestyle='--')
+        
             
-            
-    for syn_id, syn in enumerate(sim.syns):
+    for syn_id, syn in enumerate(plastic_syns):
         ylims = axs[0, syn_id].get_ylim()
         
         axs[0, syn_id].plot([],[],'b', label='w=ux')
@@ -652,7 +700,7 @@ def plot_relative_weights(sim, logx=False):
         if logx:
             ax.set_xscale('log')
     
-    figpath = osjoin(sim.res_path, sim.name + '_weight_modulation.png')
+    figpath = osjoin(sim.res_path, 'weight_modulation.png')
     plt.savefig(figpath, bbox_inches='tight', dpi=200)
     plt.close()
     
