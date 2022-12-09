@@ -140,6 +140,21 @@ def stimulator(sim, stim_cfgs):
     
     return stims
 
+
+def get_line_idx(x0, y0, c, pop, eps=2):
+    xs = np.arange(0, pop.gs//2) #only half of plane will be modified
+    
+    coords = []
+    for x in xs:
+        y_center = int(round(x*c))
+        for y in range(y_center-eps-1, y_center+eps+1):
+            if y**2 <= eps**2:
+                coords.append([(x+x0) % pop.gs, (y+y0) % pop.gs])
+    coords = np.unique(coords, axis=0)
+    idxs = coord2idx(coords, pop)
+    return idxs, coords
+    
+    
 def phase_estimator(idxs, ts, dt):
     t = np.linspace(0, ts.max(), int(ts.max()//dt) + 1)
     phis = np.zeros(shape= (len(set(idxs)), len(t)))
@@ -278,3 +293,39 @@ def balance_dist(t0, t_min=0, t_max=1):
     # phis *= 2*np.pi/(np.max(phis)+1e-12)
     # phis -= np.pi
 
+def get_anisotropic_U(sim, syn_name, Umax):
+    syn = sim.syns[syn_name]
+    conn_cfg = sim.conn_cfg[syn_name]
+    lscp = sim.lscp[syn_name]['phi']
+    lscp = Umax*(lscp- lscp.min())/(lscp.max()-lscp.min())
+    
+    Us = np.zeros(len(syn))
+    for idx_pre in sorted(set(sim.syns[syn_name].i)):
+        syn_idx = syn["i=={}".format(idx_pre)]._indices()
+        U_mean = lscp[idx_pre]
+        alpha = 2
+        beta = alpha*(1./(U_mean+1e-12) - 1)
+        Us[syn_idx] = np.random.beta(alpha, beta, size= len(syn_idx))
+    return Us
+
+def get_post_rel_locs(syn, pre_idx):
+    s_loc = idx2coords(pre_idx, syn.source).astype(float)
+    s_loc*= syn.target.gs/syn.source.gs*1.
+    s_loc = np.round(s_loc).astype(int)
+    
+    t_locs = get_post_locs(syn, pre_idx) - s_loc
+    t_locs =  (t_locs + syn.target.gs/2) % syn.target.gs - syn.target.gs/2
+    return t_locs
+
+def get_post_idxs(syn, pre_idx):
+    syns_pre = syn["i=={}".format(pre_idx)]._indices()
+    return syn.j[syns_pre]
+
+def get_post_locs(syn, pre_idx):
+    post_idxs = get_post_idxs(syn, pre_idx)
+    return idx2coords(post_idxs, syn.target)
+
+def pre_loc2post_loc_rel(t_locs, s_loc, gs):
+    tmp = t_locs - s_loc
+    return (tmp +gs/2) % gs - gs/2
+    

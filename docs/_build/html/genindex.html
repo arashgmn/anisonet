@@ -84,11 +84,15 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">anisonet</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="anisofy.html">anisofy module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="anisofy.html#enforcing-anisotropy">Enforcing anisotropy</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#dispalcement-based">Dispalcement-based</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#rotation-based">Rotation-based</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#positive-rotation">Positive rotation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#squeeze-positive-rotation">Squeeze positive rotation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#what-is-anisotropy-really">What is anisotropy, really?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#connectivity-heterogeneity">Connectivity heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#isotropic-profile">Isotropic profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#anisotropic-connectivity">Anisotropic connectivity</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#synaptic-heterogeneity">Synaptic heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#isotropic-synaptic-parameterization">Isotropic synaptic parameterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#anisotropic-synaptic-parameterization">Anisotropic synaptic parameterization</a></li>
 </ul>
 </li>
 </ul>
@@ -113,7 +117,10 @@
 <li class="toctree-l3"><a class="reference internal" href="equations.html#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="landscape.html#anisotropy-in-connectivity">Anisotropy in connectivity</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="simulate.html">simulate module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">utils module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="viz.html">viz module</a></li>
@@ -186,6 +193,7 @@
 
 <div class="genindex-jumpbox">
  <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
  | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
@@ -197,6 +205,7 @@
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
+ | <a href="#T"><strong>T</strong></a>
  | <a href="#U"><strong>U</strong></a>
  | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
@@ -218,12 +227,24 @@
         <li><a href="anisofy.html#module-anisofy">module</a>
 </li>
       </ul></li>
+      <li><a href="simulate.html#simulate.Simulate.assess_landscape">assess_landscape() (simulate.Simulate method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="utils.html#utils.balance_dist">balance_dist() (in module utils)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="simulate.html#simulate.Simulate.check_plasticity">check_plasticity() (simulate.Simulate method)</a>
+</li>
       <li>
     configs
 
@@ -261,6 +282,10 @@
 </li>
       </ul></li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="utils.html#utils.estimate_order_parameter">estimate_order_parameter() (in module utils)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="G">G</h2>
@@ -268,17 +293,31 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="simulate.html#simulate.Simulate.generate_name">generate_name() (simulate.Simulate method)</a>
 </li>
+      <li><a href="utils.html#utils.get_anisotropic_U">get_anisotropic_U() (in module utils)</a>
+</li>
       <li><a href="viz.html#viz.get_cax">get_cax() (in module viz)</a>
 </li>
       <li><a href="configs.html#configs.get_config">get_config() (in module configs)</a>
 </li>
+      <li><a href="utils.html#utils.get_line_idx">get_line_idx() (in module utils)</a>
+</li>
+      <li><a href="equations.html#equations.get_nrn_eqs">get_nrn_eqs() (in module equations)</a>
+</li>
+      <li><a href="simulate.html#simulate.Simulate.get_pop_mons">get_pop_mons() (simulate.Simulate method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="equations.html#equations.get_nrn_eqs">get_nrn_eqs() (in module equations)</a>
+      <li><a href="utils.html#utils.get_post_idxs">get_post_idxs() (in module utils)</a>
+</li>
+      <li><a href="utils.html#utils.get_post_locs">get_post_locs() (in module utils)</a>
+</li>
+      <li><a href="utils.html#utils.get_post_rel_locs">get_post_rel_locs() (in module utils)</a>
 </li>
       <li><a href="anisofy.html#anisofy.get_radial_profile">get_radial_profile() (in module anisofy)</a>
 </li>
       <li><a href="equations.html#equations.get_syn_eqs">get_syn_eqs() (in module equations)</a>
+</li>
+      <li><a href="simulate.html#simulate.Simulate.get_syn_mons">get_syn_mons() (simulate.Simulate method)</a>
 </li>
       <li><a href="simulate.html#simulate.Simulate.get_synaptic_base">get_synaptic_base() (simulate.Simulate method)</a>
 </li>
@@ -309,12 +348,22 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="anisofy.html#anisofy.make_anisotropic">make_anisotropic() (in module anisofy)</a>
+      <li><a href="anisofy.html#anisofy.make_anisotropic_profile">make_anisotropic_profile() (in module anisofy)</a>
+</li>
+      <li><a href="anisofy.html#anisofy.make_anisotropic_syn">make_anisotropic_syn() (in module anisofy)</a>
+</li>
+      <li><a href="utils.html#utils.make_circular">make_circular() (in module utils)</a>
 </li>
       <li><a href="landscape.html#landscape.make_landscape">make_landscape() (in module landscape)</a>
 </li>
+      <li><a href="utils.html#utils.make_planar">make_planar() (in module utils)</a>
+</li>
       <li><a href="simulate.html#simulate.Simulate.make_txy">make_txy() (simulate.Simulate method)</a>
 </li>
+      <li><a href="landscape.html#landscape.makes_synaptic_ladscape">makes_synaptic_ladscape() (in module landscape)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     module
 
@@ -348,7 +397,15 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="utils.html#utils.phase_estimator">phase_estimator() (in module utils)</a>
+</li>
+      <li><a href="utils.html#utils.plane2torus">plane2torus() (in module utils)</a>
+</li>
+      <li><a href="viz.html#viz.plot_3d_clusters">plot_3d_clusters() (in module viz)</a>
+</li>
       <li><a href="viz.html#viz.plot_animation">plot_animation() (in module viz)</a>
+</li>
+      <li><a href="viz.html#viz.plot_bump_speed">plot_bump_speed() (in module viz)</a>
 </li>
       <li><a href="viz.html#viz.plot_connectivity">plot_connectivity() (in module viz)</a>
 </li>
@@ -368,9 +425,17 @@
 </li>
       <li><a href="viz.html#viz.plot_periodicity">plot_periodicity() (in module viz)</a>
 </li>
+      <li><a href="viz.html#viz.plot_R">plot_R() (in module viz)</a>
+</li>
       <li><a href="viz.html#viz.plot_realized_landscape">plot_realized_landscape() (in module viz)</a>
 </li>
+      <li><a href="viz.html#viz.plot_relative_weights">plot_relative_weights() (in module viz)</a>
+</li>
+      <li><a href="viz.html#viz.plot_spline_trace">plot_spline_trace() (in module viz)</a>
+</li>
       <li><a href="simulate.html#simulate.Simulate.post_process">post_process() (simulate.Simulate method)</a>
+</li>
+      <li><a href="utils.html#utils.pre_loc2post_loc_rel">pre_loc2post_loc_rel() (in module utils)</a>
 </li>
       <li><a href="simulate.html#simulate.Simulate.process_configs">process_configs() (simulate.Simulate method)</a>
 </li>
@@ -394,16 +459,18 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="simulate.html#simulate.Simulate.save_monitors">save_monitors() (simulate.Simulate method)</a>
 </li>
+      <li><a href="simulate.html#simulate.Simulate.set_protocol">set_protocol() (simulate.Simulate method)</a>
+</li>
       <li><a href="simulate.html#simulate.Simulate.setup_landscape">setup_landscape() (simulate.Simulate method)</a>
 </li>
       <li><a href="simulate.html#simulate.Simulate.setup_net">setup_net() (simulate.Simulate method)</a>
 </li>
       <li><a href="simulate.html#simulate.Simulate.setup_pops">setup_pops() (simulate.Simulate method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="simulate.html#simulate.Simulate.setup_syns">setup_syns() (simulate.Simulate method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     simulate
 
@@ -415,11 +482,27 @@
 </li>
       <li><a href="simulate.html#simulate.Simulate.start">start() (simulate.Simulate method)</a>
 </li>
+      <li><a href="simulate.html#simulate.Simulate.state_initializer">state_initializer() (simulate.Simulate method)</a>
+</li>
+      <li><a href="utils.html#utils.stimulator">stimulator() (in module utils)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="utils.html#utils.torus2plane">torus2plane() (in module utils)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="U">U</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="simulate.html#simulate.Simulate.update_state">update_state() (simulate.Simulate method)</a>
+</li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     utils

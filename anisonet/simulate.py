@@ -11,6 +11,7 @@ modules are auxillary utilities used here.
 import os 
 import logging
 osjoin = os.path.join # an alias for convenient
+from copy import deepcopy
 
 import pickle
 import numpy as np
@@ -29,7 +30,9 @@ from landscape import make_landscape
 #from anisofy import draw_post_syns as draw_posts
 from anisofy import draw_posts as draw_posts
 
-b2.seed(8)
+from pdb import set_trace
+
+b2.seed(81)
 
 _plastic_models = ['tsodysk-markram']
 
@@ -40,7 +43,7 @@ class Simulate(object):
     """
     
     def __init__(self, net_name='I_net', load_connectivity=True,  scalar=1,
-                 result_path=None, to_event_driven = True):
+                 result_path=None, to_event_driven = True, ):
         """
         Initializes the simulator object for the given network configuration. 
         By default, tries to load the connectivity matrix from disk, otherwise
@@ -70,8 +73,7 @@ class Simulate(object):
         
         # processing configs
         self.process_configs(to_event_driven) 
-        
-        
+        self.assess_landscape()
         #self.base = self.get_synaptic_base()
         self.has_plastic = self.check_plasticity()
         
@@ -91,6 +93,9 @@ class Simulate(object):
         self.warmup_std = 500*b2.pA
         self.warmup_dur = 500*b2.ms
         
+        self.fmt = '{:0>3}'
+        self.state_id = 0
+        self.state_str = self.fmt.format(self.state_id)
         
     def state_initializer(self, mode='ss'):
         """
@@ -119,7 +124,23 @@ class Simulate(object):
         msg_cell = '''
             I only regonize LIF neuron for now.
             '''
+            
+        # syapse parameters must be synapse specific. However, we may induce
+        # a bias in the parameters of all synapses of a certain neuron. This 
+        # bias can be "anisotropic" if it reflects the location of the neuron.
+        # aniso_syns = False
+        # if len(mode.split('-'))>1:
+        #    aniso_syns= True
+        #    mode = mode.split('-')[0]
         
+        mode_cell = mode.split('-')
+        if len(mode_cell)>1:
+            mode_syn = mode_cell[1]
+            mode_cell = mode_cell[0]
+        else:
+            mode_cell = mode_cell[0]
+            mode_syn = mode_cell  
+            
         for pop, pop_cfg in zip(self.pops, self.pops_cfg.values()):         
             # setting up voltage
             if pop_cfg['cell']['type']=='LIF':
@@ -128,9 +149,9 @@ class Simulate(object):
             else:
                 raise NotImplementedError(msg0 + msg_cell)
             
-            if mode=='ss':
+            if mode_cell=='ss':
                 self.pops[pop].v = minV
-            elif mode=='rand':
+            elif mode_cell=='rand':
                 self.pops[pop].v = '({}+ rand()*({}))*mV'.format(minV/b2.mV, (maxV-minV)/b2.mV)
             else:
                 raise NotImplementedError(msg0 + msg_mode)
@@ -150,11 +171,12 @@ class Simulate(object):
         for syn_name in self.syns.keys():
             conn_cfg = self.conn_cfg[syn_name]
             kernel, model = conn_cfg['synapse']['type'].split('_')
-        
-            if mode=='ss':
+            
+            if mode_syn=='ss':
                 if kernel=='tsodysk-markram':
                     self.syns[syn_name].u = conn_cfg['synapse']['params']['U']
                     self.syns[syn_name].x = 1
+                    self.syns[syn_name].U = conn_cfg['synapse']['params']['U']
                 elif kernel in ['alpha','exp','biexp']:
                     self.syns[syn_name].g = 0
                 elif kernel == 'const':
@@ -163,11 +185,16 @@ class Simulate(object):
                     raise NotImplementedError(msg0 + msg_kernel.format(kernel))
                 
             
-            elif mode=='rand':
+            elif mode_syn=='rand':
                 if kernel=='tsodysk-markram':
                     self.syns[syn_name].u = 'rand()'
                     self.syns[syn_name].x = 'rand()'
+                    self.syns[syn_name].U = conn_cfg['synapse']['params']['U']
                     
+                    # else:
+                    #     self.syns[syn_name].U = utils.get_anisotropic_U(self, 
+                    #                                                     syn_name,
+                    #                                                     conn_cfg['synapse']['params']['U'])
                 elif kernel in ['alpha','exp','biexp']:
                     self.syns[syn_name].g = 'rand()'
                 elif kernel == 'const':
@@ -175,7 +202,12 @@ class Simulate(object):
                 else:
                     raise NotImplementedError(msg0 + msg_kernel.format(kernel))
             
-            
+            elif mode_syn=='het':
+                if kernel=='tsodysk-markram':
+                    self.syns[syn_name].u = 'rand()'
+                    self.syns[syn_name].x = 'rand()'
+                    self.syns[syn_name].U = np.load(osjoin(self.data_path, 'Us.npy'))
+                
             else:
                 raise NotImplementedError(msg0 + msg_mode)
             
@@ -293,20 +325,21 @@ class Simulate(object):
             else:
                 raise
                 
+            # TODO: anisotropy is not a good feature for naming
             # I factor the GA out becasue it's shared in Gamma and Gaussian
-            if pw_cfg['anisotropy']['type']=='perlin':
-                name += 'P' 
-            elif pw_cfg['anisotropy']['type']=='homogeneous':
-                name += 'H'
-            elif pw_cfg['anisotropy']['type']=='random':
-                name += 'R'
-            elif pw_cfg['anisotropy']['type']=='iso':
-                name += 'I'
-            else:
-                raise
+            # if pw_cfg['anisotropy']['type']=='perlin':
+            #     name += 'P' 
+            # elif pw_cfg['anisotropy']['type']=='homogeneous':
+            #     name += 'H'
+            # elif pw_cfg['anisotropy']['type']=='random':
+            #     name += 'R'
+            # elif pw_cfg['anisotropy']['type']=='iso':
+            #     name += 'I'
+            # else:
+            #     raise
             
-            print('\t\t{}: Connectivity profle {} - anisotropy pattern {}'.format(
-                pw_name, pw_cfg['profile']['type'], pw_cfg['anisotropy']['type']))
+            # print('\t\t{}: Connectivity profle {} - anisotropy pattern {}'.format(
+            #     pw_name, pw_cfg['profile']['type'], pw_cfg['anisotropy']['type']))
             
             name+='-'
         
@@ -320,21 +353,40 @@ class Simulate(object):
             src, trg = pathway
             config = self.conn_cfg[pathway]
             
+            # filling None profiles with homog
             if config['profile']==None:
                 self.conn_cfg[pathway]['profile'] = {'type': 'homog', 'params':{}}
             
+            # filling None anisotropy with empty parameters
             if config['anisotropy']==None:
-                self.conn_cfg[pathway]['anisotropy'] = {'type':'iso', 'params':{}}
+                 self.conn_cfg[pathway]['anisotropy'] = {'params': {},
+                                                         'connectivity': None,
+                                                         'synaptic': None}
+            else:
+                if 'connectivity' not in config['anisotropy']:
+                    config['anisotropy']['connectivity'] = None
+                if 'synaptic' not in  config['anisotropy']:
+                    config['anisotropy']['synaptic'] = None
         
+            # adding types to anisotropy params
+            for param, value in config['anisotropy']['params'].items():
+                if type(value)==type({}):
+                    if 'type' not in value:
+                        config['anisotropy']['params'][param]['type'] = None
+                    if 'args' not in value:
+                        config['anisotropy']['params'][param]['args'] = None
+                
+                
+        # adding stimulation variable
         for pop in self.pops_cfg.keys():
             if 'stim' not in self.pops_cfg[pop]:
                 self.pops_cfg[pop]['stim'] = {}
         
-        # converting to models to jump
+        # converting to models to jump if necessary
         if to_event_driven:
             self.current_to_voltage()
         
-        # checking if consistent current models
+        # checking if current models are consistent 
         for pop in self.pops_cfg.keys():
             for pathway in self.conn_cfg.keys():
                 src, trg = pathway
@@ -350,7 +402,7 @@ class Simulate(object):
                         self.pops_cfg[pop]['input_model'] = model
             
             
-    def setup_net(self):
+    def setup_net(self, initializer):
         """
         Sets up a network by the following steps:
             #. defining the populations (``setup_pops``)
@@ -368,10 +420,9 @@ class Simulate(object):
         self.setup_pops()
         self.setup_landscape()
         self.setup_syns()
-        self.state_initializer(mode='ss')
+        self.state_initializer(mode=initializer)
         
         self.configure_monitors()
-        
         self.net = b2.Network()
         self.net.add(self.pops.values())
         self.net.add(self.syns.values())
@@ -426,13 +477,49 @@ class Simulate(object):
             y,x = np.indices((gs,gs))
             pop.coord = list(zip(x.ravel(),y.ravel()))
             
+            # add grid size for convenience
             pop.add_attribute('gs')
             pop.gs = gs
             
+            # add anisotropy parameters
             self.pops[pop_name] = pop
             del x,y, cell_cfg, noise_cfg, gs, eqs
             
-    
+            
+    def assess_landscape(self):
+        for pathway in self.conn_cfg.keys():
+            aniso = self.conn_cfg[pathway]['anisotropy']
+            
+            # connectivity anisotropy
+            if aniso['connectivity'] == 'shift':
+                assert 'r' in aniso['params'], "Please provide shift radius of anisotropy for pathway: " +pathway
+                assert 'phi' in aniso['params'], "Please provide shift angle of anisotropy for pathway: " +pathway
+
+            elif aniso['connectivity'] == 'positive-rotate':
+                assert 'phi' in aniso['params'], "Please provide rotation angle of anisotropy for pathway: " +pathway
+            
+            elif aniso['connectivity'] is ['squeeze-rotate', 'positive-squeeze-rotate']:
+                assert 'r' in aniso['params'], "Please provide sqeezing ratio of anisotropy for pathway: " +pathway
+                assert 'phi' in aniso['params'], "Please provide rotation angle of anisotropy for pathway: " +pathway
+            
+            elif aniso['connectivity'] == None:
+                pass
+            else:
+                raise TypeError ("I don't understand the profile's anisotropy method!")
+
+            # synaptic anisotropy
+            if aniso['synaptic'] in ['cos', 'sin']:
+                assert ('tau_f' in aniso['params']) or \
+                       ('tau_d' in aniso['params']) or \
+                       ('U' in aniso['params']), "Do not know which synaptic variable is to be anisotrofied in pathway "+pathway
+                assert 'phi' in aniso['params'], "Please provide angle anisotropy for pathway: " +pathway
+            elif aniso['synaptic'] == None:
+                pass
+            else:
+                raise TypeError ("I don't understand the synaptic anisotropy method!")
+            
+            # 
+            
     def setup_landscape(self):
         """
         Generates the requested landscape: A dictionary keyed by ``phi`` and 
@@ -451,11 +538,16 @@ class Simulate(object):
             lscp_cfg = self.conn_cfg[conn_name]['anisotropy']
             gs = self.pops_cfg[src]['gs'] # grid size
             
-            rs, phis = make_landscape(gs=gs, config=lscp_cfg)
-            self.lscp[conn_name] = {'phi' : phis, 'r' :rs}
-            
+            # this might be inefficient for constant values
+            # rs, phis = make_landscape(gs=gs, aniso=anisotropy)
+            # self.lscp[conn_name] = {'phi' : phis, 'r' :rs}
+            self.lscp[conn_name] = {}
+            for param, cfg in lscp_cfg['params'].items():
+                #set_trace()
+                
+                self.lscp[conn_name][param] = make_landscape(gs, cfg)
         
-        del rs, phis, gs, lscp_cfg, src, trg
+        # del rs, phis, gs, lscp_cfg, src, trg
         
         
     def setup_syns(self, visualize=False, init='rand'):
@@ -475,7 +567,7 @@ class Simulate(object):
 
         """
         print('{} -- Setting up synapses ...'.format(time.ctime()))
-
+        
         self.syns = {}
         for key in sorted(self.conn_cfg.keys()):
             src, trg = key
@@ -500,39 +592,55 @@ class Simulate(object):
                 try:
                     print('\tLoading connectivity matrix: {}'.format(w_name))
                     w = sparse.load_npz(osjoin(self.data_path, w_name+'.npz'))
+                    delays = np.load(osjoin(self.data_path, w_name+'_delays.npy'))
                 except:
                     print('\tWarning: Connecitivy file {} was not found.'.format(w_name))                    
                     print('\tWarning: Computing connectivity from scratch.')                    
                     self.load_connectivity = False
                     
             # computing anisotropic post-synapses
-            delays = []
+            syn_params = {}
             for s_idx in range(len(spop)):
                 if self.load_connectivity:
                     t_idxs = w.col[w.row==s_idx]
+                    # TODO: add a function that computes delays
                 else:
                     kws = dict(s_coord = spop.coord[s_idx],
                                ncons = ncons,
-                               srow = int(np.sqrt(len(spop))),
-                               scol = int(np.sqrt(len(spop))),
-                               trow = int(np.sqrt(len(tpop))),
-                               tcol = int(np.sqrt(len(tpop))),
+                               srow = spop.gs,
+                               scol = spop.gs,
+                               trow = tpop.gs,
+                               tcol = tpop.gs,
                                profile = self.conn_cfg[key]['profile'],
-                               landscape = {'phi': self.lscp[key]['phi'][s_idx], 
-                                             'r' : self.lscp[key]['r'][s_idx]},
+                               anisotropy = {k:v[s_idx] for k,v in self.lscp[key].items()},
+                               # landscape = {'phi': self.lscp[key]['phi'][s_idx], 
+                               #               'r' : self.lscp[key]['r'][s_idx]},
                                self_link = self.conn_cfg[key]['self_link'],
                                recurrent = trg==src,
                                )
-                    s_coord, t_coords, delay = draw_posts(**kws) # projects s_coord
+                                
+                    # adding the methods
+                    aniso_methods = deepcopy(self.conn_cfg[key]['anisotropy'])
+                    aniso_methods.pop('params')
+                    kws['aniso_methods'] = aniso_methods
+                    
+                    #set_trace()
+                    s_coord, t_coords, syn_param = draw_posts(**kws) # projects s_coord
                     t_idxs = utils.coord2idx(t_coords, tpop)
-                    delays.append(delay)
+                    
+                    for k,v in syn_param.items():
+                        if k in syn_params:
+                            syn_params[k] = np.concatenate([syn_params[k],v])
+                        else:
+                            syn_params[k] = v
                     
                 syn.connect(i = s_idx, j = t_idxs)
                 
-            # initializing the values
+            # Setting up delays
             # syn.J = self.conn_cfg[key]['synapse']['params']['J']
-            #syn.delay = np.array(delays).ravel()*b2.ms
+            # syn.delay = np.array(delays).ravel()*b2.ms
             #syn.delay = np.random.uniform(0.5, 2.5, len(syn.delay))*b2.ms
+            
             #self.state_initializer(syn, self.conn_cfg[key], mode='rand')
             syn.add_attribute('is_plastic')
             syn.is_plastic = False
@@ -551,7 +659,10 @@ class Simulate(object):
                 data = np.ones_like(row_idx)
                 w = sparse.coo_matrix((data, (row_idx, col_idx)))
                 sparse.save_npz(osjoin(self.data_path, w_name+'.npz'), w)
-                                
+                
+                for k,v in syn_params.items():
+                    np.save(osjoin(self.data_path, k), v)
+                                    
                 del t_coords, s_coord, kws, row_idx, col_idx, data
         del src, trg, eqs, on_pre, on_post, ncons 
         del spop, tpop, syn, t_idxs, w
@@ -571,6 +682,7 @@ class Simulate(object):
         """
         print('{} -- Configuring monitors'.format(time.ctime()))
         
+        # this is necessary to delete mons. Otherwise it won't work
         if hasattr(self, 'mons'):
             del self.mons
             
@@ -643,7 +755,8 @@ class Simulate(object):
     
         
     def start(self, duration=2000*b2.ms, batch_dur=1000*b2.ms, 
-              restore=True, profile=False, plot_snapshots=True):
+              restore=True, profile=False, plot_snapshots=True,
+              warmup=False):
         """
         Starts a long simulation by breaking it down to several batches. After
         each ``batch_dur``, the monitors will be saved on disk, and simulation
@@ -665,23 +778,28 @@ class Simulate(object):
         :type plot_snapshots: bool, optional
         """
         
+        # we try to restore state if requested, but throw a warning if couldn't
         if restore:
             try:
                 self.net.restore(name = self.name, 
                                  filename= osjoin(self.data_path, self.name+'.wup'))
-                print('Restored state from warmed-up state: {}'.format(self.name+'.wup'))
+                print('Restored state from state: {}'.format(self.name+'.wup'))
             
             except Exception as e: 
                 print(str(e))
                 print('Warning: Could not restore state from: {}.'.format(self.name+'.wup'))
-                self.warmup()
+                restore = False
+                
+        # we proceed with the requested warmup only if nothing is restored
+        if (warmup) and (not restore):
+            self.warmup()
         
         print('Starting simulation.')
         nbatch = int(duration/batch_dur)
         if (duration-nbatch*batch_dur)/(b2.defaultclock.dt)>0:
             nbatch += 1
         
-        fmt = '{:0>%d}'%(np.log10(nbatch)+1) #suffix_format
+        # fmt = '{:0>%d}'%(np.log10(nbatch)+1) #suffix_format
         
         for n in range(nbatch):
             self.reset_monitors()
@@ -691,26 +809,39 @@ class Simulate(object):
             self.net.run(dur, profile=profile)
             
             if profile:
-                print(profiling_summary(sim.net))
+                print(profiling_summary(self.net))
             
-            if plot_snapshots:
-                viz.plot_firing_rates(sim=self, suffix='_'+str(n))
-                
-            self.save_monitors(suffix = fmt.format(n+1))
+            if plot_snapshots:  
+                viz.plot_firing_rates(sim=self, suffix='_'+self.state_str,)
             
+            print('before: '+self.state_str)                
+            self.save_monitors()
+            print('after: '+self.state_str)                
+                    
     
-    def save_monitors(self, suffix):
+    def update_state(self):
+        self.state_id += 1
+        self.state_str = self.fmt.format(self.state_id)
+        
+        
+    def save_monitors(self):
         for mon in self.mons:
             data = mon.get_states()
-            with open (osjoin(self.data_path, 
-                              self.name+'_'+mon.name+'_'+suffix+'.dat'), 'wb') as f:
+            path = osjoin(self.data_path, 
+                          self.name+'_'+mon.name+'_'+self.state_str+'.dat')
+            with open (path, 'wb') as f:
                 pickle.dump(data, f)
-        del mon, data
+        
+        # saving monitors means the a new batch will be configured next
+        # so we can update the sate safely.
+        self.update_state()
+        
+        del mon, data, path
     
     def make_txy(self):
         import glob
         
-        for pop_name in sim.pops.keys():
+        for pop_name in self.pops.keys():
             txy = []
             files_list = sorted(glob.glob(osjoin(self.data_path, 
                                                  self.name+'_mon_'+pop_name+'*.dat')))
@@ -719,7 +850,7 @@ class Simulate(object):
                 f = f.read()
                 data = pickle.loads(f)
                 
-                xy = utils.idx2coords(data['i'], sim.pops[pop_name])
+                xy = utils.idx2coords(data['i'], self.pops[pop_name])
                 txy.append(np.hstack((data['t'].reshape(-1,1), xy)))
                 del data,xy
                 
@@ -744,24 +875,24 @@ class Simulate(object):
         print('{} -- Starting postprocessing ...'.format(time.ctime()))
         
         logging.info('Visualizing landscape, degress, and connectivity.')
-        viz.plot_landscape(sim, overlay=overlay)
-        viz.plot_in_out_deg(sim)
-        viz.plot_realized_landscape(sim)
-        viz.plot_connectivity(sim)
+        viz.plot_landscape(self, overlay=overlay)
+        viz.plot_in_out_deg(self)
+        viz.plot_realized_landscape(self)
+        viz.plot_connectivity(self)
         
         logging.info('Visualizing firing rate distribution.')
-        viz.plot_firing_rates_dist(sim)
+        viz.plot_firing_rates_dist(self)
         
         logging.info('Making activity animation.')
-        viz.plot_animation(sim, overlay=overlay, ss_dur=ss_dur) 
+        viz.plot_animation(self, overlay=overlay, ss_dur=ss_dur) 
 
         logging.info('Computing synchrony order parameter.')
-        #viz.plot_R(sim)
+        #viz.plot_R(self)
         
         if self.has_plastic:
-            viz.plot_relative_weights(sim)
+            viz.plot_relative_weights(self)
         
-        analyze.find_bumps(sim, plot=True)
+        analyze.find_bumps(self, plot=True)
         
         
     def get_syn_mons(self):
@@ -799,16 +930,17 @@ class Simulate(object):
         
         
 if __name__=='__main__':
+    pass
     #b2.defaultclock.dt = 2000*b2.us
     # I_net
-    sim = Simulate('STSP_TM_I_net', scalar=2., load_connectivity=1, 
-                    to_event_driven=1, )
+    # sim = Simulate('I_net_focal_stim', scalar=2., load_connectivity=0, 
+    #                 to_event_driven=1, )
     
-    sim.setup_net()
+    # sim.setup_net()
     #sim.warmup()
-    sim.set_protocol()
-    sim.start(duration=2000*b2.ms, batch_dur=1000*b2.ms, 
-               restore=False, profile=False, plot_snapshots=True)
+    # sim.set_protocol()
+    # sim.start(duration=2000*b2.ms, batch_dur=1000*b2.ms, 
+    #            restore=False, profile=False, plot_snapshots=True)
     
     # sim.reset_monitors()
     # sim.net.run(10*b2.ms, )
@@ -818,7 +950,7 @@ if __name__=='__main__':
     # viz.plot_firing_rates(sim, suffix='_all')
     # sim.save_monitors(suffix ='all')
     
-    sim.post_process(overlay=True)
+    # sim.post_process(overlay=True)
     # import matplotlib.pyplot as plt
     
     # m = sim.mons[1]

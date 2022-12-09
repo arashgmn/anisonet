@@ -84,11 +84,15 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../modules.html">anisonet</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../anisofy.html">anisofy module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#enforcing-anisotropy">Enforcing anisotropy</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#dispalcement-based">Dispalcement-based</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#rotation-based">Rotation-based</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#positive-rotation">Positive rotation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#squeeze-positive-rotation">Squeeze positive rotation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#what-is-anisotropy-really">What is anisotropy, really?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#connectivity-heterogeneity">Connectivity heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#isotropic-profile">Isotropic profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#anisotropic-connectivity">Anisotropic connectivity</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#synaptic-heterogeneity">Synaptic heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#isotropic-synaptic-parameterization">Isotropic synaptic parameterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#anisotropic-synaptic-parameterization">Anisotropic synaptic parameterization</a></li>
 </ul>
 </li>
 </ul>
@@ -113,7 +117,10 @@
 <li class="toctree-l3"><a class="reference internal" href="../equations.html#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../landscape.html">landscape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../landscape.html">landscape module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../landscape.html#anisotropy-in-connectivity">Anisotropy in connectivity</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../simulate.html">simulate module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../utils.html">utils module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../viz.html">viz module</a></li>
@@ -185,93 +192,125 @@
 <span></span><span class="ch">#!/usr/bin/env python3</span>
 <span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">This module controls the inhomogeneity and anistropy of the synaptic </span>
-<span class="sd">connections. The probability of stablishing a connection from the presynapse at</span>
-<span class="sd">location :math:`\\textbf r` to location :math:`\\textbf r&#39;`, in general depends</span>
-<span class="sd">on both locations. We model connectivies that can be broken down this into </span>
-<span class="sd">radial and angular terms:</span>
-<span class="sd">    </span>
-<span class="sd">.. math::</span>
-<span class="sd">	w(\\textbf r, \\textbf r&#39;) = f(|\\textbf r - \\textbf r&#39;|) g(\phi)</span>
+<span class="sd">What is anisotropy, really?</span>
+<span class="sd">===========================</span>
+<span class="sd">We assume every neuron is somehow different from its surrounding, in that it is</span>
+<span class="sd">biased in one form or other toward on direction. Such angular bias, thus, makes</span>
+<span class="sd">up so-called anisotropy landscape, which is nothing but a visualization of the</span>
+<span class="sd">extend of this bias for each neuron in the spatial field.</span>
 
-<span class="sd">The function :math:`f` controls the extent of spatial homogeneity and is assumed to </span>
-<span class="sd">have a peak at the center. Function :math:`g` encodes anisotropy or angular </span>
-<span class="sd">bias in forming connections. </span>
+<span class="sd">For instance, `[1]`_ introduced a directional bias (anisotropy) in the </span>
+<span class="sd">connectivity of locally connected neurons. Similarly, we can introduce an</span>
+<span class="sd">angular heterogeneity in the synaptic parameters (think of the parameters of </span>
+<span class="sd">the `kernel` dicussed in :ref:`equations:Kernel`). Probably other forms are </span>
+<span class="sd">possible too, but in this package, we stick to these two only. So in what </span>
+<span class="sd">follows, we discuss these two form of anisotropy and how can we produce them.</span>
 
-<span class="sd">There are many ways to model such dependence. We implemented two methods: a</span>
-<span class="sd">displacement-based (`shift`) and a rotation-based (`rotate`) one which are </span>
-<span class="sd">explained in details below.</span>
 
-<span class="sd">**Inhomogeneity**: Radial connectivity profile can enforce locality. The following profiles are</span>
-<span class="sd">supported:</span>
-<span class="sd">    </span>
-<span class="sd">    #. Gaussian</span>
-<span class="sd">    #. Gamma distribution</span>
+<span class="sd">.. note::</span>
+<span class="sd">    In this madule we only explain the imposition of anisotropy. For how such </span>
+<span class="sd">    neuron-specific biases are spread in space, please refer to :ref:`landscape`.</span>
+
+
+<span class="sd">Connectivity heterogeneity</span>
+<span class="sd">==========================</span>
+
+<span class="sd">Isotropic profile</span>
+<span class="sd">-----------------</span>
+<span class="sd">It is common to assume that the probability of establishing a link between two</span>
+<span class="sd">neurons depends on their distance. As such, the connecitivity profile from any</span>
+<span class="sd">presynapse will be an isometric sphere centered on the locaiton of presynapse.</span>
+<span class="sd">Such isotropy even holds for situations in which neurons are connected </span>
+<span class="sd">uniformly regardless of their distance. </span>
+
+<span class="sd">We refer this radial connecitivty pattern simply as ``profile``. The following</span>
+<span class="sd">profiles are supported: </span>
+
 <span class="sd">    #. uniform (homogeneous)</span>
-
-<span class="sd">using which we sample the distance (radius) to the postsynapse. Additionally,</span>
-<span class="sd">in cases where autapse is not allowed, we symmetrically shift the aformentioed </span>
-<span class="sd">PDFs such that distances less than a controllable ``gap`` are improbable. </span>
-
-<span class="sd">**Anisotropy**: We attribute an angle :math:`\phi` to each neuron that specifies its angular</span>
-<span class="sd">bias (a.k.a. anisotropy landscape) by the following strategies:</span>
+<span class="sd">    #. Gaussian distribution</span>
+<span class="sd">    #. Gamma distribution</span>
 <span class="sd">    </span>
-<span class="sd">    #. uniform (isotropic)</span>
-<span class="sd">    #. constant or homogenous</span>
-<span class="sd">    #. Perlin-noise-based: A unifromly random method with spatioal correlation</span>
+<span class="sd">Not specifying any profile will be fallen back to the ``uniform`` case</span>
+<span class="sd">automatically.</span>
 
-
-<span class="sd">Having the landscape specified, we now explain how connections </span>
-<span class="sd">are actually formed.</span>
-
-<span class="sd">Enforcing anisotropy</span>
-<span class="sd">====================</span>
-<span class="sd">Anisotropy is induced in two major steps. The first one, which is shared among</span>
-<span class="sd">all methods, is generating an *iso*-tropic set of posible postsynaptic locations.</span>
-<span class="sd">based on the radius drew before. These locations make an angle-independent </span>
-<span class="sd">presynapse-centric point cloud. The next step natually is to induce anisotropy</span>
-<span class="sd">in this cloud. The API accepts the following values which are explained below:</span>
+<span class="sd">.. note::</span>
+<span class="sd">    One particularly interesting connectivity pattern is Mexcan hat profile (aka</span>
+<span class="sd">    difference of Gaussians) which implements proximal excitation and lateral</span>
+<span class="sd">    inhibition (or vice versa, depending on which one is subtracted from the </span>
+<span class="sd">    other). This profile is known to give rise to activity bumps in networks.</span>
 <span class="sd">    </span>
-<span class="sd">    #. ``shift``: A displacement-based method</span>
-<span class="sd">    #. ``squeeze-rotate``: A rotation-based method that first squeezes the point</span>
-<span class="sd">       cloud</span>
-<span class="sd">    #. ``positive-rotate``: A rotation-based method that constraints the point </span>
-<span class="sd">       cloud to positive x values before rotation. Thus, differentiates between </span>
-<span class="sd">       angle :math:`\\theta` and :math:`2\pi - \\theta`. </span>
-<span class="sd">    #. ``positive-squeeze-rotate``: combination of last two methods.</span>
-<span class="sd">     </span>
-<span class="sd">Dispalcement-based</span>
-<span class="sd">~~~~~~~~~~~~~~~~~~</span>
-<span class="sd">This method is similar to `[1]`_ and works as follows. To enforce </span>
-<span class="sd">anisotropy, this point cloud is shifted be a displacement vector determined by</span>
-<span class="sd">a length :math:`r &gt; 0`  and angle  :math:`\phi` (the landscape). We keep this </span>
-<span class="sd">length constant for all neurons (although it can be very well change too).</span>
-
-<span class="sd">Rotation-based</span>
-<span class="sd">~~~~~~~~~~~~~~</span>
-<span class="sd">In this method we generate a circular point cloud as before. However, instead </span>
-<span class="sd">of displacing, we first squeeze this point cloud and then rotate this elongated </span>
-<span class="sd">point could according to the angle provided in the landscape. Squeezing is </span>
-<span class="sd">controlled by the :math:`r &gt; 0` property of the landscape -- now interpreted as</span>
-<span class="sd">the `reshpae` factor: The x-axis of the point cloud is up-scaled by :math:`1+r`</span>
-<span class="sd">while the y-axis is down-scaled by the same factor (so that the area stays </span>
-<span class="sd">constant). Then the ellipse is rotated along the z-axis. Note that for these</span>
-<span class="sd">method, complementary angles lead to the identical distributions.</span>
-
-
-<span class="sd">Positive rotation</span>
-<span class="sd">~~~~~~~~~~~~~~~~~</span>
-<span class="sd">To discern between complementary angles :math:`\\theta` and :math:`\\theta&#39; = 2\pi - \\theta` </span>
-<span class="sd">this method first coverts all the locations with the negative-x to positive ones.</span>
-<span class="sd">Then, it rotates the (now half-circular) point cloud without squeezign it.</span>
-
-<span class="sd">Squeeze positive rotation</span>
-<span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~</span>
-<span class="sd">Combines the two method above by first converting to positive x values, and </span>
-<span class="sd">then squeezing followed by rotating.</span>
+<span class="sd">    In case of networks with single synaptic types (only inhibitory or </span>
+<span class="sd">    excitatory) which are driven by a background input of the opposite polarity</span>
+<span class="sd">    it is possible to emulate the maxican hot profile by introducing a central</span>
+<span class="sd">    ``gap`` in the connectivity profile. As such, ``gap`` ensures that there is</span>
+<span class="sd">    an effective connecitivty difference between nearby neurons and distals </span>
+<span class="sd">    ones. By default, it is set to zero, but use it if your network does not </span>
+<span class="sd">    opposite synaptic types.</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">Anisotropic connectivity</span>
+<span class="sd">------------------------</span>
+<span class="sd">The connecitivty pattern introduced earlier is isotropic. We can break this </span>
+<span class="sd">isotropy in the following ways:</span>
+<span class="sd">    </span>
+<span class="sd">    #. ``shift``: Shifts the postsynaptic cloud, as introduced by `[1]`_. In this case,</span>
+<span class="sd">       the connections are simply shifted in space by a displacement vector, which</span>
+<span class="sd">       is specific to each neuron. Thus, the anisotropy landscape is characterized</span>
+<span class="sd">       by displacement length :math:`r(\\textbf x)` and anisotropy angle </span>
+<span class="sd">       :math:`\phi(\\textbf x)`, in which :math:`\\textbf x` shows the location </span>
+<span class="sd">       dependence.</span>
+<span class="sd">    #. ``squeeze-rotate``: Squeezes the postsynaptic cloud and then rotate it. </span>
+<span class="sd">       This method, too, introduces anisotropy using two factors. Axis squeezing </span>
+<span class="sd">       ratio :math:`r(\\textbf x)` and the anisotropy angle :math:`\phi(\\textbf x)`.</span>
+<span class="sd">       Note that in this method, the outcomes of rotation angles :math:`\\theta` and </span>
+<span class="sd">       :math:`2\pi - \\theta` are indentical. </span>
+<span class="sd">    #. ``positive-rotate``: Mirros the connecitions with negative x-component to </span>
+<span class="sd">       the positive-x, and then rotate them. This method only requires the roation </span>
+<span class="sd">       angle :math:`\phi(\\textbf x)`.</span>
+<span class="sd">    #. ``positive-squeeze-rotate``: Mixes the last two methods by squeezing the </span>
+<span class="sd">       reflected-to-positive connections before rotating. Thus, it requires both </span>
+<span class="sd">       the angle :math:`\phi(\\textbf x)` and the axis squeezing ratio </span>
+<span class="sd">       :math:`r(\\textbf x)` for full characterization.</span>
 
 
-<span class="sd">Other methods can be exercised as well.</span>
+<span class="sd">The figure below displays the effect of these method:</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+
+<span class="sd">Synaptic heterogeneity</span>
+<span class="sd">======================</span>
+
+<span class="sd">Isotropic synaptic parameterization</span>
+<span class="sd">-----------------------------------</span>
+<span class="sd">Synapses are often initialized either indentically or completely randomly. </span>
+<span class="sd">Either case are isotropic and are refered here as:</span>
+<span class="sd">    </span>
+<span class="sd">    #. ``rand``: uniformly initializes the parameters between 0 and 1 or </span>
+<span class="sd">       between the minimum and maximum acceptable values for non-normalized</span>
+<span class="sd">       quantities.</span>
+<span class="sd">    #. ``ss``:  initialized all the varaibles in accord to their steady-state</span>
+<span class="sd">       equilibrated value. In case of plasticitiy dependent values, steady-state</span>
+<span class="sd">       is defined under the `no-usage` condition.</span>
+<span class="sd">    </span>
+
+<span class="sd">Anisotropic synaptic parameterization</span>
+<span class="sd">-------------------------------------</span>
+<span class="sd">The anisotropy in the synapses in imposed based on their relative direction </span>
+<span class="sd">w.r.t. the presynapse (which is computed for each neuron individually). Given</span>
+<span class="sd">the direction of each postsynapse (:math:`\\theta`), and neuron-specific angular</span>
+<span class="sd">bias (:math:`\phi(\\textbf x)`) the anisotropy is applied according to a </span>
+<span class="sd">trianglumertic transformation:</span>
+
+<span class="sd">    #. ``sin``: modulates the variable between its minium and maximum range </span>
+<span class="sd">       accodring to :math:`\\frac{1+\sin (\\theta-\phi(\\textbf x) )}{2}`</span>
+<span class="sd">    #. ``cos``: modulates the variable between its minium and maximum range </span>
+<span class="sd">       accodring to :math:`\\frac{1+\cos (\\theta-\phi(\\textbf x) )}{2}`</span>
+<span class="sd">       </span>
+<span class="sd">.. note::</span>
+<span class="sd">    Other anisotropic transformations are under development.</span>
+
+
 <span class="sd">    </span>
 <span class="sd">.. _[1]: https://doi.org/10.1371/journal.pcbi.1007432</span>
 <span class="sd">.. _[3]: https://doi.org/10.1523/ENEURO.0348-16.2017</span>
@@ -280,7 +319,9 @@
 
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">from</span> <span class="nn">pdb</span> <span class="kn">import</span> <span class="n">set_trace</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="c1"># def draw_post_syns(s_coord, ncons,</span>
 <span class="c1">#                   srow, scol, trow, tcol, </span>
@@ -536,9 +577,9 @@
 
 <div class="viewcode-block" id="draw_posts"><a class="viewcode-back" href="../anisofy.html#anisofy.draw_posts">[docs]</a><span class="k">def</span> <span class="nf">draw_posts</span><span class="p">(</span><span class="n">s_coord</span><span class="p">,</span> <span class="n">ncons</span><span class="p">,</span>
               <span class="n">srow</span><span class="p">,</span> <span class="n">scol</span><span class="p">,</span> <span class="n">trow</span><span class="p">,</span> <span class="n">tcol</span><span class="p">,</span> 
-              <span class="n">profile</span><span class="p">,</span> <span class="n">landscape</span><span class="p">,</span> 
-              <span class="n">method</span><span class="o">=</span><span class="s1">&#39;shift&#39;</span><span class="p">,</span> <span class="n">gap</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-              <span class="n">self_link</span><span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">recurrent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+              <span class="n">profile</span><span class="p">,</span>
+              <span class="n">anisotropy</span><span class="p">,</span> <span class="n">aniso_methods</span><span class="p">,</span>
+              <span class="n">recurrent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">self_link</span><span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
               <span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Draws the coordinates of ``ncons`` postsynaptic neurons </span>
@@ -558,8 +599,11 @@
     <span class="c1"># initialzing containers for postsynapse coordiantes</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">ncons</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
     <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">ncons</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
-    <span class="n">redraw</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">y</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># index of those who must be redrawn. Now, all.</span>
     
+    <span class="c1"># intialzing synaptic parameters</span>
+    <span class="n">delays</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">ncons</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    
+    <span class="n">redraw</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">y</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># index of those who must be redrawn. Now, all.</span>
     <span class="k">while</span> <span class="nb">sum</span><span class="p">(</span><span class="n">redraw</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
         <span class="n">ncon</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">redraw</span><span class="p">)</span>
         
@@ -570,15 +614,18 @@
         
         <span class="k">else</span><span class="p">:</span>
             <span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">ncon</span><span class="p">)</span>
-            <span class="n">radius</span> <span class="o">=</span> <span class="n">get_radial_profile</span><span class="p">(</span><span class="n">ncon</span><span class="p">,</span> <span class="n">profile</span><span class="p">,</span> <span class="n">gap</span><span class="o">=</span><span class="n">gap</span><span class="p">)</span>
+            <span class="n">radius</span> <span class="o">=</span> <span class="n">get_radial_profile</span><span class="p">(</span><span class="n">ncon</span><span class="p">,</span> <span class="n">profile</span><span class="p">)</span>
             <span class="n">x_</span><span class="p">,</span> <span class="n">y_</span> <span class="o">=</span> <span class="n">radius</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">alpha</span><span class="p">),</span> <span class="n">radius</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> 
         
-        <span class="c1"># making anisotropic</span>
-        <span class="n">x_</span><span class="p">,</span> <span class="n">y_</span> <span class="o">=</span> <span class="n">make_anisotropic</span><span class="p">(</span><span class="n">x_</span><span class="p">,</span> <span class="n">y_</span><span class="p">,</span> <span class="n">landscape</span><span class="p">)</span><span class="c1">#, method)    </span>
+        <span class="c1"># making anisotropic connectivity</span>
+        <span class="n">x_</span><span class="p">,</span> <span class="n">y_</span> <span class="o">=</span> <span class="n">make_anisotropic_profile</span><span class="p">(</span><span class="n">x_</span><span class="p">,</span> <span class="n">y_</span><span class="p">,</span> 
+                                          <span class="n">anisotropy</span><span class="p">,</span> 
+                                          <span class="n">aniso_methods</span><span class="p">[</span><span class="s1">&#39;connectivity&#39;</span><span class="p">])</span>    
         
         <span class="c1"># make coordinates periodic around the presynapse</span>
         <span class="n">x</span><span class="p">[</span><span class="n">redraw</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_</span> <span class="o">+</span> <span class="n">tcol</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">%</span> <span class="n">tcol</span> <span class="o">-</span> <span class="n">tcol</span><span class="o">/</span><span class="mi">2</span>
         <span class="n">y</span><span class="p">[</span><span class="n">redraw</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">y_</span> <span class="o">+</span> <span class="n">trow</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">%</span> <span class="n">trow</span> <span class="o">-</span> <span class="n">trow</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">delays</span><span class="p">[</span><span class="n">redraw</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x_</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y_</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mf">2.5</span> <span class="c1"># this division is arbitrary</span>
         
         <span class="c1"># mark self-links for redraw, if necessary</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">recurrent</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">self_link</span><span class="p">):</span>
@@ -593,10 +640,16 @@
     <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span> <span class="o">+</span> <span class="n">s_coord</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">%</span> <span class="n">trow</span>
     <span class="n">t_coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">])</span><span class="o">.</span><span class="n">T</span> 
     
-    <span class="k">return</span> <span class="n">s_coord</span><span class="p">,</span> <span class="n">t_coords</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span></div>
+    <span class="c1"># make anisotropic parameters</span>
+    <span class="n">synaptic_params</span> <span class="o">=</span> <span class="n">make_anisotropic_syn</span><span class="p">(</span><span class="n">s_coord</span><span class="p">,</span> <span class="n">t_coords</span><span class="p">,</span> <span class="n">tcol</span><span class="p">,</span> 
+                                           <span class="n">anisotropy</span> <span class="o">=</span> <span class="n">anisotropy</span><span class="p">,</span>
+                                           <span class="n">method</span> <span class="o">=</span> <span class="n">aniso_methods</span><span class="p">[</span><span class="s1">&#39;synaptic&#39;</span><span class="p">])</span>
+    
+    
+    <span class="k">return</span> <span class="n">s_coord</span><span class="p">,</span> <span class="n">t_coords</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span> <span class="n">synaptic_params</span></div>
 
 
-<div class="viewcode-block" id="get_radial_profile"><a class="viewcode-back" href="../anisofy.html#anisofy.get_radial_profile">[docs]</a><span class="k">def</span> <span class="nf">get_radial_profile</span><span class="p">(</span><span class="n">nconn</span><span class="p">,</span> <span class="n">profile</span><span class="p">,</span> <span class="n">gap</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<div class="viewcode-block" id="get_radial_profile"><a class="viewcode-back" href="../anisofy.html#anisofy.get_radial_profile">[docs]</a><span class="k">def</span> <span class="nf">get_radial_profile</span><span class="p">(</span><span class="n">nconn</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;generate the radial profile for the inhomog. networks.&quot;&quot;&quot;</span>
     
     <span class="n">wtype</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
@@ -617,65 +670,100 @@
         
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-        
-    <span class="c1"># LCRN network can have a minimum gap of between source and targets.</span>
-    <span class="n">radius</span><span class="p">[</span><span class="n">radius</span><span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-=</span> <span class="n">gap</span>
-    <span class="n">radius</span><span class="p">[</span><span class="n">radius</span><span class="o">&gt;=</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">gap</span>
+    
+    <span class="c1"># In case of solely inhibitory networks, neurons are excited via excitatory</span>
+    <span class="c1"># background. In such cases, to emulate the mexian-hat profile, it is </span>
+    <span class="c1"># common to prevent establishment of inhibitory links for nearest neighbors.</span>
+    <span class="c1"># The parameter `gap` ensures that the radial profile, doesn&#39;t sample a </span>
+    <span class="c1"># post-synapse which is closer than the specified gap. Note that this gap</span>
+    <span class="c1"># may be squeezed/sheared during the anisotrofy step. But, it is ok, as the</span>
+    <span class="c1"># mexican hat profile is introduced only for the radial profile. </span>
+    <span class="k">if</span> <span class="s1">&#39;gap&#39;</span> <span class="ow">in</span> <span class="n">profile</span><span class="p">:</span>
+        <span class="n">radius</span><span class="p">[</span><span class="n">radius</span><span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;gap&#39;</span><span class="p">]</span>
+        <span class="n">radius</span><span class="p">[</span><span class="n">radius</span><span class="o">&gt;=</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;gap&#39;</span><span class="p">]</span>
     
     <span class="k">return</span> <span class="n">radius</span></div>
 
 
-<div class="viewcode-block" id="make_anisotropic"><a class="viewcode-back" href="../anisofy.html#anisofy.make_anisotropic">[docs]</a><span class="k">def</span> <span class="nf">make_anisotropic</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span> <span class="n">lscp</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;shift&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="make_anisotropic_profile"><a class="viewcode-back" href="../anisofy.html#anisofy.make_anisotropic_profile">[docs]</a><span class="k">def</span> <span class="nf">make_anisotropic_profile</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span> <span class="n">aniso</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;shift&#39;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    takes an isotropic set of coordinates and transforms them</span>
 <span class="sd">    into anisotropic ones according to the provided ``method``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span> <span class="nn">scipy.spatial.transform</span> <span class="kn">import</span> <span class="n">Rotation</span> <span class="k">as</span> <span class="n">R</span>
     
-    <span class="c1"># for convenience</span>
-    <span class="n">r</span> <span class="o">=</span> <span class="n">lscp</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">]</span>
-    <span class="n">phi</span> <span class="o">=</span> <span class="n">lscp</span><span class="p">[</span><span class="s1">&#39;phi&#39;</span><span class="p">]</span>
-    <span class="n">r0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">])</span>
-    
-    
-    <span class="k">if</span> <span class="n">method</span><span class="o">==</span><span class="s1">&#39;shift&#39;</span><span class="p">:</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">r</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
-        <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">r</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">method</span><span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># for convenience</span>
+        <span class="c1"># TODO: This might not be applicable for later forms of profile anisotorpy</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">aniso</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">]</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">aniso</span><span class="p">[</span><span class="s1">&#39;phi&#39;</span><span class="p">]</span>
+        <span class="n">r0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">])</span>
+     
         
-
-    <span class="k">elif</span> <span class="n">method</span><span class="o">==</span><span class="s1">&#39;shift-rotate&#39;</span><span class="p">:</span> <span class="c1"># identical to shift. It&#39;s written for testing</span>
-        <span class="n">r0</span><span class="p">[</span><span class="mi">0</span><span class="p">,:]</span> <span class="o">+=</span> <span class="n">r</span>
-        <span class="n">rot</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_euler</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">phi</span><span class="p">)</span><span class="o">.</span><span class="n">as_matrix</span><span class="p">()[:</span><span class="mi">2</span><span class="p">,:</span><span class="mi">2</span><span class="p">]</span>
-        
-        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">rot</span> <span class="o">@</span> <span class="n">r0</span>
+        <span class="k">if</span> <span class="n">method</span><span class="o">==</span><span class="s1">&#39;shift&#39;</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">r</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">r</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+            
     
-    <span class="k">elif</span> <span class="n">method</span><span class="o">==</span><span class="s1">&#39;squeeze-rotate&#39;</span><span class="p">:</span>
-        <span class="n">sqz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="mi">1</span><span class="o">+</span><span class="n">r</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">r</span><span class="p">)])</span>
-        <span class="n">rot</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_euler</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">phi</span><span class="p">)</span><span class="o">.</span><span class="n">as_matrix</span><span class="p">()[:</span><span class="mi">2</span><span class="p">,:</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">method</span><span class="o">==</span><span class="s1">&#39;shift-rotate&#39;</span><span class="p">:</span> <span class="c1"># identical to shift. It&#39;s written for testing</span>
+            <span class="n">r0</span><span class="p">[</span><span class="mi">0</span><span class="p">,:]</span> <span class="o">+=</span> <span class="n">r</span>
+            <span class="n">rot</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_euler</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">phi</span><span class="p">)</span><span class="o">.</span><span class="n">as_matrix</span><span class="p">()[:</span><span class="mi">2</span><span class="p">,:</span><span class="mi">2</span><span class="p">]</span>
+            
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">rot</span> <span class="o">@</span> <span class="n">r0</span>
         
-        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">rot</span> <span class="o">@</span> <span class="n">sqz</span> <span class="o">@</span> <span class="n">r0</span>
-
-    <span class="k">elif</span> <span class="n">method</span><span class="o">==</span><span class="s1">&#39;positive-rotate&#39;</span><span class="p">:</span>
-        <span class="n">r0</span><span class="p">[</span><span class="mi">0</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">r0</span><span class="p">[</span><span class="mi">0</span><span class="p">,:])</span> 
-        <span class="n">rot</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_euler</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">phi</span><span class="p">)</span><span class="o">.</span><span class="n">as_matrix</span><span class="p">()[:</span><span class="mi">2</span><span class="p">,:</span><span class="mi">2</span><span class="p">]</span>
-        
-        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">rot</span> <span class="o">@</span> <span class="n">r0</span>
-
-    <span class="k">elif</span> <span class="n">method</span><span class="o">==</span><span class="s1">&#39;positive-squeeze-rotate&#39;</span><span class="p">:</span>
-        <span class="n">r0</span><span class="p">[</span><span class="mi">0</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">r0</span><span class="p">[</span><span class="mi">0</span><span class="p">,:])</span> 
-        <span class="n">sqz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="mi">1</span><span class="o">+</span><span class="n">r</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">r</span><span class="p">)])</span>
-        <span class="n">rot</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_euler</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">phi</span><span class="p">)</span><span class="o">.</span><span class="n">as_matrix</span><span class="p">()[:</span><span class="mi">2</span><span class="p">,:</span><span class="mi">2</span><span class="p">]</span>
-        
-        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">rot</span> <span class="o">@</span> <span class="n">sqz</span> <span class="o">@</span> <span class="n">r0</span>
+        <span class="k">elif</span> <span class="n">method</span><span class="o">==</span><span class="s1">&#39;squeeze-rotate&#39;</span><span class="p">:</span>
+            <span class="n">sqz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="mi">1</span><span class="o">+</span><span class="n">r</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">r</span><span class="p">)])</span>
+            <span class="n">rot</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_euler</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">phi</span><span class="p">)</span><span class="o">.</span><span class="n">as_matrix</span><span class="p">()[:</span><span class="mi">2</span><span class="p">,:</span><span class="mi">2</span><span class="p">]</span>
+            
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">rot</span> <span class="o">@</span> <span class="n">sqz</span> <span class="o">@</span> <span class="n">r0</span>
     
-    <span class="k">elif</span> <span class="n">method</span><span class="o">==</span><span class="s1">&#39;iso&#39;</span><span class="p">:</span>
-        <span class="k">pass</span>
+        <span class="k">elif</span> <span class="n">method</span><span class="o">==</span><span class="s1">&#39;positive-rotate&#39;</span><span class="p">:</span>
+            <span class="n">r0</span><span class="p">[</span><span class="mi">0</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">r0</span><span class="p">[</span><span class="mi">0</span><span class="p">,:])</span> 
+            <span class="n">rot</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_euler</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">phi</span><span class="p">)</span><span class="o">.</span><span class="n">as_matrix</span><span class="p">()[:</span><span class="mi">2</span><span class="p">,:</span><span class="mi">2</span><span class="p">]</span>
+            
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">rot</span> <span class="o">@</span> <span class="n">r0</span>
     
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span>
+        <span class="k">elif</span> <span class="n">method</span><span class="o">==</span><span class="s1">&#39;positive-squeeze-rotate&#39;</span><span class="p">:</span>
+            <span class="n">r0</span><span class="p">[</span><span class="mi">0</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">r0</span><span class="p">[</span><span class="mi">0</span><span class="p">,:])</span> 
+            <span class="n">sqz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="mi">1</span><span class="o">+</span><span class="n">r</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">r</span><span class="p">)])</span>
+            <span class="n">rot</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_euler</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">phi</span><span class="p">)</span><span class="o">.</span><span class="n">as_matrix</span><span class="p">()[:</span><span class="mi">2</span><span class="p">,:</span><span class="mi">2</span><span class="p">]</span>
+            
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">rot</span> <span class="o">@</span> <span class="n">sqz</span> <span class="o">@</span> <span class="n">r0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span>
+        
     
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span></div>
     
+
+<div class="viewcode-block" id="make_anisotropic_syn"><a class="viewcode-back" href="../anisofy.html#anisofy.make_anisotropic_syn">[docs]</a><span class="k">def</span> <span class="nf">make_anisotropic_syn</span><span class="p">(</span><span class="n">s_loc</span><span class="p">,</span> <span class="n">t_locs</span><span class="p">,</span> <span class="n">gs</span><span class="p">,</span> <span class="n">anisotropy</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
+    
+    <span class="n">syn_pars</span> <span class="o">=</span> <span class="p">{}</span>
+    
+    <span class="n">rel_locs</span> <span class="o">=</span> <span class="n">pre_loc2post_loc_rel</span><span class="p">(</span><span class="n">s_loc</span><span class="p">,</span> <span class="n">t_locs</span><span class="p">,</span> <span class="n">gs</span><span class="p">)</span>
+    <span class="n">delays</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">rel_locs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">syn_pars</span><span class="p">[</span><span class="s1">&#39;delay&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">delays</span>
+    
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;cos&#39;</span><span class="p">:</span>
+        <span class="n">phis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">rel_locs</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">rel_locs</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">phis</span> <span class="o">-=</span> <span class="n">anisotropy</span><span class="p">[</span><span class="s1">&#39;phi&#39;</span><span class="p">]</span>
+        <span class="n">ps</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phis</span><span class="p">))</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">anisotropy</span><span class="p">[</span><span class="s1">&#39;pmax&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">anisotropy</span><span class="p">[</span><span class="s1">&#39;pmin&#39;</span><span class="p">])</span>
+        <span class="n">ps</span> <span class="o">+=</span> <span class="n">anisotropy</span><span class="p">[</span><span class="s1">&#39;pmin&#39;</span><span class="p">]</span>        
+    
+        <span class="n">syn_pars</span><span class="p">[</span><span class="s1">&#39;ps&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ps</span>
+            
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;sin&#39;</span><span class="p">:</span>
+        <span class="n">phis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">rel_locs</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">rel_locs</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">phis</span> <span class="o">-=</span> <span class="n">anisotropy</span><span class="p">[</span><span class="s1">&#39;phi&#39;</span><span class="p">]</span>
+        <span class="n">ps</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phis</span><span class="p">))</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">anisotropy</span><span class="p">[</span><span class="s1">&#39;pmax&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">anisotropy</span><span class="p">[</span><span class="s1">&#39;pmin&#39;</span><span class="p">])</span>
+        <span class="n">ps</span> <span class="o">+=</span> <span class="n">anisotropy</span><span class="p">[</span><span class="s1">&#39;pmin&#39;</span><span class="p">]</span>        
+        
+        <span class="n">syn_pars</span><span class="p">[</span><span class="s1">&#39;ps&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ps</span>
+        
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">pass</span>
+    
+    <span class="k">return</span> <span class="n">syn_pars</span></div>
 </pre></div>
 
            </div>

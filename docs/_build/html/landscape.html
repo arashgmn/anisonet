@@ -87,11 +87,15 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">anisonet</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="anisofy.html">anisofy module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="anisofy.html#enforcing-anisotropy">Enforcing anisotropy</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#dispalcement-based">Dispalcement-based</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#rotation-based">Rotation-based</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#positive-rotation">Positive rotation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#squeeze-positive-rotation">Squeeze positive rotation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#what-is-anisotropy-really">What is anisotropy, really?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#connectivity-heterogeneity">Connectivity heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#isotropic-profile">Isotropic profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#anisotropic-connectivity">Anisotropic connectivity</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#synaptic-heterogeneity">Synaptic heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#isotropic-synaptic-parameterization">Isotropic synaptic parameterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#anisotropic-synaptic-parameterization">Anisotropic synaptic parameterization</a></li>
 </ul>
 </li>
 </ul>
@@ -116,7 +120,10 @@
 <li class="toctree-l3"><a class="reference internal" href="equations.html#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">landscape module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">landscape module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#anisotropy-in-connectivity">Anisotropy in connectivity</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="simulate.html">simulate module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">utils module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="viz.html">viz module</a></li>
@@ -190,13 +197,25 @@
             
   <section id="module-landscape">
 <span id="landscape-module"></span><h1>landscape module<a class="headerlink" href="#module-landscape" title="Permalink to this heading">¶</a></h1>
-<p>This module provides a library of different landscapes. By <cite>landscape</cite>, I mean
+<section id="anisotropy-in-connectivity">
+<h2>Anisotropy in connectivity<a class="headerlink" href="#anisotropy-in-connectivity" title="Permalink to this heading">¶</a></h2>
+<p><strong>Anisotropy</strong>: We attribute an angle <span class="math notranslate nohighlight">\(\phi\)</span> to each neuron that specifies its angular
+bias (a.k.a. anisotropy landscape) by the following strategies:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>uniform (isotropic)</p></li>
+<li><p>constant or homogenous</p></li>
+<li><p>Perlin-noise-based: A unifromly random method with spatioal correlation</p></li>
+</ol>
+</div></blockquote>
+<p>we assume each neuron is somehow 
+This module provides a library of different landscapes. By <cite>landscape</cite>, I mean
 the anisotropy angle $phi$ and shift $r$ defined in <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a>. The followings are
 merely a reimplementation of <code class="docutils literal notranslate"><span class="pre">connectivity_landscape.py</span></code> file of <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a>, except
 a few assertion.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="landscape.make_landscape">
-<span class="sig-prename descclassname"><span class="pre">landscape.</span></span><span class="sig-name descname"><span class="pre">make_landscape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digitize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/landscape.html#make_landscape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#landscape.make_landscape" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">landscape.</span></span><span class="sig-name descname"><span class="pre">make_landscape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lscp_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digitize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/landscape.html#make_landscape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#landscape.make_landscape" title="Permalink to this definition">¶</a></dt>
 <dd><p>Makes a landscape according for neural network placed on a square grid of 
 size <code class="docutils literal notranslate"><span class="pre">gs</span></code>. The landscape has two components <cite>rs</cite> (the radial 
 displacement) and <cite>phis</cite> (the anisotropic bias angle). <cite>phis</cite> are forced to
@@ -228,6 +247,12 @@ passing the landscape field to the network.</p>
 </div>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="landscape.makes_synaptic_ladscape">
+<span class="sig-prename descclassname"><span class="pre">landscape.</span></span><span class="sig-name descname"><span class="pre">makes_synaptic_ladscape</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/landscape.html#makes_synaptic_ladscape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#landscape.makes_synaptic_ladscape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
 </section>
 
 
@@ -285,6 +310,8 @@ passing the landscape field to the network.</p>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/_sphinx_javascript_frameworks_compat.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="None"></script>
+      <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
   
 

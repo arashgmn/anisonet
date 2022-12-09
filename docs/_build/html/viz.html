@@ -86,11 +86,15 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">anisonet</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="anisofy.html">anisofy module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="anisofy.html#enforcing-anisotropy">Enforcing anisotropy</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#dispalcement-based">Dispalcement-based</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#rotation-based">Rotation-based</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#positive-rotation">Positive rotation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#squeeze-positive-rotation">Squeeze positive rotation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#what-is-anisotropy-really">What is anisotropy, really?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#connectivity-heterogeneity">Connectivity heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#isotropic-profile">Isotropic profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#anisotropic-connectivity">Anisotropic connectivity</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#synaptic-heterogeneity">Synaptic heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#isotropic-synaptic-parameterization">Isotropic synaptic parameterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#anisotropic-synaptic-parameterization">Anisotropic synaptic parameterization</a></li>
 </ul>
 </li>
 </ul>
@@ -115,7 +119,10 @@
 <li class="toctree-l3"><a class="reference internal" href="equations.html#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="landscape.html#anisotropy-in-connectivity">Anisotropy in connectivity</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="simulate.html">simulate module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">utils module</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">viz module</a></li>
@@ -211,6 +218,16 @@ matplotlib’s colorbar method.</p>
 <dd></dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="viz.plot_3d_clusters">
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_3d_clusters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">txy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_3d_clusters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_3d_clusters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="viz.plot_R">
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_R</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_R"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="viz.plot_animation">
 <span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_animation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ss_dur</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_animation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_animation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Aggregates the firing rate from disk and make an animation.</p>
@@ -227,6 +244,13 @@ defaults to 50 (corresponding to 50 ms)</p></li>
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="viz.plot_bump_speed">
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_bump_speed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_bump_speed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_bump_speed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Only the distribution of velocities matter, not the one of a specific 
+cluster. So, I do not plot the legend.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -334,6 +358,16 @@ set in a simulation.</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="viz.plot_relative_weights">
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_relative_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_relative_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_relative_weights" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="viz.plot_spline_trace">
+<span class="sig-prename descclassname"><span class="pre">viz.</span></span><span class="sig-name descname"><span class="pre">plot_spline_trace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/viz.html#plot_spline_trace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#viz.plot_spline_trace" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </section>
 

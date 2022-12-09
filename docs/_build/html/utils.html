@@ -87,11 +87,15 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">anisonet</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="anisofy.html">anisofy module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="anisofy.html#enforcing-anisotropy">Enforcing anisotropy</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#dispalcement-based">Dispalcement-based</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#rotation-based">Rotation-based</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#positive-rotation">Positive rotation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#squeeze-positive-rotation">Squeeze positive rotation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#what-is-anisotropy-really">What is anisotropy, really?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#connectivity-heterogeneity">Connectivity heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#isotropic-profile">Isotropic profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#anisotropic-connectivity">Anisotropic connectivity</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#synaptic-heterogeneity">Synaptic heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#isotropic-synaptic-parameterization">Isotropic synaptic parameterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#anisotropic-synaptic-parameterization">Anisotropic synaptic parameterization</a></li>
 </ul>
 </li>
 </ul>
@@ -116,7 +120,10 @@
 <li class="toctree-l3"><a class="reference internal" href="equations.html#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="landscape.html#anisotropy-in-connectivity">Anisotropy in connectivity</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="simulate.html">simulate module</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">utils module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="viz.html">viz module</a></li>
@@ -194,7 +201,7 @@
 back and forth. A useful little script to have.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="utils.aggregate_mons">
-<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">aggregate_mons</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_pattern</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#aggregate_mons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.aggregate_mons" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">aggregate_mons</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mon_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SI</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#aggregate_mons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.aggregate_mons" title="Permalink to this definition">¶</a></dt>
 <dd><p>Aggregates the indices and timings of the spiking events from disk.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -208,6 +215,11 @@ back and forth. A useful little script to have.</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.balance_dist">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">balance_dist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#balance_dist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.balance_dist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="utils.coord2idx">
@@ -230,6 +242,36 @@ back and forth. A useful little script to have.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="utils.estimate_order_parameter">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">estimate_order_parameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">phis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#estimate_order_parameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.estimate_order_parameter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.get_anisotropic_U">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">get_anisotropic_U</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syn_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Umax</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#get_anisotropic_U"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.get_anisotropic_U" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.get_line_idx">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">get_line_idx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#get_line_idx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.get_line_idx" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.get_post_idxs">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">get_post_idxs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">syn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_idx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#get_post_idxs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.get_post_idxs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.get_post_locs">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">get_post_locs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">syn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_idx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#get_post_locs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.get_post_locs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.get_post_rel_locs">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">get_post_rel_locs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">syn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_idx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#get_post_rel_locs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.get_post_rel_locs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="utils.idx2coords">
 <span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">idx2coords</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idxs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">net</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#idx2coords"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.idx2coords" title="Permalink to this definition">¶</a></dt>
 <dd><p>Transforms the a list of indices of the given population to coordinates.</p>
@@ -248,6 +290,41 @@ back and forth. A useful little script to have.</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.make_circular">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">make_circular</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_max</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#make_circular"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.make_circular" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.make_planar">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">make_planar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">angle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_max</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#make_planar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.make_planar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.phase_estimator">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">phase_estimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idxs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#phase_estimator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.phase_estimator" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.plane2torus">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">plane2torus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lin'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#plane2torus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.plane2torus" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.pre_loc2post_loc_rel">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">pre_loc2post_loc_rel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_locs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_loc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#pre_loc2post_loc_rel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.pre_loc2post_loc_rel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.stimulator">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">stimulator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stim_cfgs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#stimulator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.stimulator" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.torus2plane">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">torus2plane</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tri'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#torus2plane"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.torus2plane" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </section>
 

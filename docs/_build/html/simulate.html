@@ -87,11 +87,15 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">anisonet</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="anisofy.html">anisofy module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="anisofy.html#enforcing-anisotropy">Enforcing anisotropy</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#dispalcement-based">Dispalcement-based</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#rotation-based">Rotation-based</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#positive-rotation">Positive rotation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#squeeze-positive-rotation">Squeeze positive rotation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#what-is-anisotropy-really">What is anisotropy, really?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#connectivity-heterogeneity">Connectivity heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#isotropic-profile">Isotropic profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#anisotropic-connectivity">Anisotropic connectivity</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#synaptic-heterogeneity">Synaptic heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#isotropic-synaptic-parameterization">Isotropic synaptic parameterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#anisotropic-synaptic-parameterization">Anisotropic synaptic parameterization</a></li>
 </ul>
 </li>
 </ul>
@@ -116,7 +120,10 @@
 <li class="toctree-l3"><a class="reference internal" href="equations.html#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="landscape.html#anisotropy-in-connectivity">Anisotropy in connectivity</a></li>
+</ul>
+</li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">simulate module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">utils module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="viz.html">viz module</a></li>
@@ -217,6 +224,16 @@ has the following strucutre:</p>
 </dd>
 </dl>
 <dl class="py method">
+<dt class="sig sig-object py" id="simulate.Simulate.assess_landscape">
+<span class="sig-name descname"><span class="pre">assess_landscape</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.assess_landscape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.assess_landscape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="simulate.Simulate.check_plasticity">
+<span class="sig-name descname"><span class="pre">check_plasticity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.check_plasticity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.check_plasticity" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="simulate.Simulate.configure_monitors">
 <span class="sig-name descname"><span class="pre">configure_monitors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.configure_monitors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.configure_monitors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Defines a list of spike monitor called <code class="docutils literal notranslate"><span class="pre">mon_&lt;population_name&gt;</span></code> for 
@@ -235,7 +252,7 @@ indexed by the sorted order of populations.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="simulate.Simulate.current_to_voltage">
-<span class="sig-name descname"><span class="pre">current_to_voltage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">increase_tau_m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.current_to_voltage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.current_to_voltage" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">current_to_voltage</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.current_to_voltage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.current_to_voltage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Transfaers the current-based synapses into an (almost) equivalent 
 voltage jump increment model. Look at <code class="docutils literal notranslate"><span class="pre">Equation</span></code> module for more info.</p>
 </dd></dl>
@@ -243,6 +260,16 @@ voltage jump increment model. Look at <code class="docutils literal notranslate"
 <dl class="py method">
 <dt class="sig sig-object py" id="simulate.Simulate.generate_name">
 <span class="sig-name descname"><span class="pre">generate_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scalar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">net_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.generate_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.generate_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="simulate.Simulate.get_pop_mons">
+<span class="sig-name descname"><span class="pre">get_pop_mons</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.get_pop_mons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.get_pop_mons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="simulate.Simulate.get_syn_mons">
+<span class="sig-name descname"><span class="pre">get_syn_mons</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.get_syn_mons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.get_syn_mons" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -260,12 +287,12 @@ when we define the governing equations.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="simulate.Simulate.post_process">
-<span class="sig-name descname"><span class="pre">post_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overlay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.post_process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.post_process" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">post_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overlay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ss_dur</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.post_process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.post_process" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="simulate.Simulate.process_configs">
-<span class="sig-name descname"><span class="pre">process_configs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.process_configs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.process_configs" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">process_configs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to_event_driven</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.process_configs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.process_configs" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -278,7 +305,12 @@ to the network again. This is necessary in Brian (look here:
 
 <dl class="py method">
 <dt class="sig sig-object py" id="simulate.Simulate.save_monitors">
-<span class="sig-name descname"><span class="pre">save_monitors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">number</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.save_monitors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.save_monitors" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">save_monitors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.save_monitors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.save_monitors" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="simulate.Simulate.set_protocol">
+<span class="sig-name descname"><span class="pre">set_protocol</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.set_protocol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.set_protocol" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -293,7 +325,7 @@ object, in form of a dictionary keyed by the population’s name.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="simulate.Simulate.setup_net">
-<span class="sig-name descname"><span class="pre">setup_net</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.setup_net"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.setup_net" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">setup_net</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initializer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.setup_net"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.setup_net" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>Sets up a network by the following steps:</dt><dd><ol class="arabic simple">
 <li><p>defining the populations (<code class="docutils literal notranslate"><span class="pre">setup_pops</span></code>)</p></li>
@@ -326,7 +358,7 @@ mathes the one of images.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="simulate.Simulate.setup_syns">
-<span class="sig-name descname"><span class="pre">setup_syns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">visualize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.setup_syns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.setup_syns" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">setup_syns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">visualize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rand'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.setup_syns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.setup_syns" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets up the synapses of all pathways (keys) in <code class="docutils literal notranslate"><span class="pre">conns_cfg</span></code>; a nested 
 dictionary whose detail is given in <code class="docutils literal notranslate"><span class="pre">configs</span></code> module. To understand 
 how the postsynpases are selected, particularly their radial profile 
@@ -339,7 +371,7 @@ object, in form of a list indexed by the sorted order of pathways.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="simulate.Simulate.start">
-<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.</span> <span class="pre">*</span> <span class="pre">second</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dur</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200.</span> <span class="pre">*</span> <span class="pre">msecond</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">restore</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_snapshots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.start" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.</span> <span class="pre">*</span> <span class="pre">second</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dur</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.</span> <span class="pre">*</span> <span class="pre">second</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">restore</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_snapshots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warmup</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Starts a long simulation by breaking it down to several batches. After
 each <code class="docutils literal notranslate"><span class="pre">batch_dur</span></code>, the monitors will be saved on disk, and simulation
 monitors will be reset to combat memory consumption.</p>
@@ -359,6 +391,32 @@ each batch, defaults to True</p></li>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="simulate.Simulate.state_initializer">
+<span class="sig-name descname"><span class="pre">state_initializer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ss'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.state_initializer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.state_initializer" title="Permalink to this definition">¶</a></dt>
+<dd><p>A smart function that intializes the synaptic or cellular state according 
+to the desired mode, based on the provided config file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<em>TYPE</em>) – DESCRIPTION</p></li>
+<li><p><strong>mode</strong> (<em>TYPE</em><em>, </em><em>optional</em>) – DESCRIPTION, defaults to ‘ss’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DESCRIPTION</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TYPE</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="simulate.Simulate.update_state">
+<span class="sig-name descname"><span class="pre">update_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulate.html#Simulate.update_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulate.Simulate.update_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="simulate.Simulate.warmup">

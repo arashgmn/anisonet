@@ -83,7 +83,20 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../modules.html">anisonet</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../anisofy.html">anisofy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../anisofy.html">anisofy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#what-is-anisotropy-really">What is anisotropy, really?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#connectivity-heterogeneity">Connectivity heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#isotropic-profile">Isotropic profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#anisotropic-connectivity">Anisotropic connectivity</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#synaptic-heterogeneity">Synaptic heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#isotropic-synaptic-parameterization">Isotropic synaptic parameterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#anisotropic-synaptic-parameterization">Anisotropic synaptic parameterization</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../configs.html">configs module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../configs.html#population-s-configuration">Population’s configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../configs.html#pathways-configuration">Pathways’ configuration</a><ul>
@@ -104,7 +117,10 @@
 <li class="toctree-l3"><a class="reference internal" href="../equations.html#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../landscape.html">landscape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../landscape.html">landscape module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../landscape.html#anisotropy-in-connectivity">Anisotropy in connectivity</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../simulate.html">simulate module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../utils.html">utils module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../viz.html">viz module</a></li>
@@ -131,7 +147,7 @@
 
       <div class="wy-nav-content">
         
-        <div class="rst-content">
+        <div class="rst-content style-external-links">
         
           
 
@@ -245,7 +261,7 @@
 <span class="sd">* **kernel**: determines the dynamics of synaptic input. In other words, how</span>
 <span class="sd">  the strength of synaptic input changes over time. Possible options are </span>
 <span class="sd">  ``alpha``, ``biexp`` (for bi-exponential), ``exp`` (for exponential), and </span>
-<span class="sd">  ``cons`` (for constant).</span>
+<span class="sd">  ``const`` (for constant).</span>
 
 
 <span class="sd">Model</span>
@@ -359,9 +375,9 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">brian2</span> <span class="k">as</span> <span class="nn">b2</span>
+<span class="kn">import</span> <span class="nn">copy</span>
 
-
-<div class="viewcode-block" id="get_nrn_eqs"><a class="viewcode-back" href="../equations.html#equations.get_nrn_eqs">[docs]</a><span class="k">def</span> <span class="nf">get_nrn_eqs</span><span class="p">(</span><span class="n">pop_name</span><span class="p">,</span> <span class="n">pops_cfg</span><span class="p">,</span> <span class="n">syn_base</span><span class="p">):</span>    
+<div class="viewcode-block" id="get_nrn_eqs"><a class="viewcode-back" href="../equations.html#equations.get_nrn_eqs">[docs]</a><span class="k">def</span> <span class="nf">get_nrn_eqs</span><span class="p">(</span><span class="n">pop_name</span><span class="p">,</span> <span class="n">pops_cfg</span><span class="p">):</span>    
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    It matters how the synapse inputs are modeled. Seemingly, the one used in</span>
 <span class="sd">    NEST and the paper are using a &quot;current-alpha&quot;, as opposed to &quot;voltage-&quot; or</span>
@@ -382,15 +398,17 @@
     <span class="n">tmp</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
 <span class="s1">        mu: amp (shared)</span>
 <span class="s1">        sigma: amp (shared)</span>
-<span class="s1">        noise_pop = mu + sigma*sqrt(noise_dt)*xi_pop: amp </span>
+<span class="s1">        noise_pop = mu + sigma*sqrt(noise_dt)*xi_pop: amp</span>
+<span class="s1">        I_stim: amp</span>
 <span class="s1">        &#39;&#39;&#39;</span>
         
     <span class="n">noise_dt</span> <span class="o">=</span> <span class="n">pops_cfg</span><span class="p">[</span><span class="n">pop_name</span><span class="p">][</span><span class="s1">&#39;noise&#39;</span><span class="p">][</span><span class="s1">&#39;noise_dt&#39;</span><span class="p">]</span>
     <span class="n">tmp</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;noise_dt&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">noise_dt</span><span class="o">/</span><span class="n">b2</span><span class="o">.</span><span class="n">ms</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;*ms&#39;</span><span class="p">)</span>
     
-    <span class="n">kernel</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">syn_base</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="c1"># identify kernel and model</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">pops_cfg</span><span class="p">[</span><span class="n">pop_name</span><span class="p">][</span><span class="s1">&#39;input_model&#39;</span><span class="p">]</span>
+    
     <span class="k">if</span> <span class="n">model</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;conductance&#39;</span><span class="p">,</span> <span class="s1">&#39;current&#39;</span><span class="p">]:</span>
-        <span class="n">eqs_str</span><span class="o">=</span> <span class="n">tmp</span> <span class="o">+</span> <span class="s1">&#39;&#39;&#39;dv/dt = (E-v)/tau + (noise_pop + I_syn)/C : volt (unless refractory)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
+        <span class="n">eqs_str</span><span class="o">=</span> <span class="n">tmp</span> <span class="o">+</span> <span class="s1">&#39;&#39;&#39;dv/dt = (E-v)/tau + (noise_pop + I_syn + I_stim)/C : volt (unless refractory)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
         <span class="n">I_syn_components</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">src_name</span> <span class="ow">in</span> <span class="n">pops_cfg</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="n">eqs_str</span><span class="o">+=</span> <span class="s1">&#39;&#39;&#39;I_syn_</span><span class="si">{}</span><span class="s1">: amp </span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">src_name</span><span class="p">)</span>
@@ -398,7 +416,7 @@
         <span class="n">eqs_str</span><span class="o">+=</span> <span class="s1">&#39;I_syn = &#39;</span><span class="o">+</span> <span class="s1">&#39;+&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">I_syn_components</span><span class="p">)</span> <span class="o">+</span><span class="s1">&#39;: amp </span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
         
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">eqs_str</span><span class="o">=</span> <span class="n">tmp</span> <span class="o">+</span> <span class="s1">&#39;&#39;&#39;dv/dt = (E-v)/tau + (noise_pop)/C : volt (unless refractory)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
+        <span class="n">eqs_str</span><span class="o">=</span> <span class="n">tmp</span> <span class="o">+</span> <span class="s1">&#39;&#39;&#39;dv/dt = (E-v)/tau + (noise_pop + I_stim)/C : volt (unless refractory)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span>
         
     <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">eqs_str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_pop&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="o">+</span><span class="n">pop_name</span><span class="p">)</span>
     <span class="n">eqs</span> <span class="o">=</span> <span class="n">b2</span><span class="o">.</span><span class="n">Equations</span><span class="p">(</span><span class="n">eqs_str</span><span class="p">,</span> 
@@ -408,7 +426,7 @@
     
     <span class="k">return</span> <span class="n">eqs</span></div>
 
-<div class="viewcode-block" id="get_syn_eqs"><a class="viewcode-back" href="../equations.html#equations.get_syn_eqs">[docs]</a><span class="k">def</span> <span class="nf">get_syn_eqs</span><span class="p">(</span><span class="n">conn_name</span><span class="p">,</span> <span class="n">conn_cfg</span><span class="p">,</span> <span class="n">syn_base</span><span class="p">):</span>
+<div class="viewcode-block" id="get_syn_eqs"><a class="viewcode-back" href="../equations.html#equations.get_syn_eqs">[docs]</a><span class="k">def</span> <span class="nf">get_syn_eqs</span><span class="p">(</span><span class="n">conn_name</span><span class="p">,</span> <span class="n">conn_cfg</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    It matters how the synapse inputs are modeled. Seemingly, the one used in</span>
 <span class="sd">    NEST and the paper are using a &quot;current-alpha&quot;, as opposed to &quot;voltage-&quot; or</span>
@@ -453,9 +471,14 @@
 <span class="s1">        dg/dt = -g / tau : 1 (clock-driven)</span>
 <span class="s1">        &#39;&#39;&#39;</span>
     
+    <span class="n">tmp_tsodysk_markram</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">        dx/dt = (1-x)/tau_d: 1 (clock-driven)</span>
+<span class="s1">        du/dt = (U-u)/tau_f: 1 (clock-driven)</span>
+<span class="s1">        U: 1</span>
+<span class="s1">        &#39;&#39;&#39;</span>
     
     <span class="c1"># Constructing equations</span>
-    <span class="n">kernel</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">syn_base</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="c1"># identify kernel and model</span>
+    <span class="n">kernel</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">conn_cfg</span><span class="p">[</span><span class="n">conn_name</span><span class="p">][</span><span class="s1">&#39;synapse&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="c1"># identify kernel and model</span>
     
     <span class="c1"># kernel related components (only traces updates are given here)</span>
     <span class="k">if</span> <span class="n">kernel</span> <span class="o">==</span> <span class="s1">&#39;alpha&#39;</span><span class="p">:</span>
@@ -474,8 +497,24 @@
     	<span class="n">eqs_str</span> <span class="o">=</span> <span class="s1">&#39;g = 1 : 1&#39;</span>
     	<span class="n">on_pre</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> <span class="c1"># no </span>
     
+    <span class="k">elif</span> <span class="n">kernel</span><span class="o">==</span><span class="s1">&#39;tsodysk-markram&#39;</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            tsodysk-markram model is defined only for the jump kernel. i.e. </span>
+<span class="s2">            incremental in the membrane voltage whenever there is a spike. It </span>
+<span class="s2">            is possible to extend this kernel to current/conductance models but</span>
+<span class="s2">            it would be a novel kernel.</span>
+<span class="s2">            &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">model</span><span class="o">==</span><span class="s1">&#39;jump&#39;</span><span class="p">,</span> <span class="n">msg</span>
+        
+        <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">tmp_tsodysk_markram</span>
+        <span class="n">on_pre</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">            u += U * (1 - u)</span>
+<span class="s1">            g = u * x</span>
+<span class="s1">            x = x - g</span>
+<span class="s1">        &#39;&#39;&#39;</span>
+    
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;synaptic kernel type </span><span class="si">{}</span><span class="s1"> is not recognized!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kernel</span><span class="p">))</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;synaptic kernel type &quot;</span><span class="si">{}</span><span class="s1">&quot; is not recognized!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kernel</span><span class="p">))</span>
     
     
     <span class="c1"># model related components (pre/post updates are prescribed here)</span>
@@ -489,12 +528,13 @@
         <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;I_syn_</span><span class="si">{}</span><span class="s1">_post = J*g: amp  (summed)</span><span class="se">\n</span><span class="s1">&#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">conn_name</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     
     <span class="k">elif</span> <span class="n">model</span><span class="o">==</span><span class="s1">&#39;jump&#39;</span><span class="p">:</span>
-    	<span class="n">eqs_str</span> <span class="o">=</span> <span class="n">eqs_str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;clock-driven&#39;</span><span class="p">,</span> <span class="s1">&#39;event-driven&#39;</span><span class="p">)</span>
-    	<span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;</span><span class="se">\n</span><span class="s1">J: volt (shared)&#39;&#39;&#39;</span>
-    	<span class="n">on_pre</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;</span><span class="se">\n</span><span class="s1">v_post += J*g&#39;&#39;&#39;</span>        
-    
+        <span class="n">eqs_str</span> <span class="o">=</span> <span class="n">eqs_str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;clock-driven&#39;</span><span class="p">,</span> <span class="s1">&#39;event-driven&#39;</span><span class="p">)</span>
+        <span class="n">eqs_str</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;</span><span class="se">\n</span><span class="s1">J: volt (shared)&#39;&#39;&#39;</span>
+        
+        <span class="n">on_pre</span> <span class="o">+=</span> <span class="s1">&#39;&#39;&#39;</span><span class="se">\n</span><span class="s1">v_post += J*g&#39;&#39;&#39;</span>
+        
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;synaptic model type </span><span class="si">{}</span><span class="s1"> is not recognized!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;synaptic model type &quot;</span><span class="si">{}</span><span class="s1">&quot; is not recognized!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
     
     <span class="n">on_post</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
 
@@ -544,11 +584,12 @@
     <span class="c1">#     print(syn_base)</span>
     <span class="c1">#     raise NotImplementedError</span>
         
-    <span class="c1"># TODO: adjust this as it won&#39;t work for bi-exp or constant kernels.</span>
-    <span class="n">eqs</span> <span class="o">=</span> <span class="n">b2</span><span class="o">.</span><span class="n">Equations</span><span class="p">(</span><span class="n">eqs_str</span><span class="p">,</span> 
-                      <span class="n">tau</span> <span class="o">=</span> <span class="n">conn_cfg</span><span class="p">[</span><span class="n">conn_name</span><span class="p">][</span><span class="s1">&#39;synapse&#39;</span><span class="p">][</span><span class="s1">&#39;params&#39;</span><span class="p">][</span><span class="s1">&#39;tau&#39;</span><span class="p">])</span>
+    <span class="n">eqs</span> <span class="o">=</span> <span class="n">b2</span><span class="o">.</span><span class="n">Equations</span><span class="p">(</span><span class="n">eqs_str</span><span class="p">)</span>
+    <span class="n">namspace</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">conn_cfg</span><span class="p">[</span><span class="n">conn_name</span><span class="p">][</span><span class="s1">&#39;synapse&#39;</span><span class="p">][</span><span class="s1">&#39;params&#39;</span><span class="p">])</span>
+    <span class="n">namspace</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;J&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">eqs</span><span class="p">,</span> <span class="n">on_pre</span><span class="p">,</span> <span class="n">on_post</span><span class="p">,</span> <span class="n">namspace</span></div>
     
-    <span class="k">return</span> <span class="n">eqs</span><span class="p">,</span> <span class="n">on_pre</span><span class="p">,</span> <span class="n">on_post</span></div>
 </pre></div>
 
            </div>

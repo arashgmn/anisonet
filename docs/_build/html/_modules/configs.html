@@ -84,8 +84,17 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../modules.html">anisonet</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../anisofy.html">anisofy module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#dispalcement-based">Dispalcement-based</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#rotation-based">Rotation-based</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#what-is-anisotropy-really">What is anisotropy, really?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#connectivity-heterogeneity">Connectivity heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#isotropic-profile">Isotropic profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#anisotropic-connectivity">Anisotropic connectivity</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#synaptic-heterogeneity">Synaptic heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#isotropic-synaptic-parameterization">Isotropic synaptic parameterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#anisotropic-synaptic-parameterization">Anisotropic synaptic parameterization</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../configs.html">configs module</a><ul>
@@ -108,7 +117,10 @@
 <li class="toctree-l3"><a class="reference internal" href="../equations.html#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../landscape.html">landscape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../landscape.html">landscape module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../landscape.html#anisotropy-in-connectivity">Anisotropy in connectivity</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../simulate.html">simulate module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../utils.html">utils module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../viz.html">viz module</a></li>
@@ -177,31 +189,34 @@
            <div itemprop="articleBody">
             
   <h1>Source code for configs</h1><div class="highlight"><pre>
-<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span></span>    <span class="c1">#!/usr/bin/env python3</span>
 <span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Configs is a utility module that passes the default configurations according to</span>
-<span class="sd">the `[1]`_. Configurations are set-up in form of nested dictionaries whose </span>
-<span class="sd">structure is explained below. If you&#39;d  like to get the exact configurations as </span>
-<span class="sd">in `[1]`_, use the ``get_config`` utility below.</span>
+<span class="sd">Simulations are configured via nested dictionaries. We treat the population </span>
+<span class="sd">and pathway configurations differently, both in the synopsis of the functions </span>
+<span class="sd">and their functionalities. In what follows, the structure of each configuration</span>
+<span class="sd">is explained. In addition, one can use``Configs`` module, which provides </span>
+<span class="sd">ready-to-use configurations for simulations.</span>
 
 
 <span class="sd">==========================</span>
 <span class="sd">Population&#39;s configuration</span>
 <span class="sd">==========================</span>
 
-<span class="sd">Populations are identified by a single character name (like ``&quot;P&quot;``) and must </span>
-<span class="sd">have parameters in the following form:</span>
+<span class="sd">Populations are identified by a capital character as their name (like ``&quot;P&quot;``) </span>
+<span class="sd">and must be set up as follows:</span>
 
-<span class="sd">..  code-block:: python</span>
-<span class="sd">    </span>
-<span class="sd">    {&#39;gs&#39;: ..., </span>
-<span class="sd">     &#39;noise&#39;: {&#39;mu&#39;: ..., &#39;sigma&#39;: ..., &#39;noise_dt&#39;: ...},</span>
-<span class="sd">     &#39;cell&#39;: {&#39;type&#39;: &#39;LIF&#39;, </span>
-<span class="sd">              &#39;thr&#39;: ..., &#39;ref&#39;: ..., &#39;rest&#39;: ...,</span>
-<span class="sd">              &#39;tau&#39;: ..., &#39;C&#39;: ...}</span>
-<span class="sd">     }</span>
-<span class="sd">    </span>
+
+<span class="sd">.. code-block:: python</span>
+
+<span class="sd">   &quot;P&quot;: {</span>
+<span class="sd">         &#39;gs&#39;: ..., </span>
+<span class="sd">         &#39;noise&#39;: {&#39;mu&#39;: ..., &#39;sigma&#39;: ..., &#39;noise_dt&#39;: ...},</span>
+<span class="sd">         &#39;cell&#39;: {&#39;type&#39;: &#39;LIF&#39;, </span>
+<span class="sd">         &#39;thr&#39;: ..., &#39;ref&#39;: ..., &#39;rest&#39;: ...,</span>
+<span class="sd">         &#39;tau&#39;: ..., &#39;C&#39;: ...}</span>
+<span class="sd">        }</span>
+
 
 <span class="sd">with </span>
 
@@ -220,47 +235,68 @@
 <span class="sd">=======================</span>
 
 <span class="sd">Pathways are identified by two-character names (like ``&quot;PQ&quot;``) that specifies </span>
-<span class="sd">the source (P) and target (Q) populations. Each pathway must have be configured</span>
-<span class="sd">similar to the following form:</span>
+<span class="sd">the source (P) and target (Q) populations (note the ordering). Each pathway </span>
+<span class="sd">must have be configured similar to the following form:</span>
 
-<span class="sd">..  code-block:: python</span>
+<span class="sd">.. code-block:: python</span>
 
 <span class="sd">    {&#39;ncons&#39;: ..., &#39;self_link&#39;: False, </span>
-<span class="sd">     &#39;profile&#39;: {...}</span>
-<span class="sd">     &#39;anisotropy&#39;: {...}</span>
+<span class="sd">     &#39;profile&#39;: {...},</span>
+<span class="sd">     &#39;anisotropy&#39;: {...},</span>
 <span class="sd">    }</span>
 
 
 <span class="sd">#. ``ncons``: number of connections from each source neuron to the target population (int)</span>
 <span class="sd">#. ``self_link``: if self-link is allowed; only important if source and target are the same object. In other words, pathway is recurrent. (bool)</span>
 
+
 <span class="sd">~~~~~~~</span>
 <span class="sd">Profile</span>
 <span class="sd">~~~~~~~</span>
-<span class="sd">Use either of the following structures for the value of ``profile`` key:</span>
+<span class="sd">``profile`` determines the `radial` profile of the connectivity which accepts a</span>
+<span class="sd">distribution, or ``None``, i.e., no spatial structure (Erdős–Rényi network).</span>
+<span class="sd">Some examples are provided below:</span>
 <span class="sd">    </span>
-<span class="sd">..  code-block:: python</span>
+<span class="sd">.. code-block:: python</span>
 
 <span class="sd">    {</span>
-<span class="sd">     &#39;profile&#39;: {&#39;type&#39;:&#39;Gamma&#39;, &#39;params&#39;: {&#39;theta&#39;: ..., &#39;kappa&#39;: ...} },  # this</span>
-<span class="sd">     &#39;profile&#39;: {&#39;type&#39;:&#39;Gaussian&#39;, &#39;params&#39;: {&#39;std&#39;: ...} }, # or this can be used</span>
+<span class="sd">     ...</span>
+<span class="sd">     </span>
+<span class="sd">     &#39;profile&#39;: {&#39;type&#39;:&#39;Gamma&#39;, &#39;params&#39;: {&#39;theta&#39;: ..., &#39;kappa&#39;: ...} },  </span>
+<span class="sd">     &#39;profile&#39;: {&#39;type&#39;:&#39;Gaussian&#39;, &#39;params&#39;: {&#39;std&#39;: ...}, gap = ... }, </span>
+<span class="sd">     &#39;profile&#39;: None,</span>
+<span class="sd">     </span>
+<span class="sd">     ...</span>
 <span class="sd">    }</span>
 <span class="sd">    </span>
-<span class="sd">    </span>
+
 <span class="sd">#. ``type``: either ``&quot;Gamma&quot;`` or ``&quot;Gaussian&quot;`` (str)</span>
-<span class="sd">#. ``params``: distribution parameters (float)</span>
+<span class="sd">#. ``params``: distribution parameters (float). Refer, to the documentation of </span>
+<span class="sd">   each distribution.</span>
+<span class="sd">#. ``gap``: a customary float, preventing connections with distance less than</span>
+<span class="sd">   the prescribed value. </span>
+<span class="sd">   </span>
+<span class="sd">   </span>
+<span class="sd">.. note::</span>
+<span class="sd">    Please refer to the :refer:`anisofy:Isotropic connectivity profile` for a discussion</span>
+<span class="sd">    on the ``gap``.</span>
+
 
 <span class="sd">~~~~~~~</span>
 <span class="sd">Synapse</span>
 <span class="sd">~~~~~~~</span>
-<span class="sd">Use either of the following structures for the value of ``profile`` key:</span>
+<span class="sd">``synapse`` are specified via the following structures:</span>
 <span class="sd">    </span>
-<span class="sd">..  code-block:: python</span>
+<span class="sd">.. code-block:: python</span>
 
 <span class="sd">    {</span>
-<span class="sd">     &#39;synapse&#39;: {&#39;type&#39;:&#39;alpha_current&#39;, &#39;params&#39;: {&#39;J&#39;: ..., &#39;delay&#39;: ..., &#39;tau&#39;: ...}}, # usually we use this</span>
-<span class="sd">     &#39;synapse&#39;: {&#39;type&#39;:&#39;alpha_voltage&#39;, &#39;params&#39;: {&#39;J&#39;: ..., &#39;delay&#39;:..., &#39;tau&#39;: ...}},</span>
-<span class="sd">     &#39;synapse&#39;: {&#39;type&#39;:&#39;alpha_conductance&#39;, &#39;params&#39;: {&#39;J&#39;: ..., &#39;delay&#39;: ..., &#39;tau&#39;: ..., &#39;Erev&#39;: ...}},</span>
+<span class="sd">     ...</span>
+<span class="sd">     </span>
+<span class="sd">     &#39;synapse&#39;: {&#39;type&#39;:&#39;alpha_jump&#39;, &#39;params&#39;: {&#39;J&#39;: ..., &#39;delay&#39;:..., &#39;tau&#39;: ...}}, # usually we use this</span>
+<span class="sd">     &#39;synapse&#39;: {&#39;type&#39;:&#39;alpha_current&#39;, &#39;params&#39;: {&#39;J&#39;: ..., &#39;delay&#39;: ..., &#39;tau&#39;: ...}}, # or this</span>
+<span class="sd">     &#39;synapse&#39;: {&#39;type&#39;:&#39;alpha_conductance&#39;, &#39;params&#39;: {&#39;J&#39;: ..., &#39;delay&#39;: ..., &#39;tau&#39;: ..., &#39;Erev&#39;: ...}}, # but not this (NOT TESTED!)</span>
+<span class="sd">     &#39;synapse&#39;: {&#39;type&#39;:&#39;tsodysk-markram_jump&#39;, &#39;params&#39;: {&#39;J&#39;: ..., &#39;delay&#39;: ...,  &#39;tau_f&#39;: ..., &#39;tau_d&#39;: ..., &#39;U&#39;:...}},</span>
+<span class="sd">     ...</span>
 <span class="sd">    }</span>
 <span class="sd">    </span>
 <span class="sd">    </span>
@@ -273,7 +309,7 @@
 <span class="sd">   * ``tau_r`` and ``tau_d``: rise and decay timescales as a Brian time quantity (for biexp kernel)</span>
 <span class="sd">   * ``delay``: synaptic delay  as a Brian time quantity</span>
 <span class="sd">   * ``J``: synaptic qunatal with unit volt, ampere, or siemens for synapse</span>
-<span class="sd">     models ``jump``, ``current`` or ``conductance`` (c.f. :ref:`equations:Synapse equations` ).</span>
+<span class="sd">     models ``jump``, ``current`` or ``conductance`` respectively (c.f. :ref:`equations:Synapse equations` ).</span>
 <span class="sd">     Note that the sign will determine the polarity of the projection (inhibitory or excitatory).</span>
 <span class="sd">   * ``Erev``: the reversal potential for conductance-based synapse as a Brian quantity of unit volt</span>
 
@@ -281,30 +317,44 @@
 <span class="sd">~~~~~~~~~~</span>
 <span class="sd">Anisotropy</span>
 <span class="sd">~~~~~~~~~~</span>
-<span class="sd">Use either of the following structures for the value of ``profile`` key:</span>
-<span class="sd">    </span>
-<span class="sd">..  code-block:: python</span>
+<span class="sd">The ``anisotropy`` provides a pool of parameters that can be used for enforcing</span>
+<span class="sd">anisotropy on connectivity or synaptic properties. Whether or not such </span>
+<span class="sd">parameters are used in making things anisotropic, depends if the  configuration </span>
+<span class="sd">dictionary has ``synaptic`` and ``connectivity`` keys or not. The follwing </span>
+<span class="sd">examples illustrate the usage:</span>
+
+<span class="sd">.. code-block::python</span>
 
 <span class="sd">    {</span>
-<span class="sd">     &#39;anisotropy&#39;: {&#39;type&#39;: &#39;perlin&#39;, &#39;params&#39;: {&#39;r&#39;: ..., &#39;scale&#39;: ...}}</span>
-<span class="sd">     &#39;anisotropy&#39;: {&#39;type&#39;: &#39;homogeneous&#39;, &#39;params&#39;: {&#39;r&#39;: ..., &#39;phi&#39;: ...}}</span>
-<span class="sd">     &#39;anisotropy&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;params&#39;: {&#39;r&#39;:  ...,}}</span>
-<span class="sd">     &#39;anisotropy&#39;: {&#39;type&#39;: &#39;symmetric&#39;, &#39;params&#39;: {}}</span>
-<span class="sd">    }</span>
+<span class="sd">     ...</span>
+<span class="sd">     </span>
+<span class="sd">     &#39;anisotropy&#39;: None, # everything will be isotropic</span>
+<span class="sd">     &#39;anisotropy&#39;: {&#39;connectivity&#39;: ..., &#39;params&#39;: {&#39;r&#39;: ..., &#39;phi&#39;: ..., }}, # only connectivity will be anisotropic</span>
+<span class="sd">     &#39;anisotropy&#39;: {&#39;synaptic&#39;: ..., &#39;params&#39;: {&#39;r&#39;: ..., &#39;phi&#39;: ..., pmin: ..., pmax: ...}}, # only synaptic parameters will be anisotropic</span>
+<span class="sd">     &#39;anisotropy&#39;: {&#39;connectivity&#39;: ..., &#39;synaptic&#39;: ..., &#39;params&#39;: {&#39;r&#39;: ..., &#39;phi&#39;: ..., pmin: ..., pmax: ... }}, # both will be anisotropic</span>
+<span class="sd">     </span>
+<span class="sd">     ...</span>
+<span class="sd">     }</span>
+<span class="sd">     </span>
+
+<span class="sd">Note that the parameter pool ``params`` can be used for both synaptic and </span>
+<span class="sd">connecitivity anistropy, depending on the method in use. c.f. :ref:`landscape` </span>
+<span class="sd">for details on the anisotropy methods. </span>
+
+<span class="sd">.. note::</span>
+<span class="sd">    Ensure you understand the anisotropic methods first. They require parameters</span>
+<span class="sd">    that must be provided in the ``params`` pool. If not given, an error will </span>
+<span class="sd">    be raised. </span>
 <span class="sd">    </span>
-<span class="sd">#. ``type``: name of anisotropy profile. For now only one of the ``[&#39;perlin, homogeneous, random, symmetric&#39;]`` are possible. (str)</span>
-<span class="sd">#. ``params``:</span>
-
-<span class="sd">   * ``r``: displacement (float) -- not important for symmetric type,</span>
-<span class="sd">   * ``scale``: perlin scale if type is ``&quot;perlin&quot;`` (int)</span>
-<span class="sd">   * ``phi``: uniform anisotropic angle if type is ``&quot;homogeneous&quot;`` (float)</span>
-
+<span class="sd">The entries in the parameters pool depend on the anisotropy method in use. c.f.</span>
+<span class="sd">:ref:`landscape` for information on valid forms of configuring them.</span>
+<span class="sd">    </span>
 <span class="sd">    </span>
 
 <span class="sd">.. _[1]: https://doi.org/10.1371/journal.pcbi.1007432</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">brian2.units</span> <span class="kn">import</span> <span class="n">pA</span><span class="p">,</span> <span class="n">mV</span><span class="p">,</span> <span class="n">ms</span><span class="p">,</span> <span class="n">pF</span>
+<span class="kn">from</span> <span class="nn">brian2.units</span> <span class="kn">import</span> <span class="n">pA</span><span class="p">,</span> <span class="n">mV</span><span class="p">,</span> <span class="n">ms</span><span class="p">,</span> <span class="n">pF</span><span class="p">,</span> <span class="n">nA</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">18</span><span class="p">)</span>
@@ -322,7 +372,7 @@
 <div class="viewcode-block" id="get_config"><a class="viewcode-back" href="../configs.html#configs.get_config">[docs]</a><span class="k">def</span> <span class="nf">get_config</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;EI_net&#39;</span><span class="p">,</span> <span class="n">scalar</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generates the population and pathways config dictuinary only by providing </span>
-<span class="sd">    the name of the desired network.</span>
+<span class="sd">    the name of the desired network. </span>
 <span class="sd">    </span>
 <span class="sd">    .. note::</span>
 <span class="sd">        One should differetiate between homogeneity/randomness in angle and </span>
@@ -344,8 +394,21 @@
 <span class="sd">        Also note that these structures are independent from how anisotropy is </span>
 <span class="sd">        imposed.</span>
 
+<span class="sd">    .. note::</span>
+<span class="sd">        It is possible to decrease the network&#39;s grid size by a factor of </span>
+<span class="sd">        ``scalar``. However, such shrinkage has different effects on different</span>
+<span class="sd">        networks. One uni-population networks, the synaptic strenght is </span>
+<span class="sd">        enlarged by a factor of ``scalar**2`` to account for lower number of </span>
+<span class="sd">        afferents. However, syanptic weights are left intact for the </span>
+<span class="sd">        two-population networks, since they are set up in balance and afferents</span>
+<span class="sd">        will effectively cancel each other. An exception from this rule is the</span>
+<span class="sd">        signle-population excitatory network. This network is inherently </span>
+<span class="sd">        unstable. So, we did not enlarged the synaptic weights partially to </span>
+<span class="sd">        avoid blow-up. In other words, the synaptic weights is large enough to</span>
+<span class="sd">        trigger spike but not large enough to propagate it too far.</span>
 
-<span class="sd">    :param name: nework name. Either &quot;I_net&quot; or &quot;EI_net&quot;, defaults to &#39;EI_net&#39;</span>
+
+<span class="sd">    :param name: nework name</span>
 <span class="sd">    :type name: str, optional</span>
 <span class="sd">    :param scalar: scales down the network by a factor. The network must be </span>
 <span class="sd">        divisble to the factor. Number of connections, their strenghts, and the</span>
@@ -369,28 +432,72 @@
 
         <span class="n">conn_cfg</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">&#39;II&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
+                   <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gamma&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;theta&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="o">/</span><span class="n">scalar</span><span class="p">,</span> <span class="s1">&#39;kappa&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">},</span> <span class="s1">&#39;gap&#39;</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">6.</span><span class="o">/</span><span class="n">scalar</span><span class="p">)</span> <span class="p">},</span>
+                   <span class="c1">#&#39;profile&#39;: {},</span>
+                   <span class="c1">#&#39;profile&#39;: {&#39;type&#39;:&#39;Gaussian&#39;, &#39;params&#39;: {&#39;std&#39;: 3}, &#39;gap&#39;: max(2, 5./scalar) },</span>
+                   <span class="c1">#&#39;synapse&#39;: {&#39;type&#39;:&#39;alpha_current&#39;, &#39;params&#39;: {&#39;J&#39;: -10*(scalar**2)*pA, &#39;delay&#39;:1*ms, &#39;tau&#39;: 5*ms}},</span>
+                   <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;tsodysk-markram_jump&#39;</span><span class="p">,</span> 
+                                <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.221</span><span class="o">*</span><span class="n">mV</span><span class="o">*</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> 
+                                            <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau_f&#39;</span><span class="p">:</span> <span class="mf">1500.</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau_d&#39;</span><span class="p">:</span> <span class="mf">200.</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> 
+                                            <span class="s1">&#39;U&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">/</span><span class="mf">3.</span><span class="p">}},</span>
+                    <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;synaptic&#39;</span><span class="p">:</span> <span class="s1">&#39;sin&#39;</span><span class="p">,</span> <span class="c1">#&#39;connectivity&#39;: &#39;shift&#39;, </span>
+                                   <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> 
+                                              <span class="s1">&#39;phi&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;perlin&#39;</span><span class="p">,</span> <span class="s1">&#39;scale&#39;</span><span class="p">:</span><span class="mi">3</span><span class="p">},</span>
+                                              <span class="s1">&#39;pmin&#39;</span><span class="p">:</span><span class="mf">0.01</span><span class="p">,</span> <span class="s1">&#39;pmax&#39;</span><span class="p">:</span><span class="mf">0.3</span>
+                                              <span class="p">}</span>  
+                                  <span class="p">}</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;params&#39;: {&#39;r&#39;: 1, &#39;phi&#39;: np.pi/6.},</span>
+                   <span class="c1">#                &#39;method&#39;: &#39;shift&#39;, </span>
+                   <span class="c1">#                },</span>
+                   <span class="c1">#  &#39;anisotropy&#39;: {&#39;params&#39;: {&#39;r&#39;: np.sqrt(2), &#39;phi&#39;: {&#39;type&#39;: &#39;random&#39;}},</span>
+                   <span class="c1">#                 &#39;method&#39;: &#39;shift&#39;, </span>
+                   <span class="c1">#                 },</span>
+                   <span class="c1">#&#39;anisotropy&#39;: None,</span>
+                   
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;perlin&#39;, &#39;params&#39;: {&#39;r&#39;: np.sqrt(2), &#39;scale&#39;:3}}</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;homogeneous&#39;, &#39;params&#39;: {&#39;r&#39;: np.sqrt(2), &#39;phi&#39;:np.pi/6.}}</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;params&#39;: {&#39;r&#39;: 1,}}</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;iso&#39;, &#39;params&#39;: {}}</span>
+                   <span class="p">}</span>
+        <span class="p">}</span>
+        
+        <span class="n">stim_cfg</span> <span class="o">=</span> <span class="p">{}</span>
+        
+    <span class="k">elif</span> <span class="n">name</span><span class="o">==</span><span class="s1">&#39;E_net&#39;</span><span class="p">:</span>
+        <span class="n">pops_cfg</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;E&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;gs&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">scalar</span><span class="p">),</span> 
+                  <span class="s1">&#39;noise&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mi">400</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;noise_dt&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="o">*</span><span class="n">ms</span><span class="p">},</span>
+                  <span class="s1">&#39;cell&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;LIF&#39;</span><span class="p">,</span> 
+                           <span class="s1">&#39;thr&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">55</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span> <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;rest&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">70</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span>
+                           <span class="s1">&#39;tau&#39;</span><span class="p">:</span><span class="mi">10</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="mi">250</span><span class="o">*</span><span class="n">pF</span><span class="p">}</span>
+                          <span class="p">}</span>
+            <span class="p">}</span>
+
+        <span class="n">conn_cfg</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;EE&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
                    <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gamma&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;theta&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="o">/</span><span class="n">scalar</span><span class="p">,</span> <span class="s1">&#39;kappa&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}</span> <span class="p">},</span>
                    <span class="c1">#&#39;profile&#39;: {&#39;type&#39;:&#39;Gaussian&#39;, &#39;params&#39;: {&#39;std&#39;: 3} },</span>
-                   <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">10</span><span class="o">*</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}},</span>
+                   <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="mf">2.5</span><span class="o">*</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}},</span>
                    <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;perlin&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;scale&#39;</span><span class="p">:</span><span class="mi">3</span><span class="p">}}</span>
                    <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;homogeneous&#39;, &#39;params&#39;: {&#39;r&#39;: 1, &#39;phi&#39;:np.pi/6.}}</span>
                    <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;params&#39;: {&#39;r&#39;: 1,}}</span>
-                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;symmetric&#39;, &#39;params&#39;: {}}</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;iso&#39;, &#39;params&#39;: {}}</span>
                    <span class="p">},</span>
         <span class="p">}</span>    
+    
+        <span class="n">stim_cfg</span> <span class="o">=</span> <span class="p">{}</span>
+        
     <span class="k">elif</span> <span class="n">name</span><span class="o">==</span><span class="s1">&#39;EI_net&#39;</span><span class="p">:</span>
-        <span class="n">noiser</span> <span class="o">=</span> <span class="mf">1.</span>
-        <span class="n">meaner</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="n">pops_cfg</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">&#39;I&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;gs&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="n">scalar</span><span class="p">),</span> 
-                  <span class="s1">&#39;noise&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mi">350</span><span class="o">*</span><span class="n">pA</span><span class="o">/</span><span class="n">meaner</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="o">*</span><span class="n">pA</span><span class="o">/</span><span class="n">noiser</span><span class="p">,</span> <span class="s1">&#39;noise_dt&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">},</span>
+                  <span class="s1">&#39;noise&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mi">350</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;noise_dt&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">},</span>
                   <span class="s1">&#39;cell&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;LIF&#39;</span><span class="p">,</span> 
                            <span class="s1">&#39;thr&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">55</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span> <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;rest&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">70</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span>
                            <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="mi">250</span><span class="o">*</span><span class="n">pF</span><span class="p">}</span>
                   <span class="p">},</span>
             
             <span class="s1">&#39;E&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;gs&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="n">scalar</span><span class="p">),</span> 
-                  <span class="s1">&#39;noise&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mi">350</span><span class="o">*</span><span class="n">pA</span><span class="o">/</span><span class="n">meaner</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="o">*</span><span class="n">pA</span><span class="o">/</span><span class="n">noiser</span><span class="p">,</span> <span class="s1">&#39;noise_dt&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">},</span>
+                  <span class="s1">&#39;noise&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mi">350</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;noise_dt&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">},</span>
                   <span class="s1">&#39;cell&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;LIF&#39;</span><span class="p">,</span> 
                            <span class="s1">&#39;thr&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">55</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span> <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;rest&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">70</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span>
                            <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="mi">250</span><span class="o">*</span><span class="n">pF</span><span class="p">}</span>
@@ -401,33 +508,35 @@
             <span class="s1">&#39;EE&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">720</span><span class="p">,</span> <span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
                   <span class="c1">#&#39;profile&#39;: {&#39;type&#39;:&#39;Gamma&#39;, &#39;params&#39;: {&#39;theta&#39;: 3/scalar, &#39;kappa&#39;: 4} },</span>
                   <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="mi">9</span><span class="o">/</span><span class="n">scalar</span><span class="p">}</span> <span class="p">},</span>
-                  <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}</span> <span class="p">},</span>
+                  <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}</span> <span class="p">},</span>
                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;perlin&#39;, &#39;params&#39;: {&#39;scale&#39;: 3, &#39;r&#39;:np.sqrt(2)}},</span>
-                  <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;symmetric&#39;, &#39;params&#39;: {}}</span>
+                  <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;iso&#39;, &#39;params&#39;: {}}</span>
                   <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;homogeneous&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;phi&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mf">6.</span><span class="p">}}</span>
                   <span class="p">},</span>
             
             <span class="s1">&#39;EI&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span> <span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
                    <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="mf">4.5</span><span class="o">/</span><span class="n">scalar</span><span class="p">}},</span>
-                   <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}},</span>
+                   <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}},</span>
                    <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;random&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,}},</span>
                    <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;params&#39;: {&#39;r&#39;: 1,}}</span>
                    <span class="p">},</span>
             
             <span class="s1">&#39;IE&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">720</span><span class="p">,</span> <span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
                    <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="mi">12</span><span class="o">/</span><span class="n">scalar</span><span class="p">}},</span>
-                   <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">80</span><span class="o">*</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}},</span>
+                   <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">80</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}},</span>
                    <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;random&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,}},</span>
                    <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;params&#39;: {&#39;r&#39;: 1,}}</span>
                    <span class="p">},</span>
 
             <span class="s1">&#39;II&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span> <span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
                    <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="mi">6</span><span class="o">/</span><span class="n">scalar</span><span class="p">}},</span>
-                   <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">80</span><span class="o">*</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}},</span>
+                   <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">80</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}},</span>
                    <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;random&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,}},</span>
                    <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;params&#39;: {&#39;r&#39;: 1,}}</span>
                    <span class="p">},</span>
         <span class="p">}</span>
+        
+        <span class="n">stim_cfg</span> <span class="o">=</span> <span class="p">{}</span>
         
     <span class="k">elif</span> <span class="n">name</span><span class="o">==</span><span class="s1">&#39;homo_net&#39;</span><span class="p">:</span>
         <span class="n">pops_cfg</span> <span class="o">=</span> <span class="p">{</span>
@@ -447,7 +556,9 @@
                    <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;perlin&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;scale&#39;</span><span class="p">:</span><span class="mi">3</span><span class="p">}}</span>
                    <span class="p">},</span>
         <span class="p">}</span>    
-        
+
+        <span class="n">stim_cfg</span> <span class="o">=</span> <span class="p">{}</span>
+                
     <span class="k">elif</span> <span class="n">name</span><span class="o">==</span><span class="s1">&#39;iso_net&#39;</span><span class="p">:</span>
         <span class="n">pops_cfg</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">&#39;I&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;gs&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">scalar</span><span class="p">),</span> 
@@ -460,12 +571,14 @@
 
         <span class="n">conn_cfg</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">&#39;II&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
-                   <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gamma&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;theta&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="o">/</span><span class="n">scalar</span><span class="p">,</span> <span class="s1">&#39;kappa&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}</span> <span class="p">},</span>
+                   <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gamma&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;theta&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="o">/</span><span class="n">scalar</span><span class="p">,</span> <span class="s1">&#39;kappa&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">},</span> <span class="s1">&#39;gap&#39;</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">5.</span><span class="o">/</span><span class="n">scalar</span><span class="p">)</span> <span class="p">},</span>
                    <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">10</span><span class="o">*</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}},</span>
                    <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="kc">None</span>
                    <span class="p">},</span>
         <span class="p">}</span>    
 
+        <span class="n">stim_cfg</span> <span class="o">=</span> <span class="p">{}</span>
+        
     <span class="k">elif</span> <span class="n">name</span><span class="o">==</span><span class="s1">&#39;homiso_net&#39;</span><span class="p">:</span>
         <span class="n">pops_cfg</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">&#39;I&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;gs&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">scalar</span><span class="p">),</span> 
@@ -484,10 +597,214 @@
                    <span class="p">},</span>
         <span class="p">}</span>    
     
+        <span class="n">stim_cfg</span> <span class="o">=</span> <span class="p">{}</span>
+        
+    <span class="k">elif</span> <span class="n">name</span><span class="o">==</span><span class="s1">&#39;STSP_TM_I_net&#39;</span><span class="p">:</span>
+        <span class="n">pops_cfg</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;I&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;gs&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">scalar</span><span class="p">),</span> 
+                  <span class="s1">&#39;noise&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mi">700</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;noise_dt&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="o">*</span><span class="n">ms</span><span class="p">},</span>
+                  <span class="s1">&#39;cell&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;LIF&#39;</span><span class="p">,</span> 
+                           <span class="s1">&#39;thr&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">55</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span> <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;rest&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">70</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span>
+                           <span class="s1">&#39;tau&#39;</span><span class="p">:</span><span class="mi">10</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="mi">250</span><span class="o">*</span><span class="n">pF</span><span class="p">}</span>
+                          <span class="p">}</span>
+            <span class="p">}</span>
+
+        <span class="n">conn_cfg</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;II&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
+                   <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gamma&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;theta&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="o">/</span><span class="n">scalar</span><span class="p">,</span> <span class="s1">&#39;kappa&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">},</span> <span class="s1">&#39;gap&#39;</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">5.</span><span class="o">/</span><span class="n">scalar</span><span class="p">)</span> <span class="p">},</span>
+                   <span class="c1">#&#39;profile&#39;: {&#39;type&#39;:&#39;Gaussian&#39;, &#39;params&#39;: {&#39;std&#39;: 3,} , &#39;gap&#39;: max(2, 5./scalar)},</span>
+                   <span class="c1">#&#39;synapse&#39;: {&#39;type&#39;:&#39;alpha_current&#39;, &#39;params&#39;: {&#39;J&#39;: -10*(scalar**2)*pA, &#39;delay&#39;:1*ms, &#39;tau&#39;: 5*ms}},</span>
+                    <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;tsodysk-markram_jump&#39;</span><span class="p">,</span> 
+                                <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.221</span><span class="o">*</span><span class="n">mV</span><span class="o">*</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> 
+                                           <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau_f&#39;</span><span class="p">:</span> <span class="mf">1500.</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau_d&#39;</span><span class="p">:</span> <span class="mf">200.</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> 
+                                           <span class="s1">&#39;U&#39;</span><span class="p">:</span><span class="mf">.3</span><span class="p">}},</span>
+                   
+                   
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;perlin&#39;, &#39;params&#39;: {&#39;r&#39;: np.sqrt(2), &#39;scale&#39;:3}}</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;homogeneous&#39;, &#39;params&#39;: {&#39;r&#39;: 1, &#39;phi&#39;:np.pi/6.}}</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;params&#39;: {&#39;r&#39;: 1,}}</span>
+                   <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;iso&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{}}</span>
+                   <span class="p">},</span>
+        <span class="p">}</span>
+     
+        <span class="n">stim_cfg</span> <span class="o">=</span> <span class="p">{}</span>
+           
+    <span class="k">elif</span> <span class="n">name</span><span class="o">==</span><span class="s1">&#39;STSP_TM_EI_net&#39;</span><span class="p">:</span>
+        <span class="n">pops_cfg</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;I&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;gs&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="n">scalar</span><span class="p">),</span> 
+                  <span class="s1">&#39;noise&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mi">350</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;noise_dt&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">},</span>
+                  <span class="s1">&#39;cell&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;LIF&#39;</span><span class="p">,</span> 
+                           <span class="s1">&#39;thr&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">55</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span> <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;rest&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">70</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span>
+                           <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="mi">250</span><span class="o">*</span><span class="n">pF</span><span class="p">}</span>
+                  <span class="p">},</span>
+            
+            <span class="s1">&#39;E&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;gs&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="n">scalar</span><span class="p">),</span> 
+                  <span class="s1">&#39;noise&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mi">350</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;noise_dt&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">},</span>
+                  <span class="s1">&#39;cell&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;LIF&#39;</span><span class="p">,</span> 
+                           <span class="s1">&#39;thr&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">55</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span> <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;rest&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">70</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span>
+                           <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="mi">250</span><span class="o">*</span><span class="n">pF</span><span class="p">}</span>
+                 <span class="p">}</span>
+            <span class="p">}</span>
+
+        <span class="n">conn_cfg</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;EE&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">720</span><span class="p">,</span> <span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
+                  <span class="c1">#&#39;profile&#39;: {&#39;type&#39;:&#39;Gamma&#39;, &#39;params&#39;: {&#39;theta&#39;: 3/scalar, &#39;kappa&#39;: 4} },</span>
+                  <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="mi">9</span><span class="o">/</span><span class="n">scalar</span><span class="p">}</span> <span class="p">},</span>
+                  <span class="c1">#&#39;synapse&#39;: {&#39;type&#39;:&#39;alpha_current&#39;, &#39;params&#39;: {&#39;J&#39;: 10*pA, &#39;delay&#39;:1*ms, &#39;tau&#39;: 5*ms} },</span>
+                  <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;tsodysk-markram_jump&#39;</span><span class="p">,</span> 
+                              <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="mf">0.221</span><span class="o">*</span><span class="n">mV</span><span class="o">*</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> 
+                                         <span class="s1">&#39;tau_f&#39;</span><span class="p">:</span> <span class="mi">1500</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau_d&#39;</span><span class="p">:</span> <span class="mi">600</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;U&#39;</span><span class="p">:</span><span class="mf">0.1</span><span class="p">}},</span>
+                  <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;perlin&#39;, &#39;params&#39;: {&#39;scale&#39;: 3, &#39;r&#39;:np.sqrt(2)}},</span>
+                  <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;iso&#39;, &#39;params&#39;: {}}</span>
+                  <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;homogeneous&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;phi&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mf">6.</span><span class="p">}}</span>
+                  <span class="p">},</span>
+            
+            <span class="s1">&#39;EI&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span> <span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
+                   <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="mf">4.5</span><span class="o">/</span><span class="n">scalar</span><span class="p">}},</span>
+                   <span class="c1">#&#39;synapse&#39;: {&#39;type&#39;:&#39;alpha_current&#39;, &#39;params&#39;: {&#39;J&#39;: 10*pA, &#39;delay&#39;:1*ms, &#39;tau&#39;: 5*ms}},</span>
+                   <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;tsodysk-markram_jump&#39;</span><span class="p">,</span> 
+                               <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="mf">0.221</span><span class="o">*</span><span class="n">mV</span><span class="o">*</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> 
+                                          <span class="s1">&#39;tau_f&#39;</span><span class="p">:</span> <span class="mi">1500</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau_d&#39;</span><span class="p">:</span> <span class="mi">600</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;U&#39;</span><span class="p">:</span><span class="mf">0.5</span><span class="p">}},</span>
+                   <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;iso&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{}},</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;params&#39;: {&#39;r&#39;: 1,}}</span>
+                   <span class="p">},</span>
+            
+            <span class="s1">&#39;IE&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">720</span><span class="p">,</span> <span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
+                   <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="mi">12</span><span class="o">/</span><span class="n">scalar</span><span class="p">}},</span>
+                   <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">40</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}},</span>
+                   <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;iso&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{}},</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;params&#39;: {&#39;r&#39;: 1,}}</span>
+                   <span class="p">},</span>
+
+            <span class="s1">&#39;II&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span> <span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
+                   <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="mi">6</span><span class="o">/</span><span class="n">scalar</span><span class="p">}},</span>
+                   <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">40</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}},</span>
+                   <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;iso&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{}},</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;params&#39;: {&#39;r&#39;: 1,}}</span>
+                   <span class="p">},</span>
+            
+            <span class="p">}</span>
+    
+        <span class="n">stim_cfg</span> <span class="o">=</span> <span class="p">{}</span>
+        
+    
+    <span class="k">elif</span> <span class="n">name</span><span class="o">==</span><span class="s1">&#39;EI_net_focal_stim&#39;</span><span class="p">:</span>
+        <span class="n">pops_cfg</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;I&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;gs&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="n">scalar</span><span class="p">),</span> 
+                  <span class="s1">&#39;noise&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mi">350</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;noise_dt&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">},</span>
+                  <span class="s1">&#39;cell&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;LIF&#39;</span><span class="p">,</span> 
+                           <span class="s1">&#39;thr&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">55</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span> <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;rest&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">70</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span>
+                           <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="mi">250</span><span class="o">*</span><span class="n">pF</span><span class="p">}</span>
+                  <span class="p">},</span>
+            
+            <span class="s1">&#39;E&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;gs&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="n">scalar</span><span class="p">),</span> 
+                  <span class="s1">&#39;noise&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mi">350</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;noise_dt&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">},</span>
+                  <span class="s1">&#39;cell&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;LIF&#39;</span><span class="p">,</span> 
+                           <span class="s1">&#39;thr&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">55</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span> <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;rest&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">70</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span>
+                           <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="mi">250</span><span class="o">*</span><span class="n">pF</span><span class="p">}</span>
+                  <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="n">conn_cfg</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;EE&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">720</span><span class="p">,</span> <span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
+                  <span class="c1">#&#39;profile&#39;: {&#39;type&#39;:&#39;Gamma&#39;, &#39;params&#39;: {&#39;theta&#39;: 3/scalar, &#39;kappa&#39;: 4} },</span>
+                  <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="mi">9</span><span class="o">/</span><span class="n">scalar</span><span class="p">}</span> <span class="p">},</span>
+                  <span class="c1"># &#39;synapse&#39;: {&#39;type&#39;:&#39;tsodysk-markram_jump&#39;, </span>
+                  <span class="c1">#             &#39;params&#39;: {&#39;J&#39;: -0.221*mV, &#39;delay&#39;:1*ms, </span>
+                  <span class="c1">#                        &#39;tau_f&#39;: 1500*ms, &#39;tau_d&#39;: 200*ms, &#39;U&#39;:0.5}},</span>
+                  
+                  <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}</span> <span class="p">},</span>
+                  <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;perlin&#39;, &#39;params&#39;: {&#39;scale&#39;: 3, &#39;r&#39;:np.sqrt(2)}},</span>
+                  <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;iso&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{}}</span>
+                  <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;homogeneous&#39;, &#39;params&#39;: {&#39;r&#39;: np.sqrt(2), &#39;phi&#39;:np.pi/6.}}</span>
+                  <span class="p">},</span>
+            
+            <span class="s1">&#39;EI&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span> <span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> 
+                    <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
+                    <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="mf">4.5</span><span class="o">/</span><span class="n">scalar</span><span class="p">}},</span>
+                    <span class="c1">#&#39;profile&#39;: {&#39;type&#39;:&#39;homog&#39;, &#39;params&#39;: {}},</span>
+                    <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}},</span>
+                    <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;params&#39;: {&#39;r&#39;: 1,}},</span>
+                    <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;iso&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:{}}</span>
+                    <span class="p">},</span>
+            
+            <span class="s1">&#39;IE&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">720</span><span class="p">,</span> <span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> 
+                    <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
+                    <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="mi">12</span><span class="o">/</span><span class="n">scalar</span><span class="p">}},</span>
+                    <span class="c1">#&#39;profile&#39;: {&#39;type&#39;:&#39;homog&#39;, &#39;params&#39;: {}},</span>
+                    <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">80</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}},</span>
+                    <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;params&#39;: {&#39;r&#39;: 1,}},</span>
+                    <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;params&#39;: {&#39;r&#39;: 1,}}</span>
+                    <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;iso&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:{}}</span>
+                    <span class="p">},</span>
+
+            <span class="s1">&#39;II&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span> <span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
+                   <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="mi">6</span><span class="o">/</span><span class="n">scalar</span><span class="p">}},</span>
+                   <span class="c1">#&#39;profile&#39;: {&#39;type&#39;:&#39;homog&#39;, &#39;params&#39;: {}},</span>
+                   <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">80</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="o">*</span><span class="n">ms</span><span class="p">}},</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;params&#39;: {&#39;r&#39;: 1,}},</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;params&#39;: {&#39;r&#39;: 1,}}</span>
+                   <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;iso&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:{}}</span>
+                   <span class="p">},</span>
+        <span class="p">}</span>
+            
+        <span class="n">stim_cfg</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;E_0&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;const&#39;</span><span class="p">,</span> <span class="s1">&#39;I_stim&#39;</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span>
+                    <span class="s1">&#39;domain&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="s1">&#39;x0&#39;</span><span class="p">:</span> <span class="mi">15</span><span class="p">,</span> <span class="s1">&#39;y0&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span><span class="mi">2</span><span class="p">}</span>
+                    <span class="p">},</span>
+            
+            <span class="c1"># &#39;I_1&#39;: {&#39;type&#39;: &#39;const&#39;, &#39;I_stim&#39;: -0,</span>
+            <span class="c1">#         &#39;domain&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;p&#39;: 1}</span>
+            <span class="c1">#         }</span>
+            
+            <span class="p">}</span>
+            
+    <span class="k">elif</span> <span class="n">name</span><span class="o">==</span><span class="s1">&#39;I_net_focal_stim&#39;</span><span class="p">:</span>
+        <span class="n">pops_cfg</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;I&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;gs&#39;</span><span class="p">:</span> <span class="n">round_to_even</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">scalar</span><span class="p">),</span> 
+                  <span class="s1">&#39;noise&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mi">700</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="o">*</span><span class="n">pA</span><span class="p">,</span> <span class="s1">&#39;noise_dt&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="o">*</span><span class="n">ms</span><span class="p">},</span>
+                  <span class="s1">&#39;cell&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;LIF&#39;</span><span class="p">,</span> 
+                           <span class="s1">&#39;thr&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">55</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span> <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;rest&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">70</span><span class="o">*</span><span class="n">mV</span><span class="p">,</span>
+                           <span class="s1">&#39;tau&#39;</span><span class="p">:</span><span class="mi">10</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="mi">250</span><span class="o">*</span><span class="n">pF</span><span class="p">}</span>
+                          <span class="p">}</span>
+            <span class="p">}</span>
+
+        <span class="n">conn_cfg</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;II&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span> 
+                   <span class="c1">#&#39;profile&#39;: {&#39;type&#39;:&#39;Gamma&#39;, &#39;params&#39;: {&#39;theta&#39;: 3/scalar, &#39;kappa&#39;: 4} },</span>
+                   <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">/</span><span class="n">scalar</span><span class="p">}</span> <span class="p">,</span> <span class="s1">&#39;gap&#39;</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">5.</span><span class="o">/</span><span class="n">scalar</span><span class="p">)</span> <span class="p">},</span>
+                   <span class="c1">#&#39;synapse&#39;: {&#39;type&#39;:&#39;alpha_current&#39;, &#39;params&#39;: {&#39;J&#39;: -10*pA, &#39;delay&#39;:1*ms, &#39;tau&#39;: 5*ms}},</span>
+                   <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;tsodysk-markram_jump&#39;</span><span class="p">,</span> 
+                               <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.221</span><span class="o">*</span><span class="n">mV</span><span class="o">*</span><span class="p">(</span><span class="n">scalar</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="mi">1</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> 
+                                          <span class="s1">&#39;tau_f&#39;</span><span class="p">:</span> <span class="mi">1500</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;tau_d&#39;</span><span class="p">:</span> <span class="mi">200</span><span class="o">*</span><span class="n">ms</span><span class="p">,</span> <span class="s1">&#39;U&#39;</span><span class="p">:</span><span class="mf">0.2</span><span class="p">}},</span>
+                   <span class="c1">#&#39;synapse&#39;: {&#39;type&#39;:&#39;tsodysk-markram_jump&#39;, </span>
+                               <span class="c1"># &#39;params&#39;: {&#39;J&#39;: -0.221*mV*(scalar**2), &#39;delay&#39;:1*ms, </span>
+                               <span class="c1">#            &#39;tau&#39;: 10*ms, &#39;tau_f&#39;: 1500.*ms, &#39;tau_d&#39;: 200.*ms, </span>
+                               <span class="c1">#            &#39;U&#39;:1/3.}},</span>
+                   
+                   
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;perlin&#39;, &#39;params&#39;: {&#39;r&#39;: np.sqrt(2), &#39;scale&#39;:3}}</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;homogeneous&#39;, &#39;params&#39;: {&#39;r&#39;: 1, &#39;phi&#39;:np.pi/6.}}</span>
+                   <span class="c1">#&#39;anisotropy&#39;: {&#39;type&#39;: &#39;random&#39;, &#39;params&#39;: {&#39;r&#39;: 1,}}</span>
+                   <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;iso&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{}}</span>
+                   <span class="p">}</span>
+            <span class="p">}</span>
+            
+        <span class="n">stim_cfg</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;I_0&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;const&#39;</span><span class="p">,</span> <span class="s1">&#39;I_stim&#39;</span><span class="p">:</span> <span class="mi">700</span><span class="p">,</span>
+                    <span class="s1">&#39;domain&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="s1">&#39;x0&#39;</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span> <span class="s1">&#39;y0&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span><span class="mf">2.5</span><span class="p">}</span>
+                    <span class="p">},</span>
+            
+            <span class="c1"># &#39;I_1&#39;: {&#39;type&#39;: &#39;const&#39;, &#39;I_stim&#39;: 700,</span>
+            <span class="c1">#         &#39;domain&#39;: {&#39;type&#39;: &#39;r&#39;, &#39;x0&#39;: 3, &#39;y0&#39;: 10, &#39;r&#39;: 7}</span>
+            <span class="c1">#         }</span>
+            
+            <span class="p">}</span>
+   
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span>
     
-    <span class="k">return</span> <span class="n">pops_cfg</span><span class="p">,</span> <span class="n">conn_cfg</span></div>
+    <span class="k">return</span> <span class="n">pops_cfg</span><span class="p">,</span> <span class="n">conn_cfg</span><span class="p">,</span> <span class="n">stim_cfg</span></div>
 
 
 </pre></div>

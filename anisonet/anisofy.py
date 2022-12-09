@@ -1,93 +1,126 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-This module controls the inhomogeneity and anistropy of the synaptic 
-connections. The probability of stablishing a connection from the presynapse at
-location :math:`\\textbf r` to location :math:`\\textbf r'`, in general depends
-on both locations. We model connectivies that can be broken down this into 
-radial and angular terms:
-    
-.. math::
-	w(\\textbf r, \\textbf r') = f(|\\textbf r - \\textbf r'|) g(\phi)
+What is anisotropy, really?
+===========================
+We assume every neuron is somehow different from its surrounding, in that it is
+biased in one form or other toward on direction. Such angular bias, thus, makes
+up so-called anisotropy landscape, which is nothing but a visualization of the
+extend of this bias for each neuron in the spatial field.
 
-The function :math:`f` controls the extent of spatial homogeneity and is assumed to 
-have a peak at the center. Function :math:`g` encodes anisotropy or angular 
-bias in forming connections. 
+For instance, `[1]`_ introduced a directional bias (anisotropy) in the 
+connectivity of locally connected neurons. Similarly, we can introduce an
+angular heterogeneity in the synaptic parameters (think of the parameters of 
+the `kernel` dicussed in :ref:`equations:Kernel`). Probably other forms are 
+possible too, but in this package, we stick to these two only. So in what 
+follows, we discuss these two form of anisotropy and how can we produce them.
 
-There are many ways to model such dependence. We implemented two methods: a
-displacement-based (`shift`) and a rotation-based (`rotate`) one which are 
-explained in details below.
 
-**Inhomogeneity**: Radial connectivity profile can enforce locality. The following profiles are
-supported:
-    
-    #. Gaussian
-    #. Gamma distribution
+.. note::
+    In this madule we only explain the imposition of anisotropy. For how such 
+    neuron-specific biases are spread in space, please refer to 
+    :ref:`landscape`.
+
+
+Connectivity heterogeneity
+==========================
+
+Isotropic profile
+-----------------
+It is common to assume that the probability of establishing a link between two
+neurons depends on their distance. As such, the connecitivity profile from any
+presynapse will be an isometric sphere centered on the locaiton of presynapse.
+Such isotropy even holds for situations in which neurons are connected 
+uniformly regardless of their distance. 
+
+We refer this radial connecitivty pattern simply as ``profile``. The following
+profiles are supported: 
+
     #. uniform (homogeneous)
-
-using which we sample the distance (radius) to the postsynapse. Additionally,
-in cases where autapse is not allowed, we symmetrically shift the aformentioed 
-PDFs such that distances less than a controllable ``gap`` are improbable. 
-
-**Anisotropy**: We attribute an angle :math:`\phi` to each neuron that specifies its angular
-bias (a.k.a. anisotropy landscape) by the following strategies:
+    #. Gaussian distribution
+    #. Gamma distribution
     
-    #. uniform (isotropic)
-    #. constant or homogenous
-    #. Perlin-noise-based: A unifromly random method with spatioal correlation
+Not specifying any profile will be fallen back to the ``uniform`` case
+automatically.
 
-
-Having the landscape specified, we now explain how connections 
-are actually formed.
-
-Enforcing anisotropy
-====================
-Anisotropy is induced in two major steps. The first one, which is shared among
-all methods, is generating an *iso*-tropic set of posible postsynaptic locations.
-based on the radius drew before. These locations make an angle-independent 
-presynapse-centric point cloud. The next step natually is to induce anisotropy
-in this cloud. The API accepts the following values which are explained below:
+.. note::
+    One particularly interesting connectivity pattern is Mexcan hat profile (aka
+    difference of Gaussians) which implements proximal excitation and lateral
+    inhibition (or vice versa, depending on which one is subtracted from the 
+    other). This profile is known to give rise to activity bumps in networks.
     
-    #. ``shift``: A displacement-based method
-    #. ``squeeze-rotate``: A rotation-based method that first squeezes the point
-       cloud
-    #. ``positive-rotate``: A rotation-based method that constraints the point 
-       cloud to positive x values before rotation. Thus, differentiates between 
-       angle :math:`\\theta` and :math:`2\pi - \\theta`. 
-    #. ``positive-squeeze-rotate``: combination of last two methods.
-     
-Dispalcement-based
-~~~~~~~~~~~~~~~~~~
-This method is similar to `[1]`_ and works as follows. To enforce 
-anisotropy, this point cloud is shifted be a displacement vector determined by
-a length :math:`r > 0`  and angle  :math:`\phi` (the landscape). We keep this 
-length constant for all neurons (although it can be very well change too).
-
-Rotation-based
-~~~~~~~~~~~~~~
-In this method we generate a circular point cloud as before. However, instead 
-of displacing, we first squeeze this point cloud and then rotate this elongated 
-point could according to the angle provided in the landscape. Squeezing is 
-controlled by the :math:`r > 0` property of the landscape -- now interpreted as
-the `reshpae` factor: The x-axis of the point cloud is up-scaled by :math:`1+r`
-while the y-axis is down-scaled by the same factor (so that the area stays 
-constant). Then the ellipse is rotated along the z-axis. Note that for these
-method, complementary angles lead to the identical distributions.
-
-
-Positive rotation
-~~~~~~~~~~~~~~~~~
-To discern between complementary angles :math:`\\theta` and :math:`\\theta' = 2\pi - \\theta` 
-this method first coverts all the locations with the negative-x to positive ones.
-Then, it rotates the (now half-circular) point cloud without squeezign it.
-
-Squeeze positive rotation
-~~~~~~~~~~~~~~~~~~~~~~~~~
-Combines the two method above by first converting to positive x values, and 
-then squeezing followed by rotating.
+    In case of networks with single synaptic types (only inhibitory or 
+    excitatory) which are driven by a background input of the opposite polarity
+    it is possible to emulate the maxican hot profile by introducing a central
+    ``gap`` in the connectivity profile. As such, ``gap`` ensures that there is
+    an effective connecitivty difference between nearby neurons and distals 
+    ones. By default, it is set to zero, but use it if your network does not 
+    opposite synaptic types.
+    
+    
+Anisotropic connectivity
+------------------------
+The connecitivty pattern introduced earlier is isotropic. We can break this 
+isotropy in the following ways:
+    
+    #. ``shift``: Shifts the postsynaptic cloud, as introduced by `[1]`_. In this case,
+       the connections are simply shifted in space by a displacement vector, which
+       is specific to each neuron. Thus, the anisotropy landscape is characterized
+       by displacement length :math:`r(\\textbf x)` and anisotropy angle 
+       :math:`\phi(\\textbf x)`, in which :math:`\\textbf x` shows the location 
+       dependence.
+    #. ``squeeze-rotate``: Squeezes the postsynaptic cloud and then rotate it. 
+       This method, too, introduces anisotropy using two factors. Axis squeezing 
+       ratio :math:`r(\\textbf x)` and the anisotropy angle :math:`\phi(\\textbf x)`.
+       Note that in this method, the outcomes of rotation angles :math:`\\theta` and 
+       :math:`2\pi - \\theta` are indentical. 
+    #. ``positive-rotate``: Mirros the connecitions with negative x-component to 
+       the positive-x, and then rotate them. This method only requires the roation 
+       angle :math:`\phi(\\textbf x)`.
+    #. ``positive-squeeze-rotate``: Mixes the last two methods by squeezing the 
+       reflected-to-positive connections before rotating. Thus, it requires both 
+       the angle :math:`\phi(\\textbf x)` and the axis squeezing ratio 
+       :math:`r(\\textbf x)` for full characterization.
 
 
-Other methods can be exercised as well.
+The figure below displays the effect of these method:
+    
+    
+    
+
+Synaptic heterogeneity
+======================
+
+Isotropic synaptic parameterization
+-----------------------------------
+Synapses are often initialized either indentically or completely randomly. 
+Either case are isotropic and are refered here as:
+    
+    #. ``rand``: uniformly initializes the parameters between 0 and 1 or 
+       between the minimum and maximum acceptable values for non-normalized
+       quantities.
+    #. ``ss``:  initialized all the varaibles in accord to their steady-state
+       equilibrated value. In case of plasticitiy dependent values, steady-state
+       is defined under the `no-usage` condition.
+    
+
+Anisotropic synaptic parameterization
+-------------------------------------
+The anisotropy in the synapses in imposed based on their relative direction 
+w.r.t. the presynapse (which is computed for each neuron individually). Given
+the direction of each postsynapse (:math:`\\theta`), and neuron-specific angular
+bias (:math:`\phi(\\textbf x)`) the anisotropy is applied according to a 
+trianglumertic transformation:
+
+    #. ``sin``: modulates the variable between its minium and maximum range 
+       accodring to :math:`\\frac{1+\sin (\\theta-\phi(\\textbf x) )}{2}`
+    #. ``cos``: modulates the variable between its minium and maximum range 
+       accodring to :math:`\\frac{1+\cos (\\theta-\phi(\\textbf x) )}{2}`
+       
+.. note::
+    Other anisotropic transformations are under development.
+
+
     
 .. _[1]: https://doi.org/10.1371/journal.pcbi.1007432
 .. _[3]: https://doi.org/10.1523/ENEURO.0348-16.2017
@@ -96,7 +129,9 @@ Other methods can be exercised as well.
 
 """
 
+from pdb import set_trace
 import numpy as np
+from utils import *
 
 # def draw_post_syns(s_coord, ncons,
 #                   srow, scol, trow, tcol, 
@@ -352,9 +387,9 @@ import numpy as np
 
 def draw_posts(s_coord, ncons,
               srow, scol, trow, tcol, 
-              profile, landscape, 
-              method='shift', gap=2,
-              self_link= False, recurrent=True, 
+              profile,
+              anisotropy, aniso_methods,
+              recurrent=True, self_link= False, 
               ):
     """
     Draws the coordinates of ``ncons`` postsynaptic neurons 
@@ -374,6 +409,8 @@ def draw_posts(s_coord, ncons,
     # initialzing containers for postsynapse coordiantes
     x = np.zeros(ncons, dtype=int)
     y = np.zeros(ncons, dtype=int)
+    
+    # intialzing synaptic parameters
     delays = np.zeros(ncons, dtype=float)
     
     redraw = (x==0) & (y==0)  # index of those who must be redrawn. Now, all.
@@ -387,16 +424,18 @@ def draw_posts(s_coord, ncons,
         
         else:
             alpha = np.random.uniform(-np.pi, np.pi, ncon)
-            radius = get_radial_profile(ncon, profile, gap=gap)
+            radius = get_radial_profile(ncon, profile)
             x_, y_ = radius*np.cos(alpha), radius*np.sin(alpha) 
         
-        # making anisotropic
-        x_, y_ = make_anisotropic(x_, y_, landscape)#, method)    
+        # making anisotropic connectivity
+        x_, y_ = make_anisotropic_profile(x_, y_, 
+                                          anisotropy, 
+                                          aniso_methods['connectivity'])    
         
         # make coordinates periodic around the presynapse
         x[redraw] = (x_ + tcol/2) % tcol - tcol/2
         y[redraw] = (y_ + trow/2) % trow - trow/2
-        delays[redraw] = np.sqrt(x_**2 + y_**2)
+        delays[redraw] = np.sqrt(x_**2 + y_**2)/2.5 # this division is arbitrary
         
         # mark self-links for redraw, if necessary
         if (recurrent) and (not self_link):
@@ -411,10 +450,17 @@ def draw_posts(s_coord, ncons,
     y = (y + s_coord[1]) % trow
     t_coords = np.array([x,y]).T 
     
-    return s_coord, t_coords.astype(int), delays
+    #set_trace()
+    # make anisotropic parameters
+    synaptic_params = make_anisotropic_syn(s_coord, t_coords, tcol, 
+                                           anisotropy = anisotropy,
+                                           method = aniso_methods['synaptic'])
+    
+    
+    return s_coord, t_coords.astype(int), synaptic_params
 
 
-def get_radial_profile(nconn, profile, gap=0):
+def get_radial_profile(nconn, profile):
     """generate the radial profile for the inhomog. networks."""
     
     wtype = profile['type']
@@ -435,62 +481,94 @@ def get_radial_profile(nconn, profile, gap=0):
         
     else:
         raise NotImplementedError
-        
-    # LCRN network can have a minimum gap of between source and targets.
-    radius[radius< 0] -= gap
-    radius[radius>=0] += gap
+    
+    # In case of solely inhibitory networks, neurons are excited via excitatory
+    # background. In such cases, to emulate the mexian-hat profile, it is 
+    # common to prevent establishment of inhibitory links for nearest neighbors.
+    # The parameter `gap` ensures that the radial profile, doesn't sample a 
+    # post-synapse which is closer than the specified gap. Note that this gap
+    # may be squeezed/sheared during the anisotrofy step. But, it is ok, as the
+    # mexican hat profile is introduced only for the radial profile. 
+    if 'gap' in profile:
+        radius[radius< 0] -= profile['gap']
+        radius[radius>=0] += profile['gap']
     
     return radius
 
 
-def make_anisotropic(x,y, lscp, method='shift'):
+def make_anisotropic_profile(x,y, aniso, method='shift'):
     """
     takes an isotropic set of coordinates and transforms them
     into anisotropic ones according to the provided ``method``.
     """
     from scipy.spatial.transform import Rotation as R
     
-    # for convenience
-    r = lscp['r']
-    phi = lscp['phi']
-    r0 = np.array([x, y])
-    
-    
-    if method=='shift':
-        x = x + r*np.cos(phi)
-        y = y + r*np.sin(phi)
+    if method!= None:
+        # for convenience
+        # TODO: This might not be applicable for later forms of profile anisotorpy
+        r = aniso['r']
+        phi = aniso['phi']
+        r0 = np.array([x, y])
+     
         
-
-    elif method=='shift-rotate': # identical to shift. It's written for testing
-        r0[0,:] += r
-        rot = R.from_euler('z', phi).as_matrix()[:2,:2]
-        
-        x, y = rot @ r0
+        if method=='shift':
+            x = x + r*np.cos(phi)
+            y = y + r*np.sin(phi)
+            
     
-    elif method=='squeeze-rotate':
-        sqz = np.diag([1+r, 1/(1+r)])
-        rot = R.from_euler('z', phi).as_matrix()[:2,:2]
+        elif method=='shift-rotate': # identical to shift. It's written for testing
+            r0[0,:] += r
+            rot = R.from_euler('z', phi).as_matrix()[:2,:2]
+            
+            x, y = rot @ r0
         
-        x, y = rot @ sqz @ r0
-
-    elif method=='positive-rotate':
-        r0[0,:] = np.abs(r0[0,:]) 
-        rot = R.from_euler('z', phi).as_matrix()[:2,:2]
-        
-        x, y = rot @ r0
-
-    elif method=='positive-squeeze-rotate':
-        r0[0,:] = np.abs(r0[0,:]) 
-        sqz = np.diag([1+r, 1/(1+r)])
-        rot = R.from_euler('z', phi).as_matrix()[:2,:2]
-        
-        x, y = rot @ sqz @ r0
+        elif method=='squeeze-rotate':
+            sqz = np.diag([1+r, 1/(1+r)])
+            rot = R.from_euler('z', phi).as_matrix()[:2,:2]
+            
+            x, y = rot @ sqz @ r0
     
-    elif method=='iso':
-        pass
+        elif method=='positive-rotate':
+            r0[0,:] = np.abs(r0[0,:]) 
+            rot = R.from_euler('z', phi).as_matrix()[:2,:2]
+            
+            x, y = rot @ r0
     
-    else:
-        raise
+        elif method=='positive-squeeze-rotate':
+            r0[0,:] = np.abs(r0[0,:]) 
+            sqz = np.diag([1+r, 1/(1+r)])
+            rot = R.from_euler('z', phi).as_matrix()[:2,:2]
+            
+            x, y = rot @ sqz @ r0
+        else:
+            raise
+        
     
     return np.round(x).astype(int), np.round(y).astype(int)
     
+
+def make_anisotropic_syn(s_loc, t_locs, gs, anisotropy, method):
+    
+    syn_pars = {}
+    rel_locs = pre_loc2post_loc_rel(s_loc, t_locs, gs)
+    delays = np.linalg.norm(rel_locs, axis=1)
+    syn_pars['delays'] = delays
+    
+    if method == 'cos':
+        phis = np.arctan2(rel_locs[:,1], rel_locs[:,0])
+        phis -= anisotropy['phi']
+        Us = (1+ np.cos(phis))/2 * anisotropy['U'] 
+        
+        syn_pars['Us'] = Us
+            
+    elif method == 'sin':
+        phis = np.arctan2(rel_locs[:,1], rel_locs[:,0])
+        phis -= anisotropy['phi']
+        Us = (1+ np.sin(phis))/2 * anisotropy['U'] 
+        
+        syn_pars['Us'] = Us
+        
+    else:
+        pass
+    
+    return syn_pars

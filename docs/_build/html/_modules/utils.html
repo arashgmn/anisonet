@@ -83,7 +83,20 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../modules.html">anisonet</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../anisofy.html">anisofy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../anisofy.html">anisofy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#what-is-anisotropy-really">What is anisotropy, really?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#connectivity-heterogeneity">Connectivity heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#isotropic-profile">Isotropic profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#anisotropic-connectivity">Anisotropic connectivity</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#synaptic-heterogeneity">Synaptic heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#isotropic-synaptic-parameterization">Isotropic synaptic parameterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#anisotropic-synaptic-parameterization">Anisotropic synaptic parameterization</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../configs.html">configs module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../configs.html#population-s-configuration">Population’s configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../configs.html#pathways-configuration">Pathways’ configuration</a><ul>
@@ -96,10 +109,18 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../equations.html">equations module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../equations.html#noise-scaling">Noise scaling</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../equations.html#synaptic-model">Synaptic model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../equations.html#synapse-equations">Synapse equations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../equations.html#model">Model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../equations.html#kernel">Kernel</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../landscape.html">landscape module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../equations.html#conversion-to-jump-model">Conversion to jump model</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../landscape.html">landscape module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../landscape.html#anisotropy-in-connectivity">Anisotropy in connectivity</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../simulate.html">simulate module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../utils.html">utils module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../viz.html">viz module</a></li>
@@ -126,7 +147,7 @@
 
       <div class="wy-nav-content">
         
-        <div class="rst-content">
+        <div class="rst-content style-external-links">
         
           
 
@@ -180,10 +201,12 @@
 
 <span class="kn">import</span> <span class="nn">pickle</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">brian2</span> <span class="kn">import</span> <span class="n">Equations</span> 
-<span class="kn">from</span> <span class="nn">brian2</span> <span class="kn">import</span> <span class="n">mV</span><span class="p">,</span> <span class="n">nS</span><span class="p">,</span> <span class="n">pA</span><span class="p">,</span> <span class="n">ms</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
 
-<span class="n">root</span> <span class="o">=</span> <span class="s1">&#39;./&#39;</span>
+<span class="kn">import</span> <span class="nn">brian2</span> <span class="k">as</span> <span class="nn">b2</span>
+<span class="kn">from</span> <span class="nn">brian2</span> <span class="kn">import</span> <span class="n">mV</span><span class="p">,</span> <span class="n">nS</span><span class="p">,</span> <span class="n">pA</span><span class="p">,</span> <span class="n">ms</span><span class="p">,</span> <span class="n">second</span>
+
+<span class="kn">from</span> <span class="nn">pdb</span> <span class="kn">import</span> <span class="n">set_trace</span>
 
 <div class="viewcode-block" id="coord2idx"><a class="viewcode-back" href="../utils.html#utils.coord2idx">[docs]</a><span class="k">def</span> <span class="nf">coord2idx</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="n">pop</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -223,7 +246,7 @@
     <span class="k">return</span> <span class="n">coords</span></div>
 
 
-<div class="viewcode-block" id="aggregate_mons"><a class="viewcode-back" href="../utils.html#utils.aggregate_mons">[docs]</a><span class="k">def</span> <span class="nf">aggregate_mons</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">name_pattern</span><span class="p">):</span>
+<div class="viewcode-block" id="aggregate_mons"><a class="viewcode-back" href="../utils.html#utils.aggregate_mons">[docs]</a><span class="k">def</span> <span class="nf">aggregate_mons</span><span class="p">(</span><span class="n">sim</span><span class="p">,</span> <span class="n">mon_name</span><span class="p">,</span> <span class="n">SI</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Aggregates the indices and timings of the spiking events from disk.</span>
 <span class="sd">    </span>
@@ -234,28 +257,269 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     
-    <span class="n">files_list</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span> <span class="n">osjoin</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">name_pattern</span><span class="o">+</span><span class="s1">&#39;*&#39;</span><span class="p">)))</span>
-    <span class="n">idxs</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">ts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">data_path</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">data_path</span>
+    <span class="n">name_pattern</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">name</span><span class="o">+</span> <span class="s1">&#39;_&#39;</span><span class="o">+</span> <span class="n">mon_name</span><span class="o">+</span><span class="s1">&#39;_*.dat&#39;</span>
+    
+    <span class="n">files_list</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span> <span class="n">osjoin</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">name_pattern</span><span class="p">)))</span>
+    <span class="n">mon</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">files_list</span><span class="p">):</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-            <span class="n">idxs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]))</span>
-            <span class="n">ts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">ms</span><span class="p">))</span>
+            
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">mon</span><span class="p">:</span>
+                    <span class="n">mon</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mon</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">value</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">mon</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="c1"># ts.append(list(data[&#39;t&#39;]/ms))</span>
+            
+            <span class="c1"># idxs.append(list(data[&#39;i&#39;]))</span>
     
-    <span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">idxs</span><span class="p">)</span>
-    <span class="n">ts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span>
-    
-    <span class="k">del</span> <span class="n">files_list</span>
-    <span class="k">return</span> <span class="n">idxs</span><span class="p">,</span> <span class="n">ts</span></div>
+    <span class="c1"># if not SpikeMonitor, then we have to reshape the monitors</span>
+    <span class="k">if</span> <span class="s1">&#39;syn&#39;</span> <span class="ow">in</span> <span class="n">mon_name</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">mon</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="s1">&#39;N&#39;</span><span class="p">]:</span>
+                <span class="n">mon</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mon</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">]),</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                
+    <span class="c1"># if SI:</span>
+    <span class="c1">#     mon[&#39;t&#39;] /= (1*second)</span>
+    <span class="c1"># # idxs = np.concatenate(idxs)</span>
+    <span class="c1"># # ts = np.concatenate(ts)</span>
 
-<span class="c1"># if __name__==&#39;__main__&#39;:</span>
-<span class="c1">#     import brian2 as b2</span>
+    <span class="k">return</span> <span class="n">mon</span></div>
+
+
+<div class="viewcode-block" id="stimulator"><a class="viewcode-back" href="../utils.html#utils.stimulator">[docs]</a><span class="k">def</span> <span class="nf">stimulator</span><span class="p">(</span><span class="n">sim</span><span class="p">,</span> <span class="n">stim_cfgs</span><span class="p">):</span>
+    <span class="n">stims</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">stim_id</span><span class="p">,</span> <span class="n">stim_cfg</span> <span class="ow">in</span> <span class="n">stim_cfgs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">domain</span> <span class="o">=</span> <span class="n">stim_cfg</span><span class="p">[</span><span class="s1">&#39;domain&#39;</span><span class="p">]</span>
+        <span class="n">ampli</span> <span class="o">=</span> <span class="n">stim_cfg</span><span class="p">[</span><span class="s1">&#39;domain&#39;</span><span class="p">]</span> 
+        <span class="n">pop</span> <span class="o">=</span> <span class="n">stim_id</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="c1"># assuming ids like I_1, I_2</span>
+        <span class="n">gs</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">pops</span><span class="p">[</span><span class="n">pop</span><span class="p">]</span><span class="o">.</span><span class="n">gs</span> 
+        
+        <span class="c1"># finding domain</span>
+        <span class="k">if</span> <span class="n">domain</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;random&#39;</span><span class="p">:</span>
+            <span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">gs</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">gs</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">domain</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">domain</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;xy&#39;</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">domain</span><span class="p">[</span><span class="s1">&#39;x_min&#39;</span><span class="p">],</span> <span class="n">domain</span><span class="p">[</span><span class="s1">&#39;x_max&#39;</span><span class="p">])</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">domain</span><span class="p">[</span><span class="s1">&#39;y_min&#39;</span><span class="p">],</span> <span class="n">domain</span><span class="p">[</span><span class="s1">&#39;y_max&#39;</span><span class="p">])</span>
+                <span class="n">x</span><span class="p">,</span><span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+                <span class="n">coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span><span class="n">y</span><span class="o">.</span><span class="n">ravel</span><span class="p">())))</span>
+            
+            <span class="k">elif</span> <span class="n">domain</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;r&#39;</span><span class="p">:</span>
+                <span class="n">coords</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="nb">round</span><span class="p">(</span><span class="n">domain</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">])</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">domain</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">])</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="nb">round</span><span class="p">(</span><span class="n">domain</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">])</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">domain</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">])</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="o">**</span><span class="mi">2</span> <span class="o">&lt;=</span> <span class="n">domain</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">:</span>
+                            <span class="n">coords</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="p">[(</span><span class="n">x</span> <span class="o">+</span> <span class="n">domain</span><span class="p">[</span><span class="s1">&#39;x0&#39;</span><span class="p">])</span><span class="o">%</span><span class="n">gs</span><span class="p">,</span> 
+                                            <span class="p">(</span><span class="n">y</span> <span class="o">+</span> <span class="n">domain</span><span class="p">[</span><span class="s1">&#39;y0&#39;</span><span class="p">])</span><span class="o">%</span><span class="n">gs</span><span class="p">]</span> <span class="p">)</span> 
+                <span class="n">coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+            
+            <span class="n">idxs</span> <span class="o">=</span> <span class="n">coord2idx</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="n">sim</span><span class="o">.</span><span class="n">pops</span><span class="p">[</span><span class="n">pop</span><span class="p">])</span>
+            
+
+        <span class="c1"># finding amplitude</span>
+        <span class="k">if</span> <span class="n">stim_cfg</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;const&#39;</span><span class="p">:</span>
+            <span class="n">I_stim</span> <span class="o">=</span> <span class="n">stim_cfg</span><span class="p">[</span><span class="s1">&#39;I_stim&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">pA</span>
+            <span class="c1"># b2.TimedArray([stim_cfg[&#39;I_stim&#39;]]*pA,</span>
+            <span class="c1">#                                dt=sim.pops[pop].clock.dt)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Only constant stimulation is supported now.&#39;</span><span class="p">)</span>
+        
+        <span class="n">stims</span><span class="p">[</span><span class="n">stim_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;idxs&#39;</span><span class="p">:</span> <span class="n">idxs</span><span class="p">,</span> <span class="s1">&#39;I_stim&#39;</span><span class="p">:</span> <span class="n">I_stim</span><span class="p">}</span>
     
-<span class="c1">#     G = b2.NeuronGroup(N=100**2, model=&quot;dv/dt=1:1&quot;)</span>
+    <span class="k">return</span> <span class="n">stims</span></div>
+
+
+<div class="viewcode-block" id="get_line_idx"><a class="viewcode-back" href="../utils.html#utils.get_line_idx">[docs]</a><span class="k">def</span> <span class="nf">get_line_idx</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">pop</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">pop</span><span class="o">.</span><span class="n">gs</span><span class="o">//</span><span class="mi">2</span><span class="p">)</span> <span class="c1">#only half of plane will be modified</span>
     
-<span class="c1">#     i2c = idx2coords([1,102], G)</span>
-<span class="c1">#     c2i = coord2idx(i2c, G)</span>
+    <span class="n">coords</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">:</span>
+        <span class="n">y_center</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">x</span><span class="o">*</span><span class="n">c</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">y_center</span><span class="o">-</span><span class="n">eps</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">y_center</span><span class="o">+</span><span class="n">eps</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">y</span><span class="o">**</span><span class="mi">2</span> <span class="o">&lt;=</span> <span class="n">eps</span><span class="o">**</span><span class="mi">2</span><span class="p">:</span>
+                <span class="n">coords</span><span class="o">.</span><span class="n">append</span><span class="p">([(</span><span class="n">x</span><span class="o">+</span><span class="n">x0</span><span class="p">)</span> <span class="o">%</span> <span class="n">pop</span><span class="o">.</span><span class="n">gs</span><span class="p">,</span> <span class="p">(</span><span class="n">y</span><span class="o">+</span><span class="n">y0</span><span class="p">)</span> <span class="o">%</span> <span class="n">pop</span><span class="o">.</span><span class="n">gs</span><span class="p">])</span>
+    <span class="n">coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">idxs</span> <span class="o">=</span> <span class="n">coord2idx</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="n">pop</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">idxs</span><span class="p">,</span> <span class="n">coords</span></div>
+    
+    
+<div class="viewcode-block" id="phase_estimator"><a class="viewcode-back" href="../utils.html#utils.phase_estimator">[docs]</a><span class="k">def</span> <span class="nf">phase_estimator</span><span class="p">(</span><span class="n">idxs</span><span class="p">,</span> <span class="n">ts</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ts</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="nb">int</span><span class="p">(</span><span class="n">ts</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">//</span><span class="n">dt</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">phis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">idxs</span><span class="p">)),</span> <span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)))</span>
+    
+    <span class="k">for</span> <span class="n">num</span><span class="p">,</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">idxs</span><span class="p">))):</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+        
+        <span class="n">t_spk</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ts</span><span class="p">[</span><span class="n">idxs</span> <span class="o">==</span> <span class="n">idx</span><span class="p">])</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">t_spk</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">t_dif</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">t_spk</span><span class="p">)</span>
+            
+            <span class="n">head</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">t_spk</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">//</span><span class="n">dt</span><span class="p">)</span>
+            
+            <span class="k">for</span> <span class="n">chunk_id</span><span class="p">,</span> <span class="n">dif</span> <span class="ow">in</span>  <span class="nb">enumerate</span><span class="p">(</span><span class="n">t_dif</span><span class="p">):</span>
+                <span class="c1"># set_trace()</span>
+                <span class="n">chunk_len</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">dif</span><span class="o">//</span><span class="n">dt</span><span class="p">)</span>
+                <span class="n">phi</span><span class="p">[</span> <span class="n">head</span><span class="p">:</span> <span class="n">head</span> <span class="o">+</span> <span class="n">chunk_len</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">chunk_len</span><span class="p">)</span> 
+                <span class="n">head</span> <span class="o">+=</span> <span class="n">chunk_len</span>
+            
+            <span class="n">phis</span><span class="p">[</span><span class="n">num</span><span class="p">]</span> <span class="o">=</span> <span class="n">phi</span>
+    
+    <span class="k">return</span> <span class="n">t</span><span class="p">,</span> <span class="n">phis</span></div>
+
+<div class="viewcode-block" id="estimate_order_parameter"><a class="viewcode-back" href="../utils.html#utils.estimate_order_parameter">[docs]</a><span class="k">def</span> <span class="nf">estimate_order_parameter</span><span class="p">(</span><span class="n">phis</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+    <span class="k">if</span> <span class="n">k</span><span class="o">==</span><span class="kc">None</span><span class="p">:</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">phis</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="o">==</span><span class="n">phis</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        
+    <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">phis</span><span class="p">),</span> <span class="n">weights</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">R</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">R</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="make_circular"><a class="viewcode-back" href="../utils.html#utils.make_circular">[docs]</a><span class="k">def</span> <span class="nf">make_circular</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">r_max</span><span class="p">):</span>
+    <span class="k">return</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">r</span><span class="o">/</span><span class="n">r_max</span></div>
+
+<div class="viewcode-block" id="make_planar"><a class="viewcode-back" href="../utils.html#utils.make_planar">[docs]</a><span class="k">def</span> <span class="nf">make_planar</span><span class="p">(</span><span class="n">angle</span><span class="p">,</span> <span class="n">r_max</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">angle</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="n">r_max</span></div>
+    
+<div class="viewcode-block" id="plane2torus"><a class="viewcode-back" href="../utils.html#utils.plane2torus">[docs]</a><span class="k">def</span> <span class="nf">plane2torus</span><span class="p">(</span><span class="n">p_coords</span><span class="p">,</span> <span class="n">gs</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;lin&#39;</span><span class="p">):</span>
+    <span class="c1">#set_trace()</span>
+    <span class="c1"># coords must have the shape (n_coords,2)</span>
+    <span class="k">assert</span> <span class="n">p_coords</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span> <span class="c1"># shape must be </span>
+    
+    <span class="n">t_coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">p_coords</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">4</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">phi</span><span class="p">,</span> <span class="n">psi</span> <span class="o">=</span> <span class="n">make_circular</span><span class="p">(</span><span class="n">p_coords</span><span class="p">,</span> <span class="n">gs</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+    
+    <span class="k">if</span> <span class="n">method</span><span class="o">==</span><span class="s1">&#39;tri&#39;</span><span class="p">:</span>
+        <span class="c1"># morphing x</span>
+        <span class="n">t_coords</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+        <span class="n">t_coords</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+        
+        <span class="c1"># morphing y</span>
+        <span class="n">t_coords</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">psi</span><span class="p">)</span>
+        <span class="n">t_coords</span><span class="p">[:,</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">psi</span><span class="p">)</span>
+    
+    <span class="k">elif</span> <span class="n">method</span><span class="o">==</span><span class="s1">&#39;lin&#39;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">id_</span><span class="p">,</span> <span class="n">ang</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="n">phi</span><span class="p">,</span> <span class="n">psi</span><span class="p">]):</span>
+            <span class="c1"># Sin component</span>
+            <span class="n">choice0</span> <span class="o">=</span> <span class="n">ang</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>     
+            <span class="n">choice1</span> <span class="o">=</span> <span class="o">-</span><span class="n">ang</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span>
+            <span class="n">choice2</span> <span class="o">=</span> <span class="n">ang</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">4</span>
+            
+            <span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">ang</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+            <span class="n">index</span><span class="p">[</span><span class="n">ang</span> <span class="o">&lt;=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">index</span><span class="p">[(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span> <span class="o">&lt;</span> <span class="n">ang</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ang</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">index</span><span class="p">[</span><span class="n">ang</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+            
+            <span class="n">t_coords</span><span class="p">[:,</span><span class="mi">2</span><span class="o">*</span><span class="n">id_</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">choose</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="p">[</span><span class="n">choice0</span><span class="p">,</span> <span class="n">choice1</span><span class="p">,</span> <span class="n">choice2</span><span class="p">])</span>
+                
+            <span class="c1"># cos component</span>
+            <span class="n">choice0</span> <span class="o">=</span> <span class="o">-</span><span class="n">ang</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>     
+            <span class="n">choice1</span> <span class="o">=</span> <span class="o">+</span><span class="n">ang</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span>
+            
+            <span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">ang</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+            <span class="n">index</span><span class="p">[</span><span class="n">ang</span> <span class="o">&lt;=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">index</span><span class="p">[</span><span class="n">ang</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            
+            <span class="n">t_coords</span><span class="p">[:,</span><span class="mi">2</span><span class="o">*</span><span class="n">id_</span> <span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">choose</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="p">[</span><span class="n">choice0</span><span class="p">,</span> <span class="n">choice1</span><span class="p">])</span>
+            
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;At the moment only triangulumetric and linear morphing is possible.&quot;</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">t_coords</span></div>
+
+
+<div class="viewcode-block" id="torus2plane"><a class="viewcode-back" href="../utils.html#utils.torus2plane">[docs]</a><span class="k">def</span> <span class="nf">torus2plane</span><span class="p">(</span><span class="n">t_coords</span><span class="p">,</span> <span class="n">gs</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;tri&#39;</span><span class="p">):</span>
+    <span class="c1"># coords must have the shape (n_coords,4)</span>
+    <span class="k">assert</span> <span class="n">t_coords</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span> <span class="c1"># (s_x, c_x, s_y, c_y)</span>
+    
+    <span class="n">p_coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">t_coords</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">method</span><span class="o">==</span><span class="s1">&#39;tri&#39;</span><span class="p">:</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">t_coords</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">t_coords</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">psi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">t_coords</span><span class="p">[:,</span><span class="mi">2</span><span class="p">],</span> <span class="n">t_coords</span><span class="p">[:,</span><span class="mi">3</span><span class="p">])</span>
+        
+        <span class="n">p_coords</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">make_planar</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">gs</span><span class="p">)</span>
+        <span class="n">p_coords</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">make_planar</span><span class="p">(</span><span class="n">psi</span><span class="p">,</span> <span class="n">gs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;At the moment only triangular morphing is possible.&quot;</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">p_coords</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span></div>
+    
+        
+<div class="viewcode-block" id="balance_dist"><a class="viewcode-back" href="../utils.html#utils.balance_dist">[docs]</a><span class="k">def</span> <span class="nf">balance_dist</span><span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="n">t_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">t_max</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">t0</span><span class="o">-</span><span class="n">t0</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="n">t</span> <span class="o">/=</span> <span class="n">t</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    
+    <span class="n">percents</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+    <span class="n">sorted_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">percents</span><span class="p">):</span>
+        <span class="n">t</span><span class="p">[</span><span class="n">sorted_idx</span><span class="p">[</span><span class="n">idx</span><span class="p">]]</span> <span class="o">=</span> <span class="n">val</span>
+        
+    <span class="n">t</span> <span class="o">=</span> <span class="n">t_min</span> <span class="o">+</span> <span class="p">(</span><span class="n">t_max</span> <span class="o">-</span> <span class="n">t_min</span><span class="p">)</span> <span class="o">*</span> <span class="n">t</span>
+    <span class="c1"># n_quantiles = len(set(t))</span>
+    <span class="c1"># quant_size = len(t)//n_quantiles </span>
+    <span class="c1"># print(n_quantiles, quant_size)</span>
+    
+    <span class="c1"># for quant_idx, quant_val in enumerate(np.linspace(t_min, t_max, n_quantiles+1)):</span>
+    <span class="c1">#     t[ sorted_idx[quant_idx*quant_size : (quant_idx+ 1)*quant_size] ] = quant_val</span>
+    
+    <span class="k">return</span> <span class="n">t</span></div>
+    
+    <span class="c1"># sorted_idx = np.argsort(phis)</span>
+    <span class="c1"># max_val = gs * 2</span>
+    <span class="c1"># idx = len(phis) // max_val</span>
+    <span class="c1"># for ii, val in enumerate(range(max_val)):</span>
+    <span class="c1">#     phis[sorted_idx[ii * idx:(ii + 1) * idx]] = val</span>
+    <span class="c1"># phis = (phis - gs) / gs</span>
+    
+    <span class="c1"># # to push between -pi and pi</span>
+    <span class="c1"># phis -= np.min(phis)</span>
+    <span class="c1"># phis *= 2*np.pi/(np.max(phis)+1e-12)</span>
+    <span class="c1"># phis -= np.pi</span>
+
+<div class="viewcode-block" id="get_anisotropic_U"><a class="viewcode-back" href="../utils.html#utils.get_anisotropic_U">[docs]</a><span class="k">def</span> <span class="nf">get_anisotropic_U</span><span class="p">(</span><span class="n">sim</span><span class="p">,</span> <span class="n">syn_name</span><span class="p">,</span> <span class="n">Umax</span><span class="p">):</span>
+    <span class="n">syn</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">syns</span><span class="p">[</span><span class="n">syn_name</span><span class="p">]</span>
+    <span class="n">conn_cfg</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">conn_cfg</span><span class="p">[</span><span class="n">syn_name</span><span class="p">]</span>
+    <span class="n">lscp</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">lscp</span><span class="p">[</span><span class="n">syn_name</span><span class="p">][</span><span class="s1">&#39;phi&#39;</span><span class="p">]</span>
+    <span class="n">lscp</span> <span class="o">=</span> <span class="n">Umax</span><span class="o">*</span><span class="p">(</span><span class="n">lscp</span><span class="o">-</span> <span class="n">lscp</span><span class="o">.</span><span class="n">min</span><span class="p">())</span><span class="o">/</span><span class="p">(</span><span class="n">lscp</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">-</span><span class="n">lscp</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+    
+    <span class="n">Us</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">syn</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">idx_pre</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">sim</span><span class="o">.</span><span class="n">syns</span><span class="p">[</span><span class="n">syn_name</span><span class="p">]</span><span class="o">.</span><span class="n">i</span><span class="p">)):</span>
+        <span class="n">syn_idx</span> <span class="o">=</span> <span class="n">syn</span><span class="p">[</span><span class="s2">&quot;i==</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx_pre</span><span class="p">)]</span><span class="o">.</span><span class="n">_indices</span><span class="p">()</span>
+        <span class="n">U_mean</span> <span class="o">=</span> <span class="n">lscp</span><span class="p">[</span><span class="n">idx_pre</span><span class="p">]</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">alpha</span><span class="o">*</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="p">(</span><span class="n">U_mean</span><span class="o">+</span><span class="mf">1e-12</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">Us</span><span class="p">[</span><span class="n">syn_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">beta</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">syn_idx</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">Us</span></div>
+
+<div class="viewcode-block" id="get_post_rel_locs"><a class="viewcode-back" href="../utils.html#utils.get_post_rel_locs">[docs]</a><span class="k">def</span> <span class="nf">get_post_rel_locs</span><span class="p">(</span><span class="n">syn</span><span class="p">,</span> <span class="n">pre_idx</span><span class="p">):</span>
+    <span class="n">s_loc</span> <span class="o">=</span> <span class="n">idx2coords</span><span class="p">(</span><span class="n">pre_idx</span><span class="p">,</span> <span class="n">syn</span><span class="o">.</span><span class="n">source</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">s_loc</span><span class="o">*=</span> <span class="n">syn</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">gs</span><span class="o">/</span><span class="n">syn</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">gs</span><span class="o">*</span><span class="mf">1.</span>
+    <span class="n">s_loc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">s_loc</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    
+    <span class="n">t_locs</span> <span class="o">=</span> <span class="n">get_post_locs</span><span class="p">(</span><span class="n">syn</span><span class="p">,</span> <span class="n">pre_idx</span><span class="p">)</span> <span class="o">-</span> <span class="n">s_loc</span>
+    <span class="n">t_locs</span> <span class="o">=</span>  <span class="p">(</span><span class="n">t_locs</span> <span class="o">+</span> <span class="n">syn</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">gs</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">%</span> <span class="n">syn</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">gs</span> <span class="o">-</span> <span class="n">syn</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">gs</span><span class="o">/</span><span class="mi">2</span>
+    <span class="k">return</span> <span class="n">t_locs</span></div>
+
+<div class="viewcode-block" id="get_post_idxs"><a class="viewcode-back" href="../utils.html#utils.get_post_idxs">[docs]</a><span class="k">def</span> <span class="nf">get_post_idxs</span><span class="p">(</span><span class="n">syn</span><span class="p">,</span> <span class="n">pre_idx</span><span class="p">):</span>
+    <span class="n">syns_pre</span> <span class="o">=</span> <span class="n">syn</span><span class="p">[</span><span class="s2">&quot;i==</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pre_idx</span><span class="p">)]</span><span class="o">.</span><span class="n">_indices</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">syn</span><span class="o">.</span><span class="n">j</span><span class="p">[</span><span class="n">syns_pre</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="get_post_locs"><a class="viewcode-back" href="../utils.html#utils.get_post_locs">[docs]</a><span class="k">def</span> <span class="nf">get_post_locs</span><span class="p">(</span><span class="n">syn</span><span class="p">,</span> <span class="n">pre_idx</span><span class="p">):</span>
+    <span class="n">post_idxs</span> <span class="o">=</span> <span class="n">get_post_idxs</span><span class="p">(</span><span class="n">syn</span><span class="p">,</span> <span class="n">pre_idx</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">idx2coords</span><span class="p">(</span><span class="n">post_idxs</span><span class="p">,</span> <span class="n">syn</span><span class="o">.</span><span class="n">target</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="pre_loc2post_loc_rel"><a class="viewcode-back" href="../utils.html#utils.pre_loc2post_loc_rel">[docs]</a><span class="k">def</span> <span class="nf">pre_loc2post_loc_rel</span><span class="p">(</span><span class="n">t_locs</span><span class="p">,</span> <span class="n">s_loc</span><span class="p">,</span> <span class="n">gs</span><span class="p">):</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">t_locs</span> <span class="o">-</span> <span class="n">s_loc</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">tmp</span> <span class="o">+</span><span class="n">gs</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">%</span> <span class="n">gs</span> <span class="o">-</span> <span class="n">gs</span><span class="o">/</span><span class="mi">2</span></div>
+    
 </pre></div>
 
            </div>

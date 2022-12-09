@@ -87,11 +87,15 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">anisonet</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">anisofy module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#enforcing-anisotropy">Enforcing anisotropy</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#dispalcement-based">Dispalcement-based</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#rotation-based">Rotation-based</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#positive-rotation">Positive rotation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#squeeze-positive-rotation">Squeeze positive rotation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-is-anisotropy-really">What is anisotropy, really?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#connectivity-heterogeneity">Connectivity heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#isotropic-profile">Isotropic profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#anisotropic-connectivity">Anisotropic connectivity</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#synaptic-heterogeneity">Synaptic heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#isotropic-synaptic-parameterization">Isotropic synaptic parameterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#anisotropic-synaptic-parameterization">Anisotropic synaptic parameterization</a></li>
 </ul>
 </li>
 </ul>
@@ -116,7 +120,10 @@
 <li class="toctree-l3"><a class="reference internal" href="equations.html#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="landscape.html#anisotropy-in-connectivity">Anisotropy in connectivity</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="simulate.html">simulate module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">utils module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="viz.html">viz module</a></li>
@@ -190,92 +197,127 @@
             
   <section id="module-anisofy">
 <span id="anisofy-module"></span><h1>anisofy module<a class="headerlink" href="#module-anisofy" title="Permalink to this heading">¶</a></h1>
-<p>This module controls the inhomogeneity and anistropy of the synaptic 
-connections. The probability of stablishing a connection from the presynapse at
-location <span class="math notranslate nohighlight">\(\textbf r\)</span> to location <span class="math notranslate nohighlight">\(\textbf r'\)</span>, in general depends
-on both locations. We model connectivies that can be broken down this into 
-radial and angular terms:</p>
-<div class="math notranslate nohighlight">
-\[w(\textbf r, \textbf r') = f(|\textbf r - \textbf r'|) g(\phi)\]</div>
-<p>The function <span class="math notranslate nohighlight">\(f\)</span> controls the extent of spatial homogeneity and is assumed to 
-have a peak at the center. Function <span class="math notranslate nohighlight">\(g\)</span> encodes anisotropy or angular 
-bias in forming connections.</p>
-<p>There are many ways to model such dependence. We implemented two methods: a
-displacement-based (<cite>shift</cite>) and a rotation-based (<cite>rotate</cite>) one which are 
-explained in details below.</p>
-<p><strong>Inhomogeneity</strong>: Radial connectivity profile can enforce locality. The following profiles are
-supported:</p>
+<section id="what-is-anisotropy-really">
+<h2>What is anisotropy, really?<a class="headerlink" href="#what-is-anisotropy-really" title="Permalink to this heading">¶</a></h2>
+<p>We assume every neuron is somehow different from its surrounding, in that it is
+biased in one form or other toward on direction. Such angular bias, thus, makes
+up so-called anisotropy landscape, which is nothing but a visualization of the
+extend of this bias for each neuron in the spatial field.</p>
+<p>For instance, <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a> introduced a directional bias (anisotropy) in the 
+connectivity of locally connected neurons. Similarly, we can introduce an
+angular heterogeneity in the synaptic parameters (think of the parameters of 
+the <cite>kernel</cite> dicussed in <a class="reference internal" href="equations.html#kernel"><span class="std std-ref">Kernel</span></a>). Probably other forms are 
+possible too, but in this package, we stick to these two only. So in what 
+follows, we discuss these two form of anisotropy and how can we produce them.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In this madule we only explain the imposition of anisotropy. For how such 
+neuron-specific biases are spread in space, please refer to <span class="xref std std-ref">landscape</span>.</p>
+</div>
+</section>
+<section id="connectivity-heterogeneity">
+<h2>Connectivity heterogeneity<a class="headerlink" href="#connectivity-heterogeneity" title="Permalink to this heading">¶</a></h2>
+<section id="isotropic-profile">
+<h3>Isotropic profile<a class="headerlink" href="#isotropic-profile" title="Permalink to this heading">¶</a></h3>
+<p>It is common to assume that the probability of establishing a link between two
+neurons depends on their distance. As such, the connecitivity profile from any
+presynapse will be an isometric sphere centered on the locaiton of presynapse.
+Such isotropy even holds for situations in which neurons are connected 
+uniformly regardless of their distance.</p>
+<p>We refer this radial connecitivty pattern simply as <code class="docutils literal notranslate"><span class="pre">profile</span></code>. The following
+profiles are supported:</p>
 <blockquote>
 <div><ol class="arabic simple">
-<li><p>Gaussian</p></li>
-<li><p>Gamma distribution</p></li>
 <li><p>uniform (homogeneous)</p></li>
+<li><p>Gaussian distribution</p></li>
+<li><p>Gamma distribution</p></li>
 </ol>
 </div></blockquote>
-<p>using which we sample the distance (radius) to the postsynapse. Additionally,
-in cases where autapse is not allowed, we symmetrically shift the aformentioed 
-PDFs such that distances less than a controllable <code class="docutils literal notranslate"><span class="pre">gap</span></code> are improbable.</p>
-<p><strong>Anisotropy</strong>: We attribute an angle <span class="math notranslate nohighlight">\(\phi\)</span> to each neuron that specifies its angular
-bias (a.k.a. anisotropy landscape) by the following strategies:</p>
+<p>Not specifying any profile will be fallen back to the <code class="docutils literal notranslate"><span class="pre">uniform</span></code> case
+automatically.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>One particularly interesting connectivity pattern is Mexcan hat profile (aka
+difference of Gaussians) which implements proximal excitation and lateral
+inhibition (or vice versa, depending on which one is subtracted from the 
+other). This profile is known to give rise to activity bumps in networks.</p>
+<p>In case of networks with single synaptic types (only inhibitory or 
+excitatory) which are driven by a background input of the opposite polarity
+it is possible to emulate the maxican hot profile by introducing a central
+<code class="docutils literal notranslate"><span class="pre">gap</span></code> in the connectivity profile. As such, <code class="docutils literal notranslate"><span class="pre">gap</span></code> ensures that there is
+an effective connecitivty difference between nearby neurons and distals 
+ones. By default, it is set to zero, but use it if your network does not 
+opposite synaptic types.</p>
+</div>
+</section>
+<section id="anisotropic-connectivity">
+<h3>Anisotropic connectivity<a class="headerlink" href="#anisotropic-connectivity" title="Permalink to this heading">¶</a></h3>
+<p>The connecitivty pattern introduced earlier is isotropic. We can break this 
+isotropy in the following ways:</p>
 <blockquote>
 <div><ol class="arabic simple">
-<li><p>uniform (isotropic)</p></li>
-<li><p>constant or homogenous</p></li>
-<li><p>Perlin-noise-based: A unifromly random method with spatioal correlation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">shift</span></code>: Shifts the postsynaptic cloud, as introduced by <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a>. In this case,
+the connections are simply shifted in space by a displacement vector, which
+is specific to each neuron. Thus, the anisotropy landscape is characterized
+by displacement length <span class="math notranslate nohighlight">\(r(\textbf x)\)</span> and anisotropy angle 
+<span class="math notranslate nohighlight">\(\phi(\textbf x)\)</span>, in which <span class="math notranslate nohighlight">\(\textbf x\)</span> shows the location 
+dependence.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">squeeze-rotate</span></code>: Squeezes the postsynaptic cloud and then rotate it. 
+This method, too, introduces anisotropy using two factors. Axis squeezing 
+ratio <span class="math notranslate nohighlight">\(r(\textbf x)\)</span> and the anisotropy angle <span class="math notranslate nohighlight">\(\phi(\textbf x)\)</span>.
+Note that in this method, the outcomes of rotation angles <span class="math notranslate nohighlight">\(\theta\)</span> and 
+<span class="math notranslate nohighlight">\(2\pi - \theta\)</span> are indentical.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">positive-rotate</span></code>: Mirros the connecitions with negative x-component to 
+the positive-x, and then rotate them. This method only requires the roation 
+angle <span class="math notranslate nohighlight">\(\phi(\textbf x)\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">positive-squeeze-rotate</span></code>: Mixes the last two methods by squeezing the 
+reflected-to-positive connections before rotating. Thus, it requires both 
+the angle <span class="math notranslate nohighlight">\(\phi(\textbf x)\)</span> and the axis squeezing ratio 
+<span class="math notranslate nohighlight">\(r(\textbf x)\)</span> for full characterization.</p></li>
 </ol>
 </div></blockquote>
-<p>Having the landscape specified, we now explain how connections 
-are actually formed.</p>
-<section id="enforcing-anisotropy">
-<h2>Enforcing anisotropy<a class="headerlink" href="#enforcing-anisotropy" title="Permalink to this heading">¶</a></h2>
-<p>Anisotropy is induced in two major steps. The first one, which is shared among
-all methods, is generating an <em>iso</em>-tropic set of posible postsynaptic locations.
-based on the radius drew before. These locations make an angle-independent 
-presynapse-centric point cloud. The next step natually is to induce anisotropy
-in this cloud. The API accepts the following values which are explained below:</p>
+<p>The figure below displays the effect of these method:</p>
+</section>
+</section>
+<section id="synaptic-heterogeneity">
+<h2>Synaptic heterogeneity<a class="headerlink" href="#synaptic-heterogeneity" title="Permalink to this heading">¶</a></h2>
+<section id="isotropic-synaptic-parameterization">
+<h3>Isotropic synaptic parameterization<a class="headerlink" href="#isotropic-synaptic-parameterization" title="Permalink to this heading">¶</a></h3>
+<p>Synapses are often initialized either indentically or completely randomly. 
+Either case are isotropic and are refered here as:</p>
 <blockquote>
 <div><ol class="arabic simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">shift</span></code>: A displacement-based method</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">squeeze-rotate</span></code>: A rotation-based method that first squeezes the point
-cloud</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">positive-rotate</span></code>: A rotation-based method that constraints the point 
-cloud to positive x values before rotation. Thus, differentiates between 
-angle <span class="math notranslate nohighlight">\(\theta\)</span> and <span class="math notranslate nohighlight">\(2\pi - \theta\)</span>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">positive-squeeze-rotate</span></code>: combination of last two methods.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rand</span></code>: uniformly initializes the parameters between 0 and 1 or 
+between the minimum and maximum acceptable values for non-normalized
+quantities.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ss</span></code>:  initialized all the varaibles in accord to their steady-state
+equilibrated value. In case of plasticitiy dependent values, steady-state
+is defined under the <cite>no-usage</cite> condition.</p></li>
 </ol>
 </div></blockquote>
-<section id="dispalcement-based">
-<h3>Dispalcement-based<a class="headerlink" href="#dispalcement-based" title="Permalink to this heading">¶</a></h3>
-<p>This method is similar to <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a> and works as follows. To enforce 
-anisotropy, this point cloud is shifted be a displacement vector determined by
-a length <span class="math notranslate nohighlight">\(r &gt; 0\)</span>  and angle  <span class="math notranslate nohighlight">\(\phi\)</span> (the landscape). We keep this 
-length constant for all neurons (although it can be very well change too).</p>
 </section>
-<section id="rotation-based">
-<h3>Rotation-based<a class="headerlink" href="#rotation-based" title="Permalink to this heading">¶</a></h3>
-<p>In this method we generate a circular point cloud as before. However, instead 
-of displacing, we first squeeze this point cloud and then rotate this elongated 
-point could according to the angle provided in the landscape. Squeezing is 
-controlled by the <span class="math notranslate nohighlight">\(r &gt; 0\)</span> property of the landscape – now interpreted as
-the <cite>reshpae</cite> factor: The x-axis of the point cloud is up-scaled by <span class="math notranslate nohighlight">\(1+r\)</span>
-while the y-axis is down-scaled by the same factor (so that the area stays 
-constant). Then the ellipse is rotated along the z-axis. Note that for these
-method, complementary angles lead to the identical distributions.</p>
-</section>
-<section id="positive-rotation">
-<h3>Positive rotation<a class="headerlink" href="#positive-rotation" title="Permalink to this heading">¶</a></h3>
-<p>To discern between complementary angles <span class="math notranslate nohighlight">\(\theta\)</span> and <span class="math notranslate nohighlight">\(\theta' = 2\pi - \theta\)</span> 
-this method first coverts all the locations with the negative-x to positive ones.
-Then, it rotates the (now half-circular) point cloud without squeezign it.</p>
-</section>
-<section id="squeeze-positive-rotation">
-<h3>Squeeze positive rotation<a class="headerlink" href="#squeeze-positive-rotation" title="Permalink to this heading">¶</a></h3>
-<p>Combines the two method above by first converting to positive x values, and 
-then squeezing followed by rotating.</p>
-<p>Other methods can be exercised as well.</p>
+<section id="anisotropic-synaptic-parameterization">
+<h3>Anisotropic synaptic parameterization<a class="headerlink" href="#anisotropic-synaptic-parameterization" title="Permalink to this heading">¶</a></h3>
+<p>The anisotropy in the synapses in imposed based on their relative direction 
+w.r.t. the presynapse (which is computed for each neuron individually). Given
+the direction of each postsynapse (<span class="math notranslate nohighlight">\(\theta\)</span>), and neuron-specific angular
+bias (<span class="math notranslate nohighlight">\(\phi(\textbf x)\)</span>) the anisotropy is applied according to a 
+trianglumertic transformation:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sin</span></code>: modulates the variable between its minium and maximum range 
+accodring to <span class="math notranslate nohighlight">\(\frac{1+\sin (\theta-\phi(\textbf x) )}{2}\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cos</span></code>: modulates the variable between its minium and maximum range 
+accodring to <span class="math notranslate nohighlight">\(\frac{1+\cos (\theta-\phi(\textbf x) )}{2}\)</span></p></li>
+</ol>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Other anisotropic transformations are under development.</p>
+</div>
 <dl class="py function">
 <dt class="sig sig-object py" id="anisofy.draw_posts">
-<span class="sig-prename descclassname"><span class="pre">anisofy.</span></span><span class="sig-name descname"><span class="pre">draw_posts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s_coord</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncons</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">srow</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trow</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tcol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landscape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'shift'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">self_link</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recurrent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/anisofy.html#draw_posts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anisofy.draw_posts" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">anisofy.</span></span><span class="sig-name descname"><span class="pre">draw_posts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s_coord</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncons</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">srow</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trow</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tcol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anisotropy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aniso_methods</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recurrent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">self_link</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/anisofy.html#draw_posts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anisofy.draw_posts" title="Permalink to this definition">¶</a></dt>
 <dd><p>Draws the coordinates of <code class="docutils literal notranslate"><span class="pre">ncons</span></code> postsynaptic neurons 
 according to the connectivity profile <code class="docutils literal notranslate"><span class="pre">profile</span></code> and the
 anisotropy pattern <code class="docutils literal notranslate"><span class="pre">landscape</span></code> using the given <code class="docutils literal notranslate"><span class="pre">method</span></code>
@@ -287,16 +329,21 @@ differ from pre is obtained.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="anisofy.get_radial_profile">
-<span class="sig-prename descclassname"><span class="pre">anisofy.</span></span><span class="sig-name descname"><span class="pre">get_radial_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nconn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/anisofy.html#get_radial_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anisofy.get_radial_profile" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">anisofy.</span></span><span class="sig-name descname"><span class="pre">get_radial_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nconn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/anisofy.html#get_radial_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anisofy.get_radial_profile" title="Permalink to this definition">¶</a></dt>
 <dd><p>generate the radial profile for the inhomog. networks.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="anisofy.make_anisotropic">
-<span class="sig-prename descclassname"><span class="pre">anisofy.</span></span><span class="sig-name descname"><span class="pre">make_anisotropic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lscp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'shift'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/anisofy.html#make_anisotropic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anisofy.make_anisotropic" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="anisofy.make_anisotropic_profile">
+<span class="sig-prename descclassname"><span class="pre">anisofy.</span></span><span class="sig-name descname"><span class="pre">make_anisotropic_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aniso</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'shift'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/anisofy.html#make_anisotropic_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anisofy.make_anisotropic_profile" title="Permalink to this definition">¶</a></dt>
 <dd><p>takes an isotropic set of coordinates and transforms them
 into anisotropic ones according to the provided <code class="docutils literal notranslate"><span class="pre">method</span></code>.</p>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anisofy.make_anisotropic_syn">
+<span class="sig-prename descclassname"><span class="pre">anisofy.</span></span><span class="sig-name descname"><span class="pre">make_anisotropic_syn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s_loc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_locs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anisotropy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/anisofy.html#make_anisotropic_syn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anisofy.make_anisotropic_syn" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </section>
 </section>

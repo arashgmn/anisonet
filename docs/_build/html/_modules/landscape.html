@@ -84,8 +84,17 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../modules.html">anisonet</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../anisofy.html">anisofy module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#dispalcement-based">Dispalcement-based</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#rotation-based">Rotation-based</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#what-is-anisotropy-really">What is anisotropy, really?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#connectivity-heterogeneity">Connectivity heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#isotropic-profile">Isotropic profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#anisotropic-connectivity">Anisotropic connectivity</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../anisofy.html#synaptic-heterogeneity">Synaptic heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#isotropic-synaptic-parameterization">Isotropic synaptic parameterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../anisofy.html#anisotropic-synaptic-parameterization">Anisotropic synaptic parameterization</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../configs.html">configs module</a><ul>
@@ -108,7 +117,10 @@
 <li class="toctree-l3"><a class="reference internal" href="../equations.html#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../landscape.html">landscape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../landscape.html">landscape module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../landscape.html#anisotropy-in-connectivity">Anisotropy in connectivity</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../simulate.html">simulate module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../utils.html">utils module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../viz.html">viz module</a></li>
@@ -180,6 +192,21 @@
 <span></span><span class="ch">#!/usr/bin/env python3</span>
 <span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">Anisotropy in connectivity</span>
+<span class="sd">--------------------------</span>
+
+<span class="sd">**Anisotropy**: We attribute an angle :math:`\phi` to each neuron that specifies its angular</span>
+<span class="sd">bias (a.k.a. anisotropy landscape) by the following strategies:</span>
+<span class="sd">    </span>
+<span class="sd">    #. uniform (isotropic)</span>
+<span class="sd">    #. constant or homogenous</span>
+<span class="sd">    #. Perlin-noise-based: A unifromly random method with spatioal correlation</span>
+
+
+
+
+<span class="sd">we assume each neuron is somehow </span>
 <span class="sd">This module provides a library of different landscapes. By `landscape`, I mean</span>
 <span class="sd">the anisotropy angle $\phi$ and shift $r$ defined in `[1]`_. The followings are</span>
 <span class="sd">merely a reimplementation of ``connectivity_landscape.py`` file of `[1]`_, except</span>
@@ -191,7 +218,9 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">noise</span> <span class="kn">import</span> <span class="n">pnoise2</span> <span class="k">as</span> <span class="n">perlin</span>    
 
-<div class="viewcode-block" id="make_landscape"><a class="viewcode-back" href="../landscape.html#landscape.make_landscape">[docs]</a><span class="k">def</span> <span class="nf">make_landscape</span><span class="p">(</span><span class="n">gs</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">digitize</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="p">:</span>
+<span class="c1">#TODO: emphasize in the docs that lanscape is reserved for anisotropy</span>
+
+<div class="viewcode-block" id="make_landscape"><a class="viewcode-back" href="../landscape.html#landscape.make_landscape">[docs]</a><span class="k">def</span> <span class="nf">make_landscape</span><span class="p">(</span><span class="n">gs</span><span class="p">,</span> <span class="n">lscp_cfg</span><span class="p">,</span> <span class="n">digitize</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Makes a landscape according for neural network placed on a square grid of </span>
 <span class="sd">    size ``gs``. The landscape has two components `rs` (the radial </span>
@@ -217,60 +246,109 @@
 <span class="sd">        symmetric and random cases, similar to `[1]`_ we flatten the disribution before </span>
 <span class="sd">        passing the landscape field to the network.  </span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">config</span><span class="o">==</span><span class="kc">None</span><span class="p">:</span>
-    	<span class="n">ls_type</span> <span class="o">=</span> <span class="s1">&#39;iso&#39;</span>
-    <span class="k">else</span><span class="p">:</span>	
-        <span class="n">ls_type</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
-        <span class="n">ls_params</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;params&#39;</span><span class="p">]</span>
+    <span class="n">lscp</span> <span class="o">=</span> <span class="p">{}</span>
     
-    <span class="k">if</span> <span class="n">ls_type</span><span class="o">==</span><span class="s1">&#39;homogeneous&#39;</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="s1">&#39;phi&#39;</span> <span class="ow">in</span> <span class="n">ls_params</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="s2">&quot;phi value is needed for landscape &quot;</span><span class="o">+</span><span class="n">ls_type</span>
-        <span class="k">assert</span> <span class="s1">&#39;r&#39;</span> <span class="ow">in</span> <span class="n">ls_params</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="s2">&quot;r value is needed for landscape &quot;</span><span class="o">+</span><span class="n">ls_type</span>
-        
-        <span class="n">phis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">gs</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">*</span><span class="n">ls_params</span><span class="p">[</span><span class="s1">&#39;phi&#39;</span><span class="p">]</span>
-        <span class="n">rs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">gs</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span><span class="o">*</span><span class="n">ls_params</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">lscp_cfg</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">lscp</span>
     
-    <span class="k">elif</span> <span class="n">ls_type</span><span class="o">==</span><span class="s1">&#39;perlin&#39;</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="s1">&#39;scale&#39;</span> <span class="ow">in</span> <span class="n">ls_params</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span><span class="s2">&quot;scale value is needed for landscape &quot;</span><span class="o">+</span><span class="n">ls_type</span>
-        <span class="k">assert</span> <span class="s1">&#39;r&#39;</span> <span class="ow">in</span> <span class="n">ls_params</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="s2">&quot;r value is needed for landscape &quot;</span><span class="o">+</span><span class="n">ls_type</span>
-        
-        <span class="n">x</span> <span class="o">=</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ls_params</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">],</span> <span class="n">gs</span><span class="p">)</span>
-        <span class="n">phis</span> <span class="o">=</span> <span class="p">[[</span><span class="n">perlin</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">repeatx</span><span class="o">=</span><span class="n">ls_params</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">],</span> <span class="n">repeaty</span><span class="o">=</span><span class="n">ls_params</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">])</span> 
-                 <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">y</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span>
-        <span class="n">phis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">phis</span><span class="p">)</span>
-        
-        <span class="c1"># to flatten the histogram of phis, one has to adjust the </span>
-        <span class="c1"># phi values</span>
-        <span class="n">sorted_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">phis</span><span class="p">)</span>
-        <span class="n">max_val</span> <span class="o">=</span> <span class="n">gs</span> <span class="o">*</span> <span class="mi">2</span>
-        <span class="n">idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">phis</span><span class="p">)</span> <span class="o">//</span> <span class="n">max_val</span>
-        <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">max_val</span><span class="p">)):</span>
-            <span class="n">phis</span><span class="p">[</span><span class="n">sorted_idx</span><span class="p">[</span><span class="n">ii</span> <span class="o">*</span> <span class="n">idx</span><span class="p">:(</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">idx</span><span class="p">]]</span> <span class="o">=</span> <span class="n">val</span>
-        <span class="n">phis</span> <span class="o">=</span> <span class="p">(</span><span class="n">phis</span> <span class="o">-</span> <span class="n">gs</span><span class="p">)</span> <span class="o">/</span> <span class="n">gs</span>
-        
-        <span class="c1"># to push between -pi and pi</span>
-        <span class="n">phis</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">phis</span><span class="p">)</span>
-        <span class="n">phis</span> <span class="o">*=</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">phis</span><span class="p">)</span><span class="o">+</span><span class="mf">1e-12</span><span class="p">)</span>
-        <span class="n">phis</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
-        
-        <span class="n">rs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">gs</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span><span class="o">*</span><span class="n">ls_params</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">]</span>
-   
-    <span class="k">elif</span> <span class="n">ls_type</span><span class="o">==</span><span class="s1">&#39;random&#39;</span><span class="p">:</span>
-        <span class="n">phis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">gs</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
-        <span class="n">rs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">gs</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span><span class="o">*</span><span class="n">ls_params</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">]</span>
-   
-    <span class="k">elif</span> <span class="n">ls_type</span><span class="o">==</span><span class="s1">&#39;iso&#39;</span><span class="p">:</span>
-        <span class="n">phis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">gs</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
-        <span class="n">rs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">gs</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
-        
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="s1">&#39;Landscape type not recognized!&#39;</span>
-    
-    <span class="k">if</span> <span class="n">digitize</span><span class="p">:</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">phis</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
-        <span class="n">phis</span> <span class="o">=</span> <span class="n">bins</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">phis</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span> <span class="kc">True</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">key_cfg</span> <span class="ow">in</span> <span class="n">lscp_cfg</span><span class="p">[</span><span class="s1">&#39;params&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">key_cfg</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">type</span><span class="p">({}):</span> <span class="c1"># a single value (equivalent to homogeneous)</span>
+                <span class="n">lscp</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">gs</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">key_cfg</span>
+            
+            <span class="k">elif</span> <span class="n">key_cfg</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;homogeneous&#39;</span><span class="p">:</span>
+                <span class="n">lscp</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">gs</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">key_cfg</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+            
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="n">key</span><span class="o">!=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="s2">&quot;I don&#39;t know how to intialized r randomly for now.&quot;</span>
+                <span class="c1"># TODO: Needs clarification of what does random or perlin mean for r</span>
+                <span class="c1"># here the assumption is only phi is provided as random</span>
+                
+                <span class="k">if</span> <span class="n">key_cfg</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;random&#39;</span><span class="p">:</span>
+                    <span class="n">phis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">gs</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+                    
+                <span class="k">elif</span> <span class="n">key_cfg</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;perlin&#39;</span><span class="p">:</span>
+                    <span class="k">assert</span> <span class="s1">&#39;scale&#39;</span> <span class="ow">in</span> <span class="n">key_cfg</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span><span class="s2">&quot;scale value is needed for perlin landscape&quot;</span>
+                    <span class="n">scale</span> <span class="o">=</span> <span class="n">key_cfg</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">]</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">gs</span><span class="p">)</span>
+                    <span class="n">phis</span> <span class="o">=</span> <span class="p">[[</span><span class="n">perlin</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">repeatx</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">repeaty</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span> 
+                             <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">y</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span>
+                    <span class="n">phis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">phis</span><span class="p">)</span>
+                    
+                    <span class="c1"># to flatten the histogram of phis, one has to adjust the phi values</span>
+                    <span class="n">sorted_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">phis</span><span class="p">)</span>
+                    <span class="n">max_val</span> <span class="o">=</span> <span class="n">gs</span> <span class="o">*</span> <span class="mi">2</span>
+                    <span class="n">idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">phis</span><span class="p">)</span> <span class="o">//</span> <span class="n">max_val</span>
+                    <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">max_val</span><span class="p">)):</span>
+                        <span class="n">phis</span><span class="p">[</span><span class="n">sorted_idx</span><span class="p">[</span><span class="n">ii</span> <span class="o">*</span> <span class="n">idx</span><span class="p">:(</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">idx</span><span class="p">]]</span> <span class="o">=</span> <span class="n">val</span>
+                    <span class="n">phis</span> <span class="o">=</span> <span class="p">(</span><span class="n">phis</span> <span class="o">-</span> <span class="n">gs</span><span class="p">)</span> <span class="o">/</span> <span class="n">gs</span>
+                    
+                    <span class="c1"># to push between -pi and pi</span>
+                    <span class="n">phis</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">phis</span><span class="p">)</span>
+                    <span class="n">phis</span> <span class="o">*=</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">phis</span><span class="p">)</span><span class="o">+</span><span class="mf">1e-12</span><span class="p">)</span>
+                    <span class="n">phis</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+                
+                <span class="n">lscp</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">phis</span>
         
-    <span class="k">return</span> <span class="n">rs</span><span class="p">,</span> <span class="n">phis</span></div>
+        <span class="k">return</span> <span class="n">lscp</span></div>
+    
+    <span class="c1"># if config==None:</span>
+    <span class="c1"># 	ls_type = &#39;iso&#39;</span>
+    <span class="c1"># else:	</span>
+    <span class="c1">#     ls_type = config[&#39;type&#39;]</span>
+    <span class="c1">#     ls_params = config[&#39;params&#39;]</span>
+    
+    <span class="c1"># if ls_type==&#39;homogeneous&#39;:</span>
+    <span class="c1">#     assert &#39;phi&#39; in ls_params.keys(), &quot;phi value is needed for landscape &quot;+ls_type</span>
+    <span class="c1">#     assert &#39;r&#39; in ls_params.keys(), &quot;r value is needed for landscape &quot;+ls_type</span>
+        
+    <span class="c1">#     phis = np.ones(gs**2, dtype=float)*ls_params[&#39;phi&#39;]</span>
+    <span class="c1">#     rs = np.ones(gs**2, dtype=int)*ls_params[&#39;r&#39;]</span>
+    
+    <span class="c1"># elif ls_type==&#39;perlin&#39;:</span>
+    <span class="c1">#     assert &#39;scale&#39; in ls_params.keys(),&quot;scale value is needed for landscape &quot;+ls_type</span>
+    <span class="c1">#     assert &#39;r&#39; in ls_params.keys(), &quot;r value is needed for landscape &quot;+ls_type</span>
+        
+    <span class="c1">#     x = y = np.linspace(0, ls_params[&#39;scale&#39;], gs)</span>
+    <span class="c1">#     phis = [[perlin(i, j, repeatx=ls_params[&#39;scale&#39;], repeaty=ls_params[&#39;scale&#39;]) </span>
+    <span class="c1">#              for j in y] for i in x]</span>
+    <span class="c1">#     phis = np.concatenate(phis)</span>
+        
+    <span class="c1">#     # to flatten the histogram of phis, one has to adjust the </span>
+    <span class="c1">#     # phi values</span>
+    <span class="c1">#     sorted_idx = np.argsort(phis)</span>
+    <span class="c1">#     max_val = gs * 2</span>
+    <span class="c1">#     idx = len(phis) // max_val</span>
+    <span class="c1">#     for ii, val in enumerate(range(max_val)):</span>
+    <span class="c1">#         phis[sorted_idx[ii * idx:(ii + 1) * idx]] = val</span>
+    <span class="c1">#     phis = (phis - gs) / gs</span>
+        
+    <span class="c1">#     # to push between -pi and pi</span>
+    <span class="c1">#     phis -= np.min(phis)</span>
+    <span class="c1">#     phis *= 2*np.pi/(np.max(phis)+1e-12)</span>
+    <span class="c1">#     phis -= np.pi</span>
+        
+    <span class="c1">#     rs = np.ones(gs**2, dtype=int)*ls_params[&#39;r&#39;]</span>
+   
+    <span class="c1"># elif ls_type==&#39;random&#39;:</span>
+    <span class="c1">#     phis = np.random.uniform(-np.pi, np.pi, size=gs**2)</span>
+    <span class="c1">#     rs = np.ones(gs**2, dtype=int)*ls_params[&#39;r&#39;]</span>
+   
+    <span class="c1"># elif ls_type==&#39;iso&#39;:</span>
+    <span class="c1">#     phis = np.random.uniform(-np.pi, np.pi, size=gs**2)</span>
+    <span class="c1">#     rs = np.zeros(gs**2, dtype=int)</span>
+        
+    <span class="c1"># else:</span>
+    <span class="c1">#     raise &#39;Landscape type not recognized!&#39;</span>
+    
+    <span class="c1"># if digitize:</span>
+    <span class="c1">#     _, bins = np.histogram(phis, bins=8)</span>
+    <span class="c1">#     phis = bins[np.digitize(phis, bins, True)]</span>
+        
+    <span class="c1"># return rs, phis</span>
+
+<div class="viewcode-block" id="makes_synaptic_ladscape"><a class="viewcode-back" href="../landscape.html#landscape.makes_synaptic_ladscape">[docs]</a><span class="k">def</span> <span class="nf">makes_synaptic_ladscape</span><span class="p">():</span>
+    <span class="k">pass</span></div>
 </pre></div>
 
            </div>

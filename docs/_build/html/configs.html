@@ -87,11 +87,15 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">anisonet</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="anisofy.html">anisofy module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="anisofy.html#enforcing-anisotropy">Enforcing anisotropy</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#dispalcement-based">Dispalcement-based</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#rotation-based">Rotation-based</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#positive-rotation">Positive rotation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#squeeze-positive-rotation">Squeeze positive rotation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#what-is-anisotropy-really">What is anisotropy, really?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#connectivity-heterogeneity">Connectivity heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#isotropic-profile">Isotropic profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#anisotropic-connectivity">Anisotropic connectivity</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#synaptic-heterogeneity">Synaptic heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#isotropic-synaptic-parameterization">Isotropic synaptic parameterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#anisotropic-synaptic-parameterization">Anisotropic synaptic parameterization</a></li>
 </ul>
 </li>
 </ul>
@@ -116,7 +120,10 @@
 <li class="toctree-l3"><a class="reference internal" href="equations.html#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="landscape.html#anisotropy-in-connectivity">Anisotropy in connectivity</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="simulate.html">simulate module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">utils module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="viz.html">viz module</a></li>
@@ -190,20 +197,22 @@
             
   <section id="module-configs">
 <span id="configs-module"></span><h1>configs module<a class="headerlink" href="#module-configs" title="Permalink to this heading">¶</a></h1>
-<p>Configs is a utility module that passes the default configurations according to
-the <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a>. Configurations are set-up in form of nested dictionaries whose 
-structure is explained below. If you’d  like to get the exact configurations as 
-in <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007432">[1]</a>, use the <code class="docutils literal notranslate"><span class="pre">get_config</span></code> utility below.</p>
+<p>Simulations are configured via nested dictionaries. We treat the population 
+and pathway configurations differently, both in the synopsis of the functions 
+and their functionalities. In what follows, the structure of each configuration
+is explained. In addition, one can use``Configs`` module, which provides 
+ready-to-use configurations for simulations.</p>
 <section id="population-s-configuration">
 <h2>Population’s configuration<a class="headerlink" href="#population-s-configuration" title="Permalink to this heading">¶</a></h2>
-<p>Populations are identified by a single character name (like <code class="docutils literal notranslate"><span class="pre">&quot;P&quot;</span></code>) and must 
-have parameters in the following form:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;gs&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> 
- <span class="s1">&#39;noise&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;noise_dt&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">},</span>
- <span class="s1">&#39;cell&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;LIF&#39;</span><span class="p">,</span> 
-          <span class="s1">&#39;thr&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;rest&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span>
-          <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">}</span>
- <span class="p">}</span>
+<p>Populations are identified by a capital character as their name (like <code class="docutils literal notranslate"><span class="pre">&quot;P&quot;</span></code>) 
+and must be set up as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;P&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s1">&#39;gs&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> 
+      <span class="s1">&#39;noise&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;noise_dt&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">},</span>
+      <span class="s1">&#39;cell&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;LIF&#39;</span><span class="p">,</span> 
+      <span class="s1">&#39;thr&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;rest&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span>
+      <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">}</span>
+     <span class="p">}</span>
 </pre></div>
 </div>
 <p>with</p>
@@ -221,11 +230,11 @@ have parameters in the following form:</p>
 <section id="pathways-configuration">
 <h2>Pathways’ configuration<a class="headerlink" href="#pathways-configuration" title="Permalink to this heading">¶</a></h2>
 <p>Pathways are identified by two-character names (like <code class="docutils literal notranslate"><span class="pre">&quot;PQ&quot;</span></code>) that specifies 
-the source (P) and target (Q) populations. Each pathway must have be configured
-similar to the following form:</p>
+the source (P) and target (Q) populations (note the ordering). Each pathway 
+must have be configured similar to the following form:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;ncons&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;self_link&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> 
- <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="o">...</span><span class="p">}</span>
- <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="o">...</span><span class="p">}</span>
+ <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="o">...</span><span class="p">},</span>
+ <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="o">...</span><span class="p">},</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -235,25 +244,44 @@ similar to the following form:</p>
 </ol>
 <section id="profile">
 <h3>Profile<a class="headerlink" href="#profile" title="Permalink to this heading">¶</a></h3>
-<p>Use either of the following structures for the value of <code class="docutils literal notranslate"><span class="pre">profile</span></code> key:</p>
+<p><code class="docutils literal notranslate"><span class="pre">profile</span></code> determines the <cite>radial</cite> profile of the connectivity which accepts a
+distribution, or <code class="docutils literal notranslate"><span class="pre">None</span></code>, i.e., no spatial structure (Erdős–Rényi network).
+Some examples are provided below:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
- <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gamma&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;theta&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;kappa&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">}</span> <span class="p">},</span>  <span class="c1"># this</span>
- <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">}</span> <span class="p">},</span> <span class="c1"># or this can be used</span>
+ <span class="o">...</span>
+
+ <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gamma&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;theta&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;kappa&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">}</span> <span class="p">},</span>  
+ <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">},</span> <span class="n">gap</span> <span class="o">=</span> <span class="o">...</span> <span class="p">},</span> 
+ <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+
+ <span class="o">...</span>
 <span class="p">}</span>
 </pre></div>
 </div>
 <ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">type</span></code>: either <code class="docutils literal notranslate"><span class="pre">&quot;Gamma&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;Gaussian&quot;</span></code> (str)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">params</span></code>: distribution parameters (float)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">params</span></code>: distribution parameters (float). Refer, to the documentation of 
+each distribution.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gap</span></code>: a customary float, preventing connections with distance less than
+the prescribed value.</p></li>
 </ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Please refer to the <a href="#id1"><span class="problematic" id="id2">:refer:`anisofy:Isotropic connectivity profile`</span></a> for a discussion
+on the <code class="docutils literal notranslate"><span class="pre">gap</span></code>.</p>
+</div>
 </section>
 <section id="synapse">
 <h3>Synapse<a class="headerlink" href="#synapse" title="Permalink to this heading">¶</a></h3>
-<p>Use either of the following structures for the value of <code class="docutils literal notranslate"><span class="pre">profile</span></code> key:</p>
+<p><code class="docutils literal notranslate"><span class="pre">synapse</span></code> are specified via the following structures:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
- <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">}},</span> <span class="c1"># usually we use this</span>
- <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_voltage&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="o">...</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">}},</span>
- <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_conductance&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;Erev&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">}},</span>
+ <span class="o">...</span>
+
+ <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_jump&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span><span class="o">...</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">}},</span> <span class="c1"># usually we use this</span>
+ <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_current&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">}},</span> <span class="c1"># or this</span>
+ <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;alpha_conductance&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;Erev&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">}},</span> <span class="c1"># but not this (NOT TESTED!)</span>
+ <span class="s1">&#39;synapse&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;tsodysk-markram_jump&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span>  <span class="s1">&#39;tau_f&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;tau_d&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;U&#39;</span><span class="p">:</span><span class="o">...</span><span class="p">}},</span>
+ <span class="o">...</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -267,7 +295,7 @@ for possible values of kernels and models.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">tau_r</span></code> and <code class="docutils literal notranslate"><span class="pre">tau_d</span></code>: rise and decay timescales as a Brian time quantity (for biexp kernel)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">delay</span></code>: synaptic delay  as a Brian time quantity</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">J</span></code>: synaptic qunatal with unit volt, ampere, or siemens for synapse
-models <code class="docutils literal notranslate"><span class="pre">jump</span></code>, <code class="docutils literal notranslate"><span class="pre">current</span></code> or <code class="docutils literal notranslate"><span class="pre">conductance</span></code> (c.f. <a class="reference internal" href="equations.html#synapse-equations"><span class="std std-ref">Synapse equations</span></a> ).
+models <code class="docutils literal notranslate"><span class="pre">jump</span></code>, <code class="docutils literal notranslate"><span class="pre">current</span></code> or <code class="docutils literal notranslate"><span class="pre">conductance</span></code> respectively (c.f. <a class="reference internal" href="equations.html#synapse-equations"><span class="std std-ref">Synapse equations</span></a> ).
 Note that the sign will determine the polarity of the projection (inhibitory or excitatory).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Erev</span></code>: the reversal potential for conductance-based synapse as a Brian quantity of unit volt</p></li>
 </ul>
@@ -276,25 +304,22 @@ Note that the sign will determine the polarity of the projection (inhibitory or 
 </section>
 <section id="anisotropy">
 <h3>Anisotropy<a class="headerlink" href="#anisotropy" title="Permalink to this heading">¶</a></h3>
-<p>Use either of the following structures for the value of <code class="docutils literal notranslate"><span class="pre">profile</span></code> key:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
- <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;perlin&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;scale&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">}}</span>
- <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;homogeneous&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s1">&#39;phi&#39;</span><span class="p">:</span> <span class="o">...</span><span class="p">}}</span>
- <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;random&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;r&#39;</span><span class="p">:</span>  <span class="o">...</span><span class="p">,}}</span>
- <span class="s1">&#39;anisotropy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;symmetric&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{}}</span>
-<span class="p">}</span>
-</pre></div>
+<p>The <code class="docutils literal notranslate"><span class="pre">anisotropy</span></code> provides a pool of parameters that can be used for enforcing
+anisotropy on connectivity or synaptic properties. Whether or not such 
+parameters are used in making things anisotropic, depends if the  configuration 
+dictionary has <code class="docutils literal notranslate"><span class="pre">synaptic</span></code> and <code class="docutils literal notranslate"><span class="pre">connectivity</span></code> keys or not. The follwing 
+examples illustrate the usage:</p>
+<p>Note that the parameter pool <code class="docutils literal notranslate"><span class="pre">params</span></code> can be used for both synaptic and 
+connecitivity anistropy, depending on the method in use. c.f. <span class="xref std std-ref">landscape</span> 
+for details on the anisotropy methods.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Ensure you understand the anisotropic methods first. They require parameters
+that must be provided in the <code class="docutils literal notranslate"><span class="pre">params</span></code> pool. If not given, an error will 
+be raised.</p>
 </div>
-<ol class="arabic simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">type</span></code>: name of anisotropy profile. For now only one of the <code class="docutils literal notranslate"><span class="pre">['perlin,</span> <span class="pre">homogeneous,</span> <span class="pre">random,</span> <span class="pre">symmetric']</span></code> are possible. (str)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">params</span></code>:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">r</span></code>: displacement (float) – not important for symmetric type,</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">scale</span></code>: perlin scale if type is <code class="docutils literal notranslate"><span class="pre">&quot;perlin&quot;</span></code> (int)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">phi</span></code>: uniform anisotropic angle if type is <code class="docutils literal notranslate"><span class="pre">&quot;homogeneous&quot;</span></code> (float)</p></li>
-</ul>
-</li>
-</ol>
+<p>The entries in the parameters pool depend on the anisotropy method in use. c.f.
+<span class="xref std std-ref">landscape</span> for information on valid forms of configuring them.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="configs.get_config">
 <span class="sig-prename descclassname"><span class="pre">configs.</span></span><span class="sig-name descname"><span class="pre">get_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'EI_net'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scalar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/configs.html#get_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#configs.get_config" title="Permalink to this definition">¶</a></dt>
@@ -323,10 +348,24 @@ profiles according to to <a class="reference external" href="https://doi.org/10.
 <p>Also note that these structures are independent from how anisotropy is 
 imposed.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It is possible to decrease the network’s grid size by a factor of 
+<code class="docutils literal notranslate"><span class="pre">scalar</span></code>. However, such shrinkage has different effects on different
+networks. One uni-population networks, the synaptic strenght is 
+enlarged by a factor of <code class="docutils literal notranslate"><span class="pre">scalar**2</span></code> to account for lower number of 
+afferents. However, syanptic weights are left intact for the 
+two-population networks, since they are set up in balance and afferents
+will effectively cancel each other. An exception from this rule is the
+signle-population excitatory network. This network is inherently 
+unstable. So, we did not enlarged the synaptic weights partially to 
+avoid blow-up. In other words, the synaptic weights is large enough to
+trigger spike but not large enough to propagate it too far.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<em>str</em><em>, </em><em>optional</em>) – nework name. Either “I_net” or “EI_net”, defaults to ‘EI_net’</p></li>
+<li><p><strong>name</strong> (<em>str</em><em>, </em><em>optional</em>) – nework name</p></li>
 <li><p><strong>scalar</strong> (<em>int</em><em>, </em><em>optional</em>) – scales down the network by a factor. The network must be 
 divisble to the factor. Number of connections, their strenghts, and the
 connectivity profile will be scaled accordingly. defaults to 3</p></li>

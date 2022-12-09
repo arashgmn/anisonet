@@ -87,10 +87,15 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">anisonet</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="anisofy.html">anisofy module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="anisofy.html#homogeneity">Homogeneity</a></li>
-<li class="toctree-l3"><a class="reference internal" href="anisofy.html#anisotropy">Anisotropy</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#dispalcement-based">Dispalcement-based</a></li>
-<li class="toctree-l4"><a class="reference internal" href="anisofy.html#rotation-based">Rotation-based</a></li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#what-is-anisotropy-really">What is anisotropy, really?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#connectivity-heterogeneity">Connectivity heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#isotropic-profile">Isotropic profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#anisotropic-connectivity">Anisotropic connectivity</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="anisofy.html#synaptic-heterogeneity">Synaptic heterogeneity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#isotropic-synaptic-parameterization">Isotropic synaptic parameterization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="anisofy.html#anisotropic-synaptic-parameterization">Anisotropic synaptic parameterization</a></li>
 </ul>
 </li>
 </ul>
@@ -115,7 +120,10 @@
 <li class="toctree-l3"><a class="reference internal" href="#conversion-to-jump-model">Conversion to jump model</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="landscape.html">landscape module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="landscape.html#anisotropy-in-connectivity">Anisotropy in connectivity</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="simulate.html">simulate module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">utils module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="viz.html">viz module</a></li>
@@ -237,7 +245,7 @@ options are <code class="docutils literal notranslate"><span class="pre">conduct
 <li><p><strong>kernel</strong>: determines the dynamics of synaptic input. In other words, how
 the strength of synaptic input changes over time. Possible options are 
 <code class="docutils literal notranslate"><span class="pre">alpha</span></code>, <code class="docutils literal notranslate"><span class="pre">biexp</span></code> (for bi-exponential), <code class="docutils literal notranslate"><span class="pre">exp</span></code> (for exponential), and 
-<code class="docutils literal notranslate"><span class="pre">cons</span></code> (for constant).</p></li>
+<code class="docutils literal notranslate"><span class="pre">const</span></code> (for constant).</p></li>
 </ul>
 <section id="model">
 <h3>Model<a class="headerlink" href="#model" title="Permalink to this heading">¶</a></h3>
@@ -333,7 +341,7 @@ one when timescale seperation is possible.</p>
 </div>
 <dl class="py function">
 <dt class="sig sig-object py" id="equations.get_nrn_eqs">
-<span class="sig-prename descclassname"><span class="pre">equations.</span></span><span class="sig-name descname"><span class="pre">get_nrn_eqs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pop_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syn_base</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/equations.html#get_nrn_eqs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#equations.get_nrn_eqs" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">equations.</span></span><span class="sig-name descname"><span class="pre">get_nrn_eqs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pop_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops_cfg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/equations.html#get_nrn_eqs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#equations.get_nrn_eqs" title="Permalink to this definition">¶</a></dt>
 <dd><p>It matters how the synapse inputs are modeled. Seemingly, the one used in
 NEST and the paper are using a “current-alpha”, as opposed to “voltage-” or
 “conductance-”. Look at <a class="reference external" href="https://github.com/nest/nest-simulator/blob/d7b3c7671c5fcd9acf211b58012db9729607a1db/models/iaf_psc_alpha.h#L48">source code</a> for more details.</p>
@@ -356,7 +364,7 @@ NEST and the paper are using a “current-alpha”, as opposed to “voltage-”
 
 <dl class="py function">
 <dt class="sig sig-object py" id="equations.get_syn_eqs">
-<span class="sig-prename descclassname"><span class="pre">equations.</span></span><span class="sig-name descname"><span class="pre">get_syn_eqs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conn_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syn_base</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/equations.html#get_syn_eqs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#equations.get_syn_eqs" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">equations.</span></span><span class="sig-name descname"><span class="pre">get_syn_eqs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conn_cfg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/equations.html#get_syn_eqs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#equations.get_syn_eqs" title="Permalink to this definition">¶</a></dt>
 <dd><p>It matters how the synapse inputs are modeled. Seemingly, the one used in
 NEST and the paper are using a “current-alpha”, as opposed to “voltage-” or
 “conductance-”: <a class="reference external" href="https://github.com/nest/nest-simulator/blob/d7b3c7671c5fcd9acf211b58012db9729607a1db/models/iaf_psc_alpha.h#L48">nest repo</a>.</p>

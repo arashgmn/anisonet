@@ -283,6 +283,7 @@ def get_syn_eqs(conn_name, conn_cfg):
     tmp_tsodysk_markram = '''
         dx/dt = (1-x)/tau_d: 1 (clock-driven)
         du/dt = (U-u)/tau_f: 1 (clock-driven)
+        U: 1
         '''
     
     # Constructing equations

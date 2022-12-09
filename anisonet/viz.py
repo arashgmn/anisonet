@@ -153,9 +153,10 @@ def plot_firing_rates(sim, suffix='',
             ax.get_yaxis().set_ticks([])
         
         if overlay:
-            phis = sim.lscp[2*src.name[-1]]['phi']
-            for ax in axs[:, id_]:
-                overlay_phis(phis, ax)
+            if 'phi' in sim.lscp[2*src.name[-1]]: # for isotropic there's no phi
+                phis = sim.lscp[2*src.name[-1]]['phi']
+                for ax in axs[:, id_]:
+                    overlay_phis(phis, ax)
                 
     path = osjoin(sim.res_path, 'rates'+suffix+'.png')
     plt.savefig(path, dpi=200, bbox_inches='tight')
@@ -231,7 +232,7 @@ def plot_periodicity(sim, N=10):
         spop = sim.pops[src]
         tpop = sim.pops[trg]
         
-        gs = int(np.sqrt(tpop.N))
+        gs = tpop.gs
         periodicity_idxs = np.random.choice(spop.N, N)
         
         posts = sim.syns[id_].j.__array__()
@@ -241,8 +242,8 @@ def plot_periodicity(sim, N=10):
             t_coords = utils.idx2coords(t_idxs, tpop)
             s_coord = utils.idx2coords(s_idx, spop)
             
-            post_cntr = (t_coords-s_coord).astype(float) # centers
-            post_cntr -= np.fix(post_cntr/(gs/2)) *gs # make periodic
+            post_cntr = t_coords-s_coord # centers
+            post_cntr = (post_cntr + gs/2) % gs - gs/2 # make periodic
             
             fig, axs = plt.subplots(1, 2, figsize=(8,5))    
             
@@ -301,15 +302,17 @@ def plot_landscape(sim, overlay=True):
     :type sim: object
     """
     for id_, key in enumerate(sim.conn_cfg.keys()):
-        phis = sim.lscp[key]['phi']
-        figpath = osjoin(sim.res_path, 'gen_phi_'+key+'.png')
-        if overlay:	    
-            plot_field(phis.reshape((int(np.sqrt(len(phis))), -1)), figpath, 
-                       vmin=-np.pi, vmax = np.pi, 
-                       phis=phis)
-        else:
-            plot_field(phis.reshape((int(np.sqrt(len(phis))), -1)), figpath, 
-                       vmin=-np.pi, vmax = np.pi)
+        if 'phi' in sim.lscp[key]:
+            phis = sim.lscp[key]['phi']
+            gs = int(np.sqrt(len(phis)))
+            figpath = osjoin(sim.res_path, 'gen_phi_'+key+'.png')
+            if overlay:	    
+                plot_field(phis.reshape((gs, gs)), figpath, 
+                           vmin=-np.pi, vmax = np.pi, 
+                           phis=phis)
+            else:
+                plot_field(phis.reshape((gs, gs)), figpath, 
+                           vmin=-np.pi, vmax = np.pi)
 
 def plot_realized_landscape(sim):
     """
@@ -336,8 +339,8 @@ def plot_realized_landscape(sim):
             t_coords = utils.idx2coords(t_idxs, tpop)
             s_coord = utils.idx2coords(s_idx, spop)*gs_t/gs_s
             
-            post_cntr = (t_coords-s_coord).astype(float) # centers
-            post_cntr -= np.fix(post_cntr/(gs_t/2)) *gs_t # make periodic
+            post_cntr = t_coords-s_coord # centers
+            post_cntr = (post_cntr + gs_t/2) % gs_t- gs_t/2 # make periodic
             phis[s_idx] = np.arctan2(post_cntr[:,1].mean(), post_cntr[:,0].mean())
             #phis[s_idx] = np.arctan2(post_cntr[:,1], post_cntr[:,0]).mean()
         
@@ -519,8 +522,9 @@ def plot_animation(sim, ss_dur=25, fps=10, overlay=True):
         axs[id_].set_title('Population '+mon.name[-1])
         
         if overlay:
-            phis = sim.lscp[2*mon.name[-1]]['phi']
-            overlay_phis(phis, axs[id_])
+            if 'phi' in sim.lscp[2*mon.name[-1]]:
+                phis = sim.lscp[2*mon.name[-1]]['phi']
+                overlay_phis(phis, axs[id_])
         
         field_vals.append(field_val)
         field_imgs.append(field_img)
