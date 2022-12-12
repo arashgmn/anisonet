@@ -301,18 +301,26 @@ def plot_landscape(sim, overlay=True):
     :param sim: ``simulate`` object
     :type sim: object
     """
-    for id_, key in enumerate(sim.conn_cfg.keys()):
-        if 'phi' in sim.lscp[key]:
-            phis = sim.lscp[key]['phi']
-            gs = int(np.sqrt(len(phis)))
-            figpath = osjoin(sim.res_path, 'gen_phi_'+key+'.png')
-            if overlay:	    
-                plot_field(phis.reshape((gs, gs)), figpath, 
-                           vmin=-np.pi, vmax = np.pi, 
-                           phis=phis)
-            else:
-                plot_field(phis.reshape((gs, gs)), figpath, 
-                           vmin=-np.pi, vmax = np.pi)
+    for key, val in sim.lscp.items():
+        for lscp_id, lscp in val.items():
+            if len(np.unique(lscp))>1:
+                figpath = osjoin(sim.res_path, 'landscape_'+key+'_'+lscp_id+'.png')
+                gs = int(np.sqrt(len(lscp)))
+                plot_field(lscp.reshape((gs, gs)), figpath, 
+                           vmin=lscp.min(), vmax = lscp.max())
+
+                
+        # if 'phi' in sim.lscp[key]:
+        #     phis = sim.lscp[key]['phi']
+        #     gs = int(np.sqrt(len(phis)))
+        #     figpath = osjoin(sim.res_path, 'gen_phi_'+key+'.png')
+        #     if overlay:	    
+        #         plot_field(phis.reshape((gs, gs)), figpath, 
+        #                    vmin=-np.pi, vmax = np.pi, 
+        #                    phis=phis)
+        #     else:
+        #         plot_field(phis.reshape((gs, gs)), figpath, 
+        #                    vmin=-np.pi, vmax = np.pi)
 
 def plot_realized_landscape(sim):
     """

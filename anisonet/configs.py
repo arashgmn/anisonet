@@ -249,10 +249,12 @@ def get_config(name='EI_net', scalar=3):
                                  'params': {'J': -0.221*mV*(scalar**2), 'delay':1*ms, 
                                              'tau': 10*ms, 'tau_f': 1500.*ms, 'tau_d': 200.*ms, 
                                              'U':1/3.}},
-                    'anisotropy': {'connectivity': 'shift', #'synaptic': 'cos'
-                                   'params': {'r'  : 2, 
-                                              'phi': {'type': 'perlin', 'args': {'scale':3} },
-                                              'U': {'type': 'perlin', 'args': {'scale':4}, 'vmin': 0.01, 'vmax':0.3}
+                    'anisotropy': {'connectivity': 'shift', 'synaptic': 'cos',
+                                   'params': {'r'  : 1, 
+                                              'phi': {'type': 'perlin', 'args': {'scale':2} },
+                                              'U': {'type': 'perlin', 'args': {'scale':5}, 'vmin': 0.01, 'vmax':0.3},
+                                              'Umin':0.01,
+                                              'Umax':0.3,
                                               }  
                                   }
                    #'anisotropy': {'params': {'r': 1, 'phi': np.pi/6.},

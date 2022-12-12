@@ -557,14 +557,14 @@ def make_anisotropic_syn(s_loc, t_locs, gs, anisotropy, method):
     if method == 'cos':
         phis = np.arctan2(rel_locs[:,1], rel_locs[:,0])
         phis -= anisotropy['phi']
-        Us = (1+ np.cos(phis))/2 * anisotropy['U'] 
+        Us = anisotropy['Umin'] + (anisotropy['Umax']-anisotropy['Umin'])*(1+ np.cos(phis))/2# * anisotropy['U'] 
         
         syn_pars['Us'] = Us
             
     elif method == 'sin':
         phis = np.arctan2(rel_locs[:,1], rel_locs[:,0])
         phis -= anisotropy['phi']
-        Us = (1+ np.sin(phis))/2 * anisotropy['U'] 
+        Us = anisotropy['Umin'] + (anisotropy['Umax']-anisotropy['Umin'])*(1+ np.sin(phis))/2# * anisotropy['U'] 
         
         syn_pars['Us'] = Us
         

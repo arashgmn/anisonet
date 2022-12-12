@@ -203,6 +203,10 @@ class Simulate(object):
                     raise NotImplementedError(msg0 + msg_kernel.format(kernel))
             
             elif mode_syn=='het':
+                msg_het = 'No anisotropy method is set of synapses. Check configs.'
+                
+                assert conn_cfg['anisotropy']['synaptic']!=None, msg_het
+                    
                 if kernel=='tsodysk-markram':
                     self.syns[syn_name].u = 'rand()'
                     self.syns[syn_name].x = 'rand()'
@@ -651,7 +655,7 @@ class Simulate(object):
             
             # append to the class
             self.syns[key] = syn
-            
+            #set_trace()
             # save if not saved
             if not self.load_connectivity:
                 row_idx = np.array(syn.i) # pre
@@ -662,7 +666,8 @@ class Simulate(object):
                 
                 for k,v in syn_params.items():
                     np.save(osjoin(self.data_path, k), v)
-                                    
+                    
+                    
                 del t_coords, s_coord, kws, row_idx, col_idx, data
         del src, trg, eqs, on_pre, on_post, ncons 
         del spop, tpop, syn, t_idxs, w

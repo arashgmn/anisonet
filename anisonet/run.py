@@ -8,7 +8,7 @@ Created on Fri Nov 18 13:58:11 2022
 
 from simulate import *
 
-sim = Simulate('I_net', scalar=1.5, 
+sim = Simulate('I_net', scalar=2, 
                load_connectivity=0, 
                to_event_driven=1,)
 
