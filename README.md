@@ -13,11 +13,7 @@ This repository is under development. Thus, I recommend you to clone this reposi
 I recommand setting up an isolated Conda environment and install and run this code in that environment. In short, Conda is a package manager by which you can install many libaries independent from one another. There are several benefits to this approach. but for now, just take my words. It is jsut better to use Conda. Here is what you need to do:
 
 1. Go to [Anaconda website](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) and download the install either Anaconda or Miniconda (**I highly recommand the latter**) for your OS.
-2. Open a terminal (or *Anaconda prompt*) and create a new environment:
-```
-conda create -n <YOUR_ENV_NAME> python=3.10
-```
-Note that the name of this environment (`<YOUR_ENV_NAME>`) can be anything. Also, we have anchored the python version to `3.10` as our dependencies must be first tested on the newest python version `3.11`.
+2. Open a terminal (or *Anaconda prompt*) and create a new environment: `conda create -n <YOUR_ENV_NAME> python=3.10`. Note that the name of this environment (`<YOUR_ENV_NAME>`) can be anything. Also, we have anchored the python version to `3.10` as our dependencies must be first tested on the newest python version `3.11`.
 3. Activate your environment: ``conda activate <YOUR_ENV_NAME>``. 
 
 ## Installing the package
@@ -35,7 +31,7 @@ This packages depends on the following packages:
 
 
 # How to run
-After installation, simply navigate to `anisonet/` and run the following command: ``python run.py``. This makes a new directory with which contains the results of the *Inhibitory Network* of the aforementioned paper. This code, constructs and warms up the netowrk, and stores the states. It also visualizes landscape, in- and out-degrees, and the realized landscape, and saves the summary of neuronal activity over a 2.5-second simulation. For changing the network configuration and extending to other possible cases, please read the documentation of ``configs`` module.
+After installation, simply navigate to `anisonet/` and run the following command: ``python demo.py``. This makes a new directory with which contains the results of the *Inhibitory Network* of the aforementioned paper. This code, constructs and warms up the netowrk, and stores the states. It also visualizes landscape, in- and out-degrees, and the realized landscape, and saves the summary of neuronal activity over a 2.5-second simulation. For changing the network configuration and extending to other possible cases, please read the documentation of ``configs`` module.
 
 # Code Structure
 We have a main class called `Simulate` which sets up the network and runs the simulation. Other files are dedicated to specified tasks:

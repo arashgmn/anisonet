@@ -716,4 +716,47 @@ def plot_relative_weights(sim, logx=False):
     plt.savefig(figpath, bbox_inches='tight', dpi=200)
     plt.close()
     
+def plot_relative_weights_2d(sim,):
+    plastic_syns = [syn for syn in sim.syns.values() if syn.is_plastic]
+    
+    for id_, syn in enumerate(plastic_syns):
+        
+        mon = utils.aggregate_mons(sim, 'mon_'+syn.name)
+        
+        fig, axs = plt.subplots(1, len(mon['t']), sharex=True, sharey=True,
+                                figsize=(4.2*len(mon['t']),4))
+        axs = np.reshape(axs, (1,-1))
+        
+        for idx_t in range(len(mon['t'])):
+            ax = axs[0, idx_t]
+
+            ax.hist2d(mon['x'][idx_t,:], mon['u'][idx_t,:], 
+                      bins =[100, 100], norm=LogNorm()
+                      )            
+            
+            x_ = np.linspace(0,1,101)
+            for w_idx, w_ in enumerate([0.01, 0.05, 0.1, 0.25]): # countours
+                ax.plot(x_, w_/(x_+1e-12), '--k', label=f'w={w_}',
+                        linewidth = (1+w_idx)*0.5,)    
+            
+        
+        axs[0,0].set_ylabel('u')
+        for idx, ax in enumerate(axs[0,:]):
+            ax.set_xlabel('x')
+            ax.set_ylim(0,1)
+            ax.set_xlim(0,1)
+            ax.set_aspect('equal')
+            ax.legend(loc='upper right')
+            ax.set_title(f"t={mon['t'][idx]}")
+            # vertical lines of stationary states 
+            # ylims = ax.get_ylim()
+            # ax.vlines(syn.namespace['U'], ylims[0], ylims[1], 
+            #           colors='darkgreen', linestyle='--')
+            # ax.vlines(1, ylims[0], ylims[1], 
+            #           colors='darkred', linestyle='--')
+        
+    figpath = osjoin(sim.res_path, 'weight_modulation_mat.png')
+    plt.savefig(figpath,dpi=200, bbox_inches='tight', )
+    plt.close()
+    
     

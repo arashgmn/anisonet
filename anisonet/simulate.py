@@ -896,7 +896,8 @@ class Simulate(object):
         
         if self.has_plastic:
             viz.plot_relative_weights(self)
-        
+            viz.plot_relative_weights_2d(self)
+            
         analyze.find_bumps(self, plot=True)
         
         
