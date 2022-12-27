@@ -323,7 +323,7 @@ def get_syn_eqs(conn_name, conn_cfg):
         '''
     
     else:
-        raise NotImplementedError('synaptic kernel type "{}" is not recognized!'.format(kernel))
+        raise NotImplementedError(f'synaptic kernel type "{kernel}" is not recognized!')
     
     
     # model related components (pre/post updates are prescribed here)

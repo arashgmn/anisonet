@@ -97,7 +97,7 @@ class Simulate(object):
         self.state_id = 0
         self.state_str = self.fmt.format(self.state_id)
         
-    def state_initializer(self, mode='ss'):
+    def state_initializer(self, init_cell='ss', init_syn='rand'):
         """
         A smart function that intializes the synaptic or cellular state according 
         to the desired mode, based on the provided config file.
@@ -133,13 +133,13 @@ class Simulate(object):
         #    aniso_syns= True
         #    mode = mode.split('-')[0]
         
-        mode_cell = mode.split('-')
-        if len(mode_cell)>1:
-            mode_syn = mode_cell[1]
-            mode_cell = mode_cell[0]
-        else:
-            mode_cell = mode_cell[0]
-            mode_syn = mode_cell  
+        # init_cell = mode.split('-')
+        # if len(init_cell)>1:
+        #     init_syn = init_cell[1]
+        #     init_cell = init_cell[0]
+        # else:
+        #     init_cell = init_cell[0]
+        #     init_syn = init_cell  
             
         for pop, pop_cfg in zip(self.pops, self.pops_cfg.values()):         
             # setting up voltage
@@ -149,9 +149,9 @@ class Simulate(object):
             else:
                 raise NotImplementedError(msg0 + msg_cell)
             
-            if mode_cell=='ss':
+            if init_cell=='ss':
                 self.pops[pop].v = minV
-            elif mode_cell=='rand':
+            elif init_cell=='rand':
                 self.pops[pop].v = '({}+ rand()*({}))*mV'.format(minV/b2.mV, (maxV-minV)/b2.mV)
             else:
                 raise NotImplementedError(msg0 + msg_mode)
@@ -172,7 +172,7 @@ class Simulate(object):
             conn_cfg = self.conn_cfg[syn_name]
             kernel, model = conn_cfg['synapse']['type'].split('_')
             
-            if mode_syn=='ss':
+            if init_syn=='ss':
                 if kernel=='tsodysk-markram':
                     self.syns[syn_name].u = conn_cfg['synapse']['params']['U']
                     self.syns[syn_name].x = 1
@@ -185,7 +185,7 @@ class Simulate(object):
                     raise NotImplementedError(msg0 + msg_kernel.format(kernel))
                 
             
-            elif mode_syn=='rand':
+            elif init_syn=='rand':
                 if kernel=='tsodysk-markram':
                     self.syns[syn_name].u = 'rand()'
                     self.syns[syn_name].x = 'rand()'
@@ -202,7 +202,7 @@ class Simulate(object):
                 else:
                     raise NotImplementedError(msg0 + msg_kernel.format(kernel))
             
-            elif mode_syn=='het':
+            elif init_syn=='het':
                 msg_het = 'No anisotropy method is set of synapses. Check configs.'
                 
                 assert conn_cfg['anisotropy']['synaptic']!=None, msg_het
@@ -406,7 +406,7 @@ class Simulate(object):
                         self.pops_cfg[pop]['input_model'] = model
             
             
-    def setup_net(self, initializer):
+    def setup_net(self, init_cell=None, init_syn=None):
         """
         Sets up a network by the following steps:
             #. defining the populations (``setup_pops``)
@@ -424,7 +424,7 @@ class Simulate(object):
         self.setup_pops()
         self.setup_landscape()
         self.setup_syns()
-        self.state_initializer(mode=initializer)
+        self.state_initializer(init_cell=init_cell, init_syn=init_syn)
         
         self.configure_monitors()
         self.net = b2.Network()

@@ -14,7 +14,7 @@ from scipy.interpolate import make_interp_spline
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 from  matplotlib.cm import ScalarMappable
-import seaborn as sns
+#import seaborn as sns
 
 from utils import aggregate_mons, idx2coords
 from utils import plane2torus, torus2plane, balance_dist

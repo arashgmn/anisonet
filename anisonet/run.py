@@ -8,11 +8,17 @@ Created on Fri Nov 18 13:58:11 2022
 
 from simulate import *
 
-sim = Simulate('I_net', scalar=2, 
+
+sim = Simulate('demo', scalar=2, 
                load_connectivity=0, 
                to_event_driven=1,)
 
-sim.setup_net(initializer='ss-het')
+sim.setup_net(init_cell='ss',)
+sim.warmup()
+sim.start(duration=2500*b2.ms, batch_dur=1000*b2.ms, 
+            restore=False, profile=False, plot_snapshots=True)
+sim.post_process(overlay=True)
+
 #sim.warmup()
 
 # idxs, _ = utils.get_line_idx(x0=30, y0=10, c=1, pop=sim.pops['I'])
@@ -32,8 +38,8 @@ sim.setup_net(initializer='ss-het')
 #     sim.start(duration=50*b2.ms, batch_dur=1000*b2.ms, 
 #                 restore=False, profile=False, plot_snapshots=True)
 
-sim.start(duration=3000*b2.ms, batch_dur=1000*b2.ms, 
-            restore=False, profile=False, plot_snapshots=True)
+#sim.start(duration=3000*b2.ms, batch_dur=1000*b2.ms, 
+#            restore=False, profile=False, plot_snapshots=True)
 
 # sim.start(duration=2000*b2.ms, batch_dur=1000*b2.ms, 
 #            restore=False, profile=False, plot_snapshots=True)
@@ -42,7 +48,7 @@ sim.start(duration=3000*b2.ms, batch_dur=1000*b2.ms,
 # viz.plot_firing_rates(sim, suffix='_all')
 # sim.save_monitors(suffix ='all')
 
-sim.post_process(overlay=True)
+#sim.post_process(overlay=True)
 # import matplotlib.pyplot as plt
 
 # m = sim.mons[1]

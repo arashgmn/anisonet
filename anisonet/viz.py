@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 from matplotlib.colors import Normalize, LogNorm
 from matplotlib.cm import ScalarMappable
-import seaborn as sns
+#import seaborn as sns
 
 from brian2.units import ms, second
 
@@ -438,7 +438,6 @@ def plot_firing_rates_dist(sim):
     :param sim: ``simulate`` object
     :type sim: object
     """
-    from pandas import value_counts
     fig, axs = plt.subplots(1, len(sim.pops))
     if len(sim.pops)==1:
         axs = [axs]
@@ -450,7 +449,8 @@ def plot_firing_rates_dist(sim):
         idxs, ts = mon_dict['i'], mon_dict['t']
         
         T = np.max(ts) - np.min(ts)
-        rates = value_counts(idxs)/T
+        _, rates = np.unique(idxs, return_counts=True)
+        rates = rates*1./T
         axs[id_].hist(rates, bins=50, density=True,)
         axs[id_].set_xlabel('Firing rate [Hz]')
         axs[id_].set_title('Population '+mon.name[-1])

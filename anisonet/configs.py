@@ -229,7 +229,31 @@ def get_config(name='EI_net', scalar=3):
     .. _[1]: https://doi.org/10.1371/journal.pcbi.1007432
 
     """
-    if name=='I_net':
+    if name=='demo':
+        pops_cfg = {
+            'I': {'gs': round_to_even(100, scalar), 
+                  'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
+                  'cell': {'type': 'LIF', 
+                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                           'tau':10*ms, 'C': 250*pF}
+                          }
+            }
+
+        conn_cfg = {
+            'II': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
+                   'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4}, 'gap': max(2, 6./scalar) },
+                   'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'anisotropy': {'connectivity': 'shift', 
+                                  'params': {'r'  : 1, 
+                                             'phi': {'type': 'perlin', 'args': {'scale':2} },
+                                             }  
+                                  }
+                   }
+        }
+        
+        stim_cfg = {}
+        
+    elif name=='I_net':
         pops_cfg = {
             'I': {'gs': round_to_even(100, scalar), 
                   'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
@@ -616,5 +640,4 @@ def get_config(name='EI_net', scalar=3):
         raise
     
     return pops_cfg, conn_cfg, stim_cfg
-
-
+       
