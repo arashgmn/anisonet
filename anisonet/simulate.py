@@ -97,7 +97,9 @@ class Simulate(object):
         self.state_id = 0
         self.state_str = self.fmt.format(self.state_id)
         
-    def state_initializer(self, init_cell='ss', init_syn='rand'):
+        self.dt = b2.defaultclock.dt
+        
+    def state_initializer(self, init_cell, init_syn):
         """
         A smart function that intializes the synaptic or cellular state according 
         to the desired mode, based on the provided config file.
@@ -406,7 +408,7 @@ class Simulate(object):
                         self.pops_cfg[pop]['input_model'] = model
             
             
-    def setup_net(self, init_cell=None, init_syn=None):
+    def setup_net(self, init_cell='ss', init_syn='rand'):
         """
         Sets up a network by the following steps:
             #. defining the populations (``setup_pops``)
@@ -801,7 +803,7 @@ class Simulate(object):
         
         print('Starting simulation.')
         nbatch = int(duration/batch_dur)
-        if (duration-nbatch*batch_dur)/(b2.defaultclock.dt)>0:
+        if (duration-nbatch*batch_dur)/(self.dt)>0:
             nbatch += 1
         
         # fmt = '{:0>%d}'%(np.log10(nbatch)+1) #suffix_format
@@ -884,7 +886,7 @@ class Simulate(object):
         viz.plot_in_out_deg(self)
         viz.plot_realized_landscape(self)
         viz.plot_connectivity(self)
-        
+        viz.plot_manifold(self, 2)
         logging.info('Visualizing firing rate distribution.')
         viz.plot_firing_rates_dist(self)
         

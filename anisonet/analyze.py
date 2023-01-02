@@ -4,12 +4,18 @@ import glob
 import os
 osjoin = os.path.join # an alias for convenient
 
+import time 
 import numpy as np
 import pandas as pd
-from sklearn.cluster import DBSCAN, OPTICS, SpectralClustering
-
+from scipy import sparse
 from scipy.interpolate import make_interp_spline
 
+from sklearn import manifold
+from sklearn.cluster import (DBSCAN, OPTICS, SpectralClustering, 
+                             AgglomerativeClustering)
+
+
+from brian2.units import second
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
@@ -18,7 +24,6 @@ from  matplotlib.cm import ScalarMappable
 
 from utils import aggregate_mons, idx2coords
 from utils import plane2torus, torus2plane, balance_dist
-
 import viz
 
 from pdb import set_trace
@@ -161,8 +166,7 @@ def find_bumps(sim, plot=True):
         
         
         # finding bumps
-        gs = int(np.sqrt(mon.source.N)) # needed for warping the bumps periodically
-        print(gs)
+        gs = mon.source.gs # needed for warping the bumps periodically
         
         
         # GOOD FOR ISO
@@ -175,6 +179,9 @@ def find_bumps(sim, plot=True):
         optics_kw = dict(min_samples=10, max_eps=40, )
         spectral_kw = dict(n_clusters=8,)
         
+        w_name = sim.name+'_w_'+2*mon.source.name
+        w = sparse.load_npz(osjoin(sim.data_path, w_name+'.npz'))
+        aggl_kw = dict(n_cluster=8, connectivity = w) 
         # nbumps, labels = warped_clusters(xyt, gs, 
         #                                  cluster_alg = 'dbscan', 
         #                                  cluster_kw = dbscan_kw 
@@ -292,3 +299,51 @@ def compute_speed(sim, plot=True):
         # ax = fig.add_subplot()
         # sns.scatterplot(data=disp[disp.index>-1], x='t', y='v', hue='label', ax=ax)
         
+
+def find_manifold(sim, plot=True):
+    from scipy.ndimage import gaussian_filter
+    
+    pop_mons = sim.get_pop_mons()
+    
+    for id_, mon in enumerate(pop_mons):
+        mon_dict = aggregate_mons(sim, mon.name, SI=True)
+        idxs, ts = mon_dict['i'], mon_dict['t']
+        coords = idx2coords(idxs, mon.source)
+        xyt = np.stack((*coords.T, ts)).T
+        
+        i = idxs
+        j = (ts/(sim.dt/second)).astype(int)
+        j -= j.min()
+        
+        Ni = mon.source.N
+        Nj = max(j)+1
+        set_trace()
+        
+        print(f'I want to make a sparse matrix, make it dense, and load onnectivity at {time.ctime()}')
+        X = sparse.coo_matrix((np.ones_like(i), (i,j)), shape = (Ni, Nj))
+        X = X.toarray()
+        w = sparse.load_npz(osjoin(sim.data_path, 
+                                   sim.name + '_w_'+ 2 * mon.source.name+'.npz'))
+        print(f'Now I want to start fitting at {time.ctime()}')
+        ward = AgglomerativeClustering(n_clusters=6, 
+                                       connectivity=w, 
+                                       linkage="ward").fit(X)
+        print(f'Done at {time.ctime()}')
+        
+        labels = ward.labels_
+        #bumps = DBSCAN(eps=1.23, min_samples=100).fit(xyt); 
+        print('Number of clusters found: {}'.format(len(set(labels))))
+        
+        if plot:
+            viz.plot_3d_clusters(sim, xyt, labels, mon.name)
+            #viz.plot_3d_clusters(sim, scsct[:,[0,2,-1]], labels, mon.name)
+            # viz.plot_3d_clusters(sim, scsct[:,[1,3,-1]], labels, mon.name)
+        
+    #     bumps[mon.source.name] = np.stack((*coords.T, ts, labels)).T
+        
+    return ward
+    
+def connectivity_manifold(w, ncomp=2):
+    spectral = manifold.SpectralEmbedding(n_components = ncomp, 
+                                          affinity='precomputed')
+    return spectral.fit_transform(w)  

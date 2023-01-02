@@ -9,7 +9,7 @@ Created on Fri Nov 18 13:58:11 2022
 from simulate import *
 
 
-sim = Simulate('demo', scalar=2, 
+sim = Simulate('demo', scalar=4, 
                load_connectivity=0, 
                to_event_driven=1,)
 

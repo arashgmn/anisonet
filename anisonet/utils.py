@@ -55,6 +55,21 @@ def idx2coords(idxs, net):
     return coords
 
 
+def make_full_train(sim, mon_name):
+    mon_dict = aggregate_mons(sim, mon_name, SI=True)
+    idxs = mon_dict['i']
+    ts = mon_dict['t']
+    
+    tmin, tmax = ts.min(), ts.max()
+    idxs = sorted(np.unique(idxs))
+    
+    
+    ts = np.zeros( (len(idxs), int((tmax-tmin)//sim.dt) + 1))
+    
+    # for idx in idxs:
+        
+    
+    
 def aggregate_mons(sim, mon_name, SI=False):
     """
     Aggregates the indices and timings of the spiking events from disk.

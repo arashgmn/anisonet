@@ -17,12 +17,15 @@ from matplotlib.cm import ScalarMappable
 
 from brian2.units import ms, second
 
+from scipy import sparse
+
 import numpy as np
 import time
 import os
 osjoin = os.path.join # an alias for convenient
 
 import utils 
+from analyze import connectivity_manifold
 
 from pdb import set_trace
 
@@ -760,3 +763,45 @@ def plot_relative_weights_2d(sim,):
     plt.close()
     
     
+def plot_manifold(sim, ncomp = 2):
+    """
+    plots a low dimensional manifold of the connecitvity matrix
+    color-coded by the location on the x-axis.
+    
+    """
+    for syn_name in sim.conn_cfg.keys():
+        w = sparse.load_npz(osjoin(sim.data_path, 
+                                   sim.name + '_w_'+ syn_name +'.npz'))
+        
+        manifold = connectivity_manifold(w, ncomp)
+    
+        gs = np.sqrt(manifold.shape[0])
+        color = np.repeat(np.sin(np.pi*np.arange(gs)), gs)
+        #color = np.cumsum(color+1)
+        if ncomp==2:
+            fig, ax = plt.subplots(
+                figsize=(6, 6),
+                facecolor="white",
+                tight_layout=True,
+            )
+    
+            x, y = manifold.T
+            ax.scatter(x, y, s = 10, c= color, alpha=0.8)
+        
+        else:
+            fig, ax = plt.subplots(
+                figsize=(6, 6),
+                facecolor="white",
+                tight_layout=True,
+                subplot_kw={"projection": "3d"},
+            )
+            
+            x, y, z = manifold[:,-3:].T
+            ax.scatter(x, y, z, s=10, c=color, alpha=0.8)
+            ax.view_init(azim=-60, elev=9)
+                    
+        fig.suptitle(syn_name, size=16)
+        figpath = osjoin(sim.res_path, f'weight_manifold_{syn_name}.png')
+        plt.savefig(figpath,dpi=200, bbox_inches='tight', )
+        #plt.close()
+        
