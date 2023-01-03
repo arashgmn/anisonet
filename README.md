@@ -1,6 +1,13 @@
 # Brian's anisotropic network
 
-This is a `Brian2` implementation of anisotropic network introduced in [From space to time: Spatial inhomogeneities lead to the emergence of spatiotemporal sequences in spiking neuronal networks](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1007432). 
+This is a `Brian2` implementation of anisotropic network introduced in [From space to time: Spatial inhomogeneities lead to the emergence of spatiotemporal sequences in spiking neuronal networks](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1007432). This packages depends on the following libraries:
+
+- brian2
+- numpy
+- scipy
+- noise (for Perlin noise)
+- matplotlib
+- pandas, scikit-learn, seaborn, ... (may be removed or expanded during development) 
 
 # Documentation
 For further details check the documentation here: [https://arashgmn.github.io/anisonet-brian](https://arashgmn.github.io/anisonet-brian)
@@ -16,18 +23,17 @@ I recommand setting up an isolated Conda environment and install and run this co
 2. Open a terminal (or *Anaconda prompt*) and create a new environment: `conda create -n <YOUR_ENV_NAME> python=3.10`. Note that the name of this environment (`<YOUR_ENV_NAME>`) can be anything. Also, we have anchored the python version to `3.10` as our dependencies must be first tested on the newest python version `3.11`.
 3. Activate your environment: ``conda activate <YOUR_ENV_NAME>``. 
 
-## Installing the package
-Navigate to the root directory of the cloned or downloaded repository within terminal (or anaconda prompt). **Make sure your environment is activated** (``conda activate <YOUR_ENV_NAME>``). Then, type in ``pip install -e .`` (with the period at the end). Done!
+## Install
+1. **Make sure your environment is activated**. In your terminal or Anaconda prompt enter ``conda activate <YOUR_ENV_NAME>``.
+2. Update your `setuptools` by entring the following command: ``pip install --upgrade setuptools``
+3. Navigate to the root directory of the cloned or downloaded repository within terminal and type ``pip install -e .`` (with the period at the end). 
 
-## Dependencies
-This packages depends on the following packages:
+**Note for Windows machines**: If the last step failed and you got an error indicating that you have to install Visual studio, it is likely that [you don't have the proper c++ compiler installed on your computer](https://wiki.python.org/moin/WindowsCompilers). In short, since we used `python=3.10` you must install version **14.x** of Visual Studio which is a hefy download, unfortunately. As indicated in the referenced link:
 
-- brian2
-- numpy
-- scipy
-- noise (for Perlin noise)
-- matplotlib
-- pandas, scikit-learn, seaborn, ... (may be removed or expanded during development) 
+> -  Install [Microsoft Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) (or later).
+> - Install the Python development workload and the optional Python native development tools option.
+> - Install the latest Windows SDK (under Native development in the installer).
+> - Optional: Set $env:PlatformToolset to your toolset version before building, if it doesn't detect it.
 
 
 # How to run
@@ -50,11 +56,8 @@ This implementation is work in progress and possibly contains bugs! Any feedback
 
 
 # FAQ 
-## I don't have terminal on my Windows machine to clone the repository
-The most prominent workaround is installing [Git-bash](https://git-scm.com/download/win) on Windows systems. It emulates a terminal with some unix-based commands (``ls, cd, cat``, etc.) but more importantly, ``git``. You can use either the GUI or the command line to clone the repository. 
-
-## I don't have git command on my linux machine
+## I don't have git command on my Linux machine
 Some of the recent linux distribution don't come with git commands pre-installed. On Debian/Ubuntu, you can install it with ``sudo apt-get install git-all``. Change command for Arch or RedHat appropriately.
 
-## Noise package installation fails on Windows
-You may need to install [C++ build tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/). You may install thiss utilitiy and retry, but I recommand an easier and safer alternative: installing noise with conda. **Make sure your environment is activated** (``conda activate <YOUR_ENV_NAME>``). Then use ``conda install -c conda-forge noise` to install the noise package.
+## I don't have terminal on my Windows machine to clone the repository
+The most prominent workaround is installing [Git-bash](https://git-scm.com/download/win) on Windows systems. It emulates a terminal with some unix-based commands (``ls, cd, cat``, etc.) but more importantly, ``git``. You can use either the GUI or the command line to clone the repository. 
