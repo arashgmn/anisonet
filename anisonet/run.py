@@ -6,8 +6,7 @@ Created on Fri Nov 18 13:58:11 2022
 @author: arash
 """
 
-from simulate import *
-
+from anisonet.simulate import Simulate
 
 sim = Simulate('I_net', scalar=2, 
                load_connectivity=0, 

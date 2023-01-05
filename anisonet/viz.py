@@ -24,8 +24,8 @@ import time
 import os
 osjoin = os.path.join # an alias for convenient
 
-import utils 
-from analyze import connectivity_manifold
+import anisonet.utils as utils 
+from anisonet.analyze import connectivity_manifold
 
 from pdb import set_trace
 

@@ -21,14 +21,13 @@ from scipy import sparse
 
 import time
 
-import viz
-import utils 
-import configs # default configurations
-import analyze
-import equations as eq
-from landscape import make_landscape
-#from anisofy import draw_post_syns as draw_posts
-from anisofy import draw_posts as draw_posts
+import anisonet.viz as viz
+import anisonet.utils as utils 
+import anisonet.configs as configs # default configurations
+import anisonet.analyze as analyze
+import anisonet.equations as eq
+from anisonet.landscape import make_landscape
+from anisonet.anisofy import draw_posts
 
 from pdb import set_trace
 
@@ -598,8 +597,9 @@ class Simulate(object):
                 try:
                     print('\tLoading connectivity matrix: {}'.format(w_name))
                     w = sparse.load_npz(osjoin(self.data_path, w_name+'.npz'))
-                    delays = np.load(osjoin(self.data_path, w_name+'_delays.npy'))
-                except:
+                    delays = np.load(osjoin(self.data_path, 'delays.npy'))
+                except Exception as e: 
+                    print(e)
                     print('\tWarning: Connecitivy file {} was not found.'.format(w_name))                    
                     print('\tWarning: Computing connectivity from scratch.')                    
                     self.load_connectivity = False

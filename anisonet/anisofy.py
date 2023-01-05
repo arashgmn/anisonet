@@ -131,7 +131,7 @@ trianglumertic transformation:
 
 from pdb import set_trace
 import numpy as np
-from utils import *
+from anisonet.utils import pre_loc2post_loc_rel 
 
 # def draw_post_syns(s_coord, ncons,
 #                   srow, scol, trow, tcol, 

@@ -22,9 +22,9 @@ from matplotlib.colors import Normalize
 from  matplotlib.cm import ScalarMappable
 #import seaborn as sns
 
-from utils import aggregate_mons, idx2coords
-from utils import plane2torus, torus2plane, balance_dist
-import viz
+from anisonet.utils import aggregate_mons, idx2coords
+from anisonet.utils import plane2torus, torus2plane, balance_dist
+# from anisonet.viz import plot_3d_clusters, plot_spline_trace
 
 from pdb import set_trace
 
@@ -195,8 +195,8 @@ def find_bumps(sim, plot=True):
         #bumps = DBSCAN(eps=1.23, min_samples=100).fit(xyt); 
         print('Number of clusters found: {}'.format(len(set(labels))))
         
-        if plot:
-            viz.plot_3d_clusters(sim, xyt, labels, mon.name)
+        # if plot:
+        #     plot_3d_clusters(sim, xyt, labels, mon.name)
             #viz.plot_3d_clusters(sim, scsct[:,[0,2,-1]], labels, mon.name)
             # viz.plot_3d_clusters(sim, scsct[:,[1,3,-1]], labels, mon.name)
         
@@ -247,14 +247,14 @@ def compute_speed(sim, plot=True):
             spls.append(make_interp_spline(t, np.c_[x, y]))
             spls0.append(make_interp_spline(t0, np.c_[x, y]))
         
-        if plot:
-            t_range = np.linspace(0,4, 201)
+        # if plot:
+        #     t_range = np.linspace(0,4, 201)
             
-            viz.plot_spline_trace(sim, spls, ts, t_range, 
-                                  name='_bump_trajectory_'+pop)
+        #     plot_spline_trace(sim, spls, ts, t_range, 
+        #                           name='_bump_trajectory_'+pop)
             
-            viz.plot_spline_trace(sim, spls0, [t_-t_.min() for t_ in ts], t_range, 
-                                  name='_bump_trajectory_reset_'+pop)
+        #     plot_spline_trace(sim, spls0, [t_-t_.min() for t_ in ts], t_range, 
+        #                           name='_bump_trajectory_reset_'+pop)
             
             
         # df = pd.DataFrame( bumps[pop], columns=['x','y','t','label'])
@@ -299,7 +299,12 @@ def compute_speed(sim, plot=True):
         # ax = fig.add_subplot()
         # sns.scatterplot(data=disp[disp.index>-1], x='t', y='v', hue='label', ax=ax)
         
-
+def connectivity_manifold(w, ncomp=2):
+    spectral = manifold.SpectralEmbedding(n_components = ncomp, 
+                                          affinity='precomputed')
+    return spectral.fit_transform(w)  
+    
+    
 def find_manifold(sim, plot=True):
     from scipy.ndimage import gaussian_filter
     
@@ -334,8 +339,8 @@ def find_manifold(sim, plot=True):
         #bumps = DBSCAN(eps=1.23, min_samples=100).fit(xyt); 
         print('Number of clusters found: {}'.format(len(set(labels))))
         
-        if plot:
-            viz.plot_3d_clusters(sim, xyt, labels, mon.name)
+        #if plot:
+        #    plot_3d_clusters(sim, xyt, labels, mon.name)
             #viz.plot_3d_clusters(sim, scsct[:,[0,2,-1]], labels, mon.name)
             # viz.plot_3d_clusters(sim, scsct[:,[1,3,-1]], labels, mon.name)
         
@@ -343,7 +348,3 @@ def find_manifold(sim, plot=True):
         
     return ward
     
-def connectivity_manifold(w, ncomp=2):
-    spectral = manifold.SpectralEmbedding(n_components = ncomp, 
-                                          affinity='precomputed')
-    return spectral.fit_transform(w)  
