@@ -15,15 +15,15 @@ sim = Simulate('I_net_focal_stim', scalar=3,
 
 sim.setup_net(init_cell='ss')
 #sim.warmup()
-for n in range(4):
+for n in range(3):
     sim.pops['I'].I_stim = 0*b2.nA
     sim.start(duration=500*b2.ms, batch_dur=500*b2.ms, 
             restore=False, profile=False, plot_snapshots=True)
-    sim.pops['I'].I_stim = 700*b2.nA
+    sim.set_protocol()
     sim.start(duration=500*b2.ms, batch_dur=500*b2.ms, 
             restore=False, profile=False, plot_snapshots=True)
 
-sim.start(duration=5000*b2.ms, batch_dur=500*b2.ms, 
-        restore=False, profile=False, plot_snapshots=True)
+# sim.start(duration=5000*b2.ms, batch_dur=500*b2.ms, 
+#         restore=False, profile=False, plot_snapshots=True)
 
 sim.post_process(overlay=True)
