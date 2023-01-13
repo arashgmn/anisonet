@@ -9,9 +9,9 @@ Created on Fri Nov 18 13:58:11 2022
 from anisonet.simulate import Simulate
 import brian2 as b2
 
-sim = Simulate('demo', scalar=2, 
+sim = Simulate('demo', scalar=4, 
                load_connectivity=1, 
-               to_event_driven=1,)
+               to_event_driven=1, training=True)
 
 sim.setup_net()
 sim.warmup()

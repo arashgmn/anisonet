@@ -42,7 +42,7 @@ class Simulate(object):
     """
     
     def __init__(self, net_name='I_net', load_connectivity=True,  scalar=1,
-                 result_path=None, to_event_driven = True, ):
+                 result_path=None, to_event_driven = True,):
         """
         Initializes the simulator object for the given network configuration. 
         By default, tries to load the connectivity matrix from disk, otherwise
@@ -87,7 +87,7 @@ class Simulate(object):
             os.makedirs(self.res_path)
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
-
+        
         # warm-up settings
         self.warmup_std = 500*b2.pA
         self.warmup_dur = 500*b2.ms
@@ -222,6 +222,10 @@ class Simulate(object):
             # equal to the prescribed J.
             if kernel=='tsodysk-markram':
                 self.syns[syn_name].J /= conn_cfg['synapse']['params']['U']
+            
+            if conn_cfg['training']['type']=='STDP':
+                self.syns[syn_name].w  = 0.5 
+                
                 
     def get_synaptic_base(self):
         """
@@ -352,21 +356,63 @@ class Simulate(object):
         return name[:-1] #dropping the last seperator
     
     def process_configs(self, to_event_driven):
+        """
+        Every population configuration must have the following keys:
+            
+            * **Mandatory**: 'gs', 'cell'
+            * **Optional**: 'noise'
+        
+        Every connection configuration must have the following keys:
+            
+            * **Mandatory**: `synapse`
+            * **Optional**: 'training' , 'profile', 'anisotropy'
+        
+        The entry 'anisotropy' itself must have some keys:
+            
+            * **Mandatory**: `connectivity`, 'synaptic'
+            
+        Every stimulation configuration must have the following keys:
+            
+            * **Optional**: everything is optional
+            
+        If optional entries are not provided, the simlest possible 
+        case will be assumed. i.e., 
+        
+            * Noise: Both mean and std will be set to zero 
+            * Profile: No connectivity profile will be considered. 
+                This is equivalent to a random network.
+            * Anisotropy: No anisotropy will be configured. This 
+                means connectivity profile will be isotropic.
+            * Training: Training will be disabled. Thus, synaptic
+                weights will fixed (in long-term). Short-term 
+                plasticity is still possible.
+        """
         
         # filling the None with appropriate values
         for pathway in self.conn_cfg.keys():
             src, trg = pathway
             config = self.conn_cfg[pathway]
             
-            # filling None profiles with homog
-            if config['profile']==None:
+            # Filling omitted optional configs
+            if 'training' not in self.conn_cfg[pathway]:
+                self.conn_cfg[pathway]['training'] = {}
+                
+            if 'profile' not in self.conn_cfg[pathway]:
                 self.conn_cfg[pathway]['profile'] = {'type': 'homog', 'params':{}}
             
-            # filling None anisotropy with empty parameters
-            if config['anisotropy']==None:
-                 self.conn_cfg[pathway]['anisotropy'] = {'params': {},
-                                                         'connectivity': None,
-                                                         'synaptic': None}
+            if 'anisotropy' not in self.conn_cfg[pathway]:
+                self.conn_cfg[pathway]['anisotropy'] = {'params': {},
+                                                        'connectivity': None,
+                                                        'synaptic': None}
+            # filling None profiles with homog
+            # if config['profile']==None:
+            #     self.conn_cfg[pathway]['profile'] = {'type': 'homog', 'params':{}}
+            
+            # # filling None anisotropy with empty parameters
+            # if config['anisotropy']==None:
+            #      self.conn_cfg[pathway]['anisotropy'] = {'params': {},
+            #                                              'connectivity': None,
+            #                                              'synaptic': None}
             else:
                 if 'connectivity' not in config['anisotropy']:
                     config['anisotropy']['connectivity'] = None
@@ -382,6 +428,7 @@ class Simulate(object):
                         config['anisotropy']['params'][param]['args'] = None
                 
                 
+        # TODO: check what does it do. Probably nothing!                
         # adding stimulation variable
         for pop in self.pops_cfg.keys():
             if 'stim' not in self.pops_cfg[pop]:
@@ -896,10 +943,15 @@ class Simulate(object):
         logging.info('Computing synchrony order parameter.')
         #viz.plot_R(self)
         
+        # short-term weights
         if self.has_plastic:
             viz.plot_relative_weights(self)
             viz.plot_relative_weights_2d(self)
-            
+        
+        # Long term weights
+        viz.plot_LT_weights(self)
+        
+        
         analyze.find_bumps(self, plot=True)
         
         
@@ -935,6 +987,9 @@ class Simulate(object):
             pop, id_ = stim_id.split('_')
             
             self.pops[pop].I_stim[ stim_cfg['idxs'] ] = stim_cfg['I_stim']#.values[0]
+        
+    def train(self):
+        assert self.training==True
         
         
 if __name__=='__main__':

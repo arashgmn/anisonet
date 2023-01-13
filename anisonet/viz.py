@@ -805,3 +805,21 @@ def plot_manifold(sim, ncomp = 2):
         plt.savefig(figpath,dpi=200, bbox_inches='tight', )
         #plt.close()
         
+def plot_LT_weights(sim):
+    """
+    plots the long-term weight distribution if training is done.
+    """
+    for syn_name in sim.conn_cfg.keys():
+        if sim.conn_cfg[syn_name]['training']['type']=='STDP':
+            s = sim.syns[syn_name]
+            
+            plt.figure()
+            plt.hist(s.w, bins=50, density=True)
+            plt.xlim(0,1)
+            plt.xlabel('w')
+            plt.ylabel('Probability density')
+            plt.yscale('log')
+            plt.title('Long-term weight distribution-'+syn_name, size=16)
+            figpath = osjoin(sim.res_path, f'LTW_{syn_name}.png')
+            plt.savefig(figpath,dpi=200, bbox_inches='tight', )
+            plt.close()

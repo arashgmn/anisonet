@@ -286,13 +286,27 @@ def get_syn_eqs(conn_name, conn_cfg):
         U: 1
         '''
     
+    tmp_hebbian = '''
+        
+    '''
+    
+    # this is modified STDP rule that ensures the weight stays between (0,1).
+    # The main treatment is in `on_pre` and `on_post` expression. However, it
+    # also requires the Apre and Apost to be absolutely less than 1.
+    tmp_STDP = '''
+        dapre/dt = -apre / taupre : 1 (event-driven)
+        dapost/dt = -apost / taupost : 1 (event-driven)
+        w: 1
+    '''
+    
     # Constructing equations
     kernel, model = conn_cfg[conn_name]['synapse']['type'].split('_') # identify kernel and model
+    namespace = copy.deepcopy(conn_cfg[conn_name]['synapse']['params'])
     
     # kernel related components (only traces updates are given here)
     if kernel == 'alpha':
     	eqs_str = tmp_alpha
-    	on_pre = 'h += exp(1)' 
+    	on_pre = 'h += exp(1)\n' 
     
     elif kernel== 'biexp':
     	eqs_str = tmp_biexp
@@ -300,11 +314,11 @@ def get_syn_eqs(conn_name, conn_cfg):
     
     elif kernel== 'exp':
     	eqs_str = tmp_exp
-    	on_pre = 'g += 1' # TODO: we have to decide how do we normalize exp kernel
+    	on_pre = 'g += 1\n' # TODO: we have to decide how do we normalize exp kernel
         
     elif kernel=='const' : # constant kernel
     	eqs_str = 'g = 1 : 1'
-    	on_pre = '' # no 
+    	on_pre = '' # none 
     
     elif kernel=='tsodysk-markram':
         msg = """
@@ -319,7 +333,7 @@ def get_syn_eqs(conn_name, conn_cfg):
         on_pre = '''
             u += U * (1 - u)
             g = u * x
-            x = x - g
+            x = x - g\n
         '''
     
     else:
@@ -340,15 +354,30 @@ def get_syn_eqs(conn_name, conn_cfg):
         eqs_str = eqs_str.replace('clock-driven', 'event-driven')
         eqs_str += '''\nJ: volt (shared)'''
         
-        on_pre += '''\nv_post += J*g'''
+        on_pre += '''\nv_post += J*g\n'''
         
     else:
         raise NotImplementedError('synaptic model type "{}" is not recognized!'.format(model))
     
     on_post = ''
-
-    
-    
+    if conn_cfg[conn_name]['training']!=None:
+        eqs_str = eqs_str.replace('(shared)', '')
+        
+        if conn_cfg[conn_name]['training']['type'] =='STDP':
+            eqs_str += tmp_STDP
+            
+            on_pre +='''
+                J *= 2*w
+                apre = Apre
+                w += w*apost
+                '''
+                
+            on_post += '''
+                apost = Apost
+                w += (1-w)*apre
+                '''
+            namespace.update(conn_cfg[conn_name]['training']['params'])
+            
     # if syn_base=='alpha_conductance':
     #     # J is the maximum conductance
     #     eqs_str = tmp_alpha
@@ -394,8 +423,6 @@ def get_syn_eqs(conn_name, conn_cfg):
     #     raise NotImplementedError
         
     eqs = b2.Equations(eqs_str)
-    namspace = copy.deepcopy(conn_cfg[conn_name]['synapse']['params'])
-    namspace.pop('J')
-
-    return eqs, on_pre, on_post, namspace
+    namespace.pop('J')
+    return eqs, on_pre, on_post, namespace
     
