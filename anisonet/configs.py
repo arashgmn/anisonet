@@ -229,6 +229,38 @@ def get_config(name='EI_net', scalar=3):
     .. _[1]: https://doi.org/10.1371/journal.pcbi.1007432
 
     """
+    if name=='test':
+        pops_cfg = {
+            'I': {'gs': round_to_even(100, scalar), 
+                  'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
+                  'cell': {'type': 'LIF', 
+                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                           'tau':10*ms, 'C': 250*pF}
+                          }
+            }
+
+        conn_cfg = {
+            'II': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
+                   'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4}, 'gap': max(2, 6./scalar) },
+                   'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'anisotropy': {
+                       'synaptic': 'cos',
+                       'connectivity': 'shift', 
+                       'params': {'r'  : 1, 
+                                  'phi': {'type': 'perlin', 'args': {'scale':3} }, 
+                                  'U': {'type': 'perlin', 'args': {'scale':2}, 'vmin': 0.01, 'vmax':0.3},
+                                  }  
+                       },
+                   
+                'training': {'type': 'STDP', 
+                             'params': {'taupre': 10*ms,'taupost': 10*ms,
+                                        'Apre': 0.05, 'Apost': -0.055,},
+                             },
+                }
+            }
+        
+    
+    
     if name=='demo':
         pops_cfg = {
             'I': {'gs': round_to_even(100, scalar), 
@@ -267,25 +299,23 @@ def get_config(name='EI_net', scalar=3):
         conn_cfg = {
             'II': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
                    'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4}, 'gap': max(2, 6./scalar) },
-                   #'profile': {},
-                   #'profile': {'type':'Gaussian', 'params': {'std': 3}, 'gap': max(2, 5./scalar) },
                    'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   # 'synapse': {'type':'tsodysk-markram_jump', 
-                   #               'params': {'J': -0.221*mV*(scalar**2), 'delay':1*ms, 
-                   #                           'tau': 10*ms, 'tau_f': 500.*ms, 'tau_d': 500.*ms, 
-                   #                           'U':1/3.}},
-                   # 'anisotropy': {'synaptic': 'cos',
-                   #                 'params': {'r'  : 1, 
-                   #                            'phi': {'type': 'perlin', 'args': {'scale':4} },
-                   #                            'U': {'type': 'perlin', 'args': {'scale':2}, 'vmin': 0.01, 'vmax':0.3},
-                   #                            'Umin':0.01,
-                   #                            'Umax':0.4,
-                   #                            }  
-                   #                },
-                    'training': {'type': 'STDP', 
-                                 'params': {'taupre': 10*ms,'taupost': 10*ms,
-                                            'Apre': 0.05, 'Apost': -0.055,},
-                                 }
+                   
+                   # Note: In the paper, four different anisotropic configurations 
+                   # are introduced: "random", "symmetric", "homogeneous" and 
+                   # "perlin". To emulate these cases follow these instructions:
+                       # comment the entire `anisotropy` dict (as well as the key) to get "random"
+                       # use `'phi': {'type': 'random'}`` to get "symmetric"
+                       # use `'phi': np.pi/6`` to get "homogeneous"
+                       # use `'phi': {'type': 'perlin', ...` to get "perlin"
+                   'anisotropy': {
+                       'connectivity': 'shift', # induces anisotropy in connections with shift method 
+                       'params': {'r'  : 1, 
+                                  'phi': {'type': 'perlin', 'args': {'scale':3} }, # a perlin-generate angular landscape
+                                  #'phi': {'type': 'random'},     # a random angular ladscape
+                                  #'phi': np.pi/6,  # a homogeneous angular ladscape
+                                  }  
+                       },
                    }
         }
         
@@ -303,18 +333,21 @@ def get_config(name='EI_net', scalar=3):
 
         conn_cfg = {
             'EE': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
-                   'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
-                   #'profile': {'type':'Gaussian', 'params': {'std': 3} },
+                   'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4}, 'gap': max(2, 6./scalar) },
                    'synapse': {'type':'alpha_current', 'params': {'J': 2.5*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}},
-                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/6.}}
-                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
-                   #'anisotropy': {'type': 'iso', 'params': {}}
-                   
+                   'anisotropy': {
+                        #'synaptic': 'cos',       # induces anisotropy in synapses with cosine method
+                       'connectivity': 'shift', # induces anisotropy in connections with shift method 
+                       'params': {'r'  : 1, 
+                                  'phi': {'type': 'perlin', 'args': {'scale':4} },
+                                  'U': {'type': 'perlin', 'args': {'scale':2}, 'vmin': 0.01, 'vmax':0.3},
+                                 }  
+                       },
                    },
-        }    
+        }
     
         stim_cfg = {}
+        
         
     elif name=='EI_net':
         pops_cfg = {
@@ -332,40 +365,60 @@ def get_config(name='EI_net', scalar=3):
                            'tau': 10*ms, 'C': 250*pF}
                   }
         }
-
+        
         conn_cfg = {
             'EE': {'ncons': round_to_even(720, scalar**2), 'self_link':False, 
-                  #'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
-                  'profile': {'type':'Gaussian', 'params': {'std': 9/scalar} },
-                  'synapse': {'type':'alpha_current', 'params': {'J': 10*pA, 'delay':1*ms, 'tau': 5*ms} },
-                  #'anisotropy': {'type': 'perlin', 'params': {'scale': 3, 'r':np.sqrt(2)}},
-                  #'anisotropy': {'type': 'iso', 'params': {}}
-                  'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':np.pi/6.}},
+                  'profile': {'type':'Gaussian', 'params': {'std': 9/scalar}, 'gap': max(2, 6./scalar) },
+                  'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms} },
                   
+                  # Note: In the paper, four different anisotropic configurations 
+                  # are introduced: "random", "symmetric", "homogeneous" and 
+                  # "perlin". To emulate these cases follow these instructions:
+                      # comment the entire `anisotropy` dict (as well as the key) to get "random"
+                      # use `'phi': {'type': 'random'}`` to get "symmetric"
+                      # use `'phi': np.pi/6`` to get "homogeneous"
+                      # use `'phi': {'type': 'perlin', ...` to get "perlin"
+                  'anisotropy': {
+                      'connectivity': 'shift', # induces anisotropy in connections with shift method 
+                      'params': {'r'  : 1, 
+                                 'phi': {'type': 'perlin', 'args': {'scale':2} }, # a perlin-generate angular landscape
+                                 #'phi': {'type': 'random'},  # a random angular ladscape
+                                 #'phi': np.pi/6,  # a homogeneous angular ladscape
+                                 }  
+                      },
                   },
-            
+                  
             'EI': {'ncons': round_to_even(180, scalar**2), 'self_link':False, 
-                   'profile': {'type':'Gaussian', 'params': {'std': 4.5/scalar}},
-                   'synapse': {'type':'alpha_current', 'params': {'J': 10*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': {'type': 'random', 'params': {'r': 1,}},
-                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
-                   
+                   'profile': {'type':'Gaussian', 'params': {'std': 4.5/scalar}, 'gap': max(2, 6./scalar) },
+                   'synapse': {'type':'alpha_current', 'params': {'J': 10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'anisotropy': {
+                       'connectivity': 'shift', # induces anisotropy in connections with shift method 
+                       'params': {'r'  : 1, 
+                                  'phi': {'type': 'random'},  # a random angular ladscape
+                                  }  
+                       },
                    },
             
             'IE': {'ncons': round_to_even(720, scalar**2), 'self_link':False, 
-                   'profile': {'type':'Gaussian', 'params': {'std': 12/scalar}},
-                   'synapse': {'type':'alpha_current', 'params': {'J': -80*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': {'type': 'random', 'params': {'r': 1,}},
-                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
-                   
+                   'profile': {'type':'Gaussian', 'params': {'std': 12/scalar}, 'gap': max(2, 6./scalar) },
+                   'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'anisotropy': {
+                       'connectivity': 'shift', # induces anisotropy in connections with shift method 
+                       'params': {'r'  : 1, 
+                                  'phi': {'type': 'random'},  # a random angular ladscape
+                                  }  
+                       },
                    },
 
             'II': {'ncons': round_to_even(180, scalar**2), 'self_link':False, 
-                   'profile': {'type':'Gaussian', 'params': {'std': 6/scalar}},
-                   'synapse': {'type':'alpha_current', 'params': {'J': -80*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': {'type': 'random', 'params': {'r': 1,}},
-                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
-                   
+                   'profile': {'type':'Gaussian', 'params': {'std': 6/scalar}, 'gap': max(2, 6./scalar) },
+                   'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'anisotropy': {
+                       'connectivity': 'shift', # induces anisotropy in connections with shift method 
+                       'params': {'r'  : 1, 
+                                  'phi': {'type': 'random'},  # a random angular ladscape
+                                  }  
+                       },
                    },
         }
         
@@ -380,16 +433,19 @@ def get_config(name='EI_net', scalar=3):
                            'tau':10*ms, 'C': 250*pF}
                           }
             }
-
+        
+        # Note: For a homogeneous network, `profile` entry can be omitted. 
         conn_cfg = {
             'II': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
-                   'profile': None,
                    'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/6.}}
-                   'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}},
-                   
+                   'anisotropy': {
+                       'connectivity': 'shift', # induces anisotropy in connections with shift method 
+                       'params': {'r'  : 1, 
+                                  'phi': {'type': 'perlin', 'args': {'scale':3} },
+                                  }  
+                       },
                    },
-        }    
+        }
 
         stim_cfg = {}
                 
@@ -402,18 +458,19 @@ def get_config(name='EI_net', scalar=3):
                            'tau':10*ms, 'C': 250*pF}
                           }
             }
-
+        
+        # Note: We can model an isotropic network, simply by omitting the 
+        #       anisotropy key in the connections config
         conn_cfg = {
             'II': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
                    'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4}, 'gap': max(2, 5./scalar) },
                    'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': None,
-                   
                    },
         }    
 
         stim_cfg = {}
         
+
     elif name=='homiso_net':
         pops_cfg = {
             'I': {'gs': round_to_even(100, scalar), 
@@ -423,12 +480,12 @@ def get_config(name='EI_net', scalar=3):
                            'tau':10*ms, 'C': 250*pF}
                           }
             }
-
+        
+        # Note: For a homogeneous and isotropic network no `profile` or
+        #       `anisotropy` is needed.
         conn_cfg = {
             'II': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
-                   'profile': None,
                    'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': None
                    },
         }    
     
@@ -447,21 +504,22 @@ def get_config(name='EI_net', scalar=3):
         conn_cfg = {
             'II': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
                    'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4}, 'gap': max(2, 5./scalar) },
-                   #'profile': {'type':'Gaussian', 'params': {'std': 3,} , 'gap': max(2, 5./scalar)},
-                   #'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                    'synapse': {'type':'tsodysk-markram_jump', 
-                                'params': {'J': -0.221*mV*(scalar**2), 'delay':1*ms, 
-                                           'tau': 10*ms, 'tau_f': 1500.*ms, 'tau_d': 200.*ms, 
-                                           'U':.3}},
-                   
-                   
-                   #'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}}
-                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/6.}}
-                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
-                   'anisotropy': {'type': 'iso', 'params': {}}
+                   'synapse': {'type':'tsodysk-markram_jump', 
+                               'params': {'J': -0.221*mV*(scalar**2), 'delay':1*ms, 
+                                          'tau': 10*ms, 'tau_f': 1500.*ms, 'tau_d': 200.*ms, 
+                                          }},
+                   'anisotropy': {
+                       'connectivity': 'shift', 'synaptic': 'cos',
+                       'params': {'r'  : 1, 
+                                  'phi': {'type': 'perlin', 'args': {'scale':2} },
+                                  # TODO: should somehow detect if U is a landscape or will be drawn from Umin to Umax.
+                                  'U': {'type': 'perlin', 'args': {'scale':2}, 'vmin': 0.01, 'vmax':0.3},
+                                  'Umin': 0.05, 'Umax':0.3
+                                  }  
+                       },
                    },
         }
-     
+        
         stim_cfg = {}
            
     elif name=='STSP_TM_EI_net':
@@ -481,41 +539,35 @@ def get_config(name='EI_net', scalar=3):
                  }
             }
 
+
         conn_cfg = {
             'EE': {'ncons': round_to_even(720, scalar**2), 'self_link':False, 
-                  #'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
-                  'profile': {'type':'Gaussian', 'params': {'std': 9/scalar} },
-                  #'synapse': {'type':'alpha_current', 'params': {'J': 10*pA, 'delay':1*ms, 'tau': 5*ms} },
+                  'profile': {'type':'Gaussian', 'params': {'std': 9/scalar}, 'gap': max(2, 6./scalar) },
                   'synapse': {'type':'tsodysk-markram_jump', 
                               'params': {'J': 0.221*mV*(scalar**2), 'delay':1*ms, 
                                          'tau_f': 1500*ms, 'tau_d': 600*ms, 'U':0.1}},
-                  #'anisotropy': {'type': 'perlin', 'params': {'scale': 3, 'r':np.sqrt(2)}},
-                  #'anisotropy': {'type': 'iso', 'params': {}}
-                  'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':np.pi/6.}}
+                  'anisotropy': {
+                      'connectivity': 'shift', 
+                      'params': {'r'  : 1, 'phi': {'type': 'perlin', 'args': {'scale':2} }, }  
+                      },
                   },
             
             'EI': {'ncons': round_to_even(180, scalar**2), 'self_link':False, 
-                   'profile': {'type':'Gaussian', 'params': {'std': 4.5/scalar}},
-                   #'synapse': {'type':'alpha_current', 'params': {'J': 10*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   'profile': {'type':'Gaussian', 'params': {'std': 4.5/scalar}, 'gap': max(2, 6./scalar) },
                    'synapse': {'type':'tsodysk-markram_jump', 
                                'params': {'J': 0.221*mV*(scalar**2), 'delay':1*ms, 
-                                          'tau_f': 1500*ms, 'tau_d': 600*ms, 'U':0.5}},
-                   'anisotropy': {'type': 'iso', 'params': {}},
-                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
+                                          'tau_f': 1500*ms, 'tau_d': 600*ms, 'U':0.1}},
+                   
                    },
             
             'IE': {'ncons': round_to_even(720, scalar**2), 'self_link':False, 
-                   'profile': {'type':'Gaussian', 'params': {'std': 12/scalar}},
-                   'synapse': {'type':'alpha_current', 'params': {'J': -40*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': {'type': 'iso', 'params': {}},
-                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
+                   'profile': {'type':'Gaussian', 'params': {'std': 12/scalar}, 'gap': max(2, 6./scalar) },
+                   'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
                    },
 
             'II': {'ncons': round_to_even(180, scalar**2), 'self_link':False, 
-                   'profile': {'type':'Gaussian', 'params': {'std': 6/scalar}},
-                   'synapse': {'type':'alpha_current', 'params': {'J': -40*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': {'type': 'iso', 'params': {}},
-                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
+                   'profile': {'type':'Gaussian', 'params': {'std': 6/scalar}, 'gap': max(2, 6./scalar) },
+                   'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
                    },
             
             }
@@ -537,51 +589,41 @@ def get_config(name='EI_net', scalar=3):
                   'cell': {'type': 'LIF', 
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
                            'tau': 10*ms, 'C': 250*pF}
-                  }
-        }
+                 }
+            }
+
 
         conn_cfg = {
             'EE': {'ncons': round_to_even(720, scalar**2), 'self_link':False, 
-                  #'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
-                  'profile': {'type':'Gaussian', 'params': {'std': 9/scalar} },
-                  # 'synapse': {'type':'tsodysk-markram_jump', 
-                  #             'params': {'J': -0.221*mV, 'delay':1*ms, 
-                  #                        'tau_f': 1500*ms, 'tau_d': 200*ms, 'U':0.5}},
-                  
-                  'synapse': {'type':'alpha_current', 'params': {'J': 10*pA, 'delay':1*ms, 'tau': 5*ms} },
-                  #'anisotropy': {'type': 'perlin', 'params': {'scale': 3, 'r':np.sqrt(2)}},
-                  'anisotropy': {'type': 'iso', 'params': {}}
-                  #'anisotropy': {'type': 'homogeneous', 'params': {'r': np.sqrt(2), 'phi':np.pi/6.}}
+                  'profile': {'type':'Gaussian', 'params': {'std': 9/scalar}, 'gap': max(2, 6./scalar) },
+                  'synapse': {'type':'tsodysk-markram_jump', 
+                              'params': {'J': 0.221*mV*(scalar**2), 'delay':1*ms, 
+                                         'tau_f': 1500*ms, 'tau_d': 600*ms, 'U':0.1}},
+                  'anisotropy': {
+                      'connectivity': 'shift', 
+                      'params': {'r'  : 1, 'phi': {'type': 'perlin', 'args': {'scale':2} }, }  
+                      },
                   },
             
-            'EI': {'ncons': round_to_even(180, scalar**2), 
-                    'self_link':False, 
-                    'profile': {'type':'Gaussian', 'params': {'std': 4.5/scalar}},
-                    #'profile': {'type':'homog', 'params': {}},
-                    'synapse': {'type':'alpha_current', 'params': {'J': 10*pA, 'delay':1*ms, 'tau': 5*ms}},
-                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}},
-                    'anisotropy': {'type': 'iso', 'params':{}}
-                    },
+            'EI': {'ncons': round_to_even(180, scalar**2), 'self_link':False, 
+                   'profile': {'type':'Gaussian', 'params': {'std': 4.5/scalar}, 'gap': max(2, 6./scalar) },
+                   'synapse': {'type':'tsodysk-markram_jump', 
+                               'params': {'J': 0.221*mV*(scalar**2), 'delay':1*ms, 
+                                          'tau_f': 1500*ms, 'tau_d': 600*ms, 'U':0.2}},
+                   
+                   },
             
-            'IE': {'ncons': round_to_even(720, scalar**2), 
-                    'self_link':False, 
-                    'profile': {'type':'Gaussian', 'params': {'std': 12/scalar}},
-                    #'profile': {'type':'homog', 'params': {}},
-                    'synapse': {'type':'alpha_current', 'params': {'J': -80*pA, 'delay':1*ms, 'tau': 5*ms}},
-                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}},
-                    #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
-                    'anisotropy': {'type': 'iso', 'params':{}}
-                    },
+            'IE': {'ncons': round_to_even(720, scalar**2), 'self_link':False, 
+                   'profile': {'type':'Gaussian', 'params': {'std': 12/scalar}, 'gap': max(2, 6./scalar) },
+                   'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                   },
 
             'II': {'ncons': round_to_even(180, scalar**2), 'self_link':False, 
-                   'profile': {'type':'Gaussian', 'params': {'std': 6/scalar}},
-                   #'profile': {'type':'homog', 'params': {}},
-                   'synapse': {'type':'alpha_current', 'params': {'J': -80*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}},
-                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
-                   'anisotropy': {'type': 'iso', 'params':{}}
+                   'profile': {'type':'Gaussian', 'params': {'std': 6/scalar}, 'gap': max(2, 6./scalar) },
+                   'synapse': {'type':'alpha_current', 'params': {'J': -80*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
                    },
-        }
+            
+            }
             
         stim_cfg = {
             'E_0': {'type': 'const', 'I_stim': 500,
@@ -597,42 +639,43 @@ def get_config(name='EI_net', scalar=3):
     elif name=='I_net_focal_stim':
         pops_cfg = {
             'I': {'gs': round_to_even(100, scalar), 
-                  'noise': {'mu': 700*pA, 'sigma': 50*pA, 'noise_dt': 1.*ms},
+                  'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
                   'cell': {'type': 'LIF', 
                            'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
                            'tau':10*ms, 'C': 250*pF}
                           }
             }
-
+        
         conn_cfg = {
-            'II': {'ncons': 1000, 'self_link':False, 
-                   #'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4} },
-                   'profile': {'type':'Gaussian', 'params': {'std': 10/scalar} , 'gap': max(3, 5./scalar) },
-                   'synapse': {'type':'alpha_current', 'params': {'J': -10*pA, 'delay':1*ms, 'tau': 5*ms}},
+            'II': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
+                   'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4}, 'gap': max(2, 6./scalar) },
+                   
+                   'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
                    # 'synapse': {'type':'tsodysk-markram_jump', 
-                   #             'params': {'J': -0.221*mV*(scalar**2), 'delay':1*ms, 
-                   #                        'tau_f': 1500*ms, 'tau_d': 200*ms, 'U':0.2}},
-                   #'synapse': {'type':'tsodysk-markram_jump', 
-                               # 'params': {'J': -0.221*mV*(scalar**2), 'delay':1*ms, 
-                               #            'tau': 10*ms, 'tau_f': 1500.*ms, 'tau_d': 200.*ms, 
-                               #            'U':1/3.}},
+                   #             'params': {'J': 0.221*mV*(scalar**2), 'delay':1*ms, 
+                   #                        'tau_f': 1500*ms, 'tau_d': 600*ms, 'U':0.1}},
                    
                    
-                   #'anisotropy': {'type': 'perlin', 'params': {'r': np.sqrt(2), 'scale':3}}
-                   #'anisotropy': {'type': 'homogeneous', 'params': {'r': 1, 'phi':np.pi/6.}}
-                   #'anisotropy': {'type': 'random', 'params': {'r': 1,}}
-                   'anisotropy': {'type': 'iso', 'params': {}},
+                   'anisotropy': {
+                       'connectivity': 'shift', # induces anisotropy in connections with shift method 
+                       'params': {'r'  : 1, 
+                                  'phi': {'type': 'perlin', 'args': {'scale':4} }, # a perlin-generate angular landscape
+                                  #'phi': {'type': 'random'},  # a random angular ladscape
+                                  #'phi': np.pi/6,  # a homogeneous angular ladscape
+                                  }  
+                       },
                    
                    'training': {'type': 'STDP', 
-                                'params': {'taupre': 500*ms,'taupost': 500*ms,
-                                           'Apre': 0.05, 'Apost': -0.055,},
-                                }
-                  }
-            }
-            
+                             'params': {'taupre': 10*ms,'taupost': 10*ms,
+                                        'Apre': 0.05, 'Apost': -0.055,},
+                             },
+                
+                   }
+        }
+           
         stim_cfg = {
-            'I_0': {'type': 'const', 'I_stim': 100,
-                    'domain': {'type': 'r', 'x0': 30, 'y0': 10, 'r':2.5}
+            'I_0': {'type': 'const', 'I_stim': 400,
+                    'domain': {'type': 'r', 'x0': 20, 'y0': 10, 'r':2.5}
                     },
             
             # 'I_1': {'type': 'const', 'I_stim': 700,
@@ -646,3 +689,38 @@ def get_config(name='EI_net', scalar=3):
     
     return pops_cfg, conn_cfg, stim_cfg
        
+
+class configer(object):
+    
+    def __init__(self):
+        self.pops_cfg = {}
+        self.conn_cfg = {}
+        self.stim_cfg = {}
+    
+    def add_pop(self, pop_name, gs):
+        pop_cfg = {}
+        pop_cfg['gs'] = gs
+        
+        # defaults
+        pop_cfg['noise']= {'mu': 0*pA, 'sigma': 0*pA, 'noise_dt': 1.*ms},
+        pop_cfg['cell'] = {'type': 'LIF', 
+                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                           'tau':10*ms, 'C': 250*pF}
+        
+        self.pops_cfg[pop_name] = pop_cfg
+        
+    def update_neuron(self, pop_name, update):
+        pass
+    
+    def update_noise(self, pop_name, update):
+        pass
+        
+    def add_pathway(self, src, trg, ncons, synapse, self_link=False):
+        conn_cfg = {}
+        
+        conn_cfg['ncons'] = ncons
+        conn_cfg['self_link'] = self_link
+        
+        conn_cfg['synapse'] = self_link
+        
+        

@@ -74,7 +74,7 @@ def make_landscape(gs, lscp_cfg, vmin=-np.pi, vmax=np.pi, balance=False,
             vmax = lscp_cfg['vmax']
         
         
-        if lscp_cfg['type'] == None:
+        if lscp_cfg['type'] == 'random':
             lscp = np.random.uniform(vmin, vmax, size=gs**2)
         
         elif lscp_cfg['type'] =='perlin':

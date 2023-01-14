@@ -395,7 +395,7 @@ class Simulate(object):
             
             # Filling omitted optional configs
             if 'training' not in self.conn_cfg[pathway]:
-                self.conn_cfg[pathway]['training'] = {}
+                self.conn_cfg[pathway]['training'] = {'type': None }
                 
             if 'profile' not in self.conn_cfg[pathway]:
                 self.conn_cfg[pathway]['profile'] = {'type': 'homog', 'params':{}}
@@ -933,7 +933,7 @@ class Simulate(object):
         viz.plot_in_out_deg(self)
         viz.plot_realized_landscape(self)
         viz.plot_connectivity(self)
-        viz.plot_manifold(self, 2)
+        
         logging.info('Visualizing firing rate distribution.')
         viz.plot_firing_rates_dist(self)
         
@@ -953,6 +953,7 @@ class Simulate(object):
         
         
         analyze.find_bumps(self, plot=True)
+        viz.plot_manifold(self, 2)
         
         
     def get_syn_mons(self):

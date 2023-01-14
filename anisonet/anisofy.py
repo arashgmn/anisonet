@@ -548,7 +548,6 @@ def make_anisotropic_profile(x,y, aniso, method='shift'):
     
 
 def make_anisotropic_syn(s_loc, t_locs, gs, anisotropy, method):
-    
     syn_pars = {}
     rel_locs = pre_loc2post_loc_rel(s_loc, t_locs, gs)
     delays = np.linalg.norm(rel_locs, axis=1)
