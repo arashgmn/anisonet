@@ -33,7 +33,7 @@ from pdb import set_trace
 
 b2.seed(81)
 
-_plastic_models = ['tsodysk-markram']
+_plastic_models = ['tsodyks-markram']
 
 
 class Simulate(object):
@@ -174,7 +174,7 @@ class Simulate(object):
             kernel, model = conn_cfg['synapse']['type'].split('_')
             
             if init_syn=='ss':
-                if kernel=='tsodysk-markram':
+                if kernel=='tsodyks-markram':
                     self.syns[syn_name].u = conn_cfg['synapse']['params']['U']
                     self.syns[syn_name].x = 1
                     self.syns[syn_name].U = conn_cfg['synapse']['params']['U']
@@ -187,7 +187,7 @@ class Simulate(object):
                 
             
             elif init_syn=='rand':
-                if kernel=='tsodysk-markram':
+                if kernel=='tsodyks-markram':
                     self.syns[syn_name].u = 'rand()'
                     self.syns[syn_name].x = 'rand()'
                     self.syns[syn_name].U = conn_cfg['synapse']['params']['U']
@@ -208,7 +208,7 @@ class Simulate(object):
                 
                 assert conn_cfg['anisotropy']['synaptic']!=None, msg_het
                     
-                if kernel=='tsodysk-markram':
+                if kernel=='tsodyks-markram':
                     self.syns[syn_name].u = 'rand()'
                     self.syns[syn_name].x = 'rand()'
                     self.syns[syn_name].U = np.load(osjoin(self.data_path, 'Us.npy'))
@@ -220,7 +220,7 @@ class Simulate(object):
             
             # The following ensures that the stationary response of synapse is
             # equal to the prescribed J.
-            if kernel=='tsodysk-markram':
+            if kernel=='tsodyks-markram':
                 self.syns[syn_name].J /= conn_cfg['synapse']['params']['U']
             
             if conn_cfg['training']['type']=='STDP':

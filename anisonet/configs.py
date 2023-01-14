@@ -104,7 +104,7 @@ Synapse
      'synapse': {'type':'alpha_jump', 'params': {'J': ..., 'delay':..., 'tau': ...}}, # usually we use this
      'synapse': {'type':'alpha_current', 'params': {'J': ..., 'delay': ..., 'tau': ...}}, # or this
      'synapse': {'type':'alpha_conductance', 'params': {'J': ..., 'delay': ..., 'tau': ..., 'Erev': ...}}, # but not this (NOT TESTED!)
-     'synapse': {'type':'tsodysk-markram_jump', 'params': {'J': ..., 'delay': ...,  'tau_f': ..., 'tau_d': ..., 'U':...}},
+     'synapse': {'type':'tsodyks-markram_jump', 'params': {'J': ..., 'delay': ...,  'tau_f': ..., 'tau_d': ..., 'U':...}},
      ...
     }
     
@@ -249,6 +249,7 @@ def get_config(name='EI_net', scalar=3):
                        'params': {'r'  : 1, 
                                   'phi': {'type': 'perlin', 'args': {'scale':3} }, 
                                   'U': {'type': 'perlin', 'args': {'scale':2}, 'vmin': 0.01, 'vmax':0.3},
+                                  'Umin':0.1, 'Umax':0.4
                                   }  
                        },
                    
@@ -259,9 +260,9 @@ def get_config(name='EI_net', scalar=3):
                 }
             }
         
-    
-    
-    if name=='demo':
+        stim_cfg = {}
+        
+    elif name=='demo':
         pops_cfg = {
             'I': {'gs': round_to_even(100, scalar), 
                   'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
@@ -504,7 +505,7 @@ def get_config(name='EI_net', scalar=3):
         conn_cfg = {
             'II': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
                    'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4}, 'gap': max(2, 5./scalar) },
-                   'synapse': {'type':'tsodysk-markram_jump', 
+                   'synapse': {'type':'tsodyks-markram_jump', 
                                'params': {'J': -0.221*mV*(scalar**2), 'delay':1*ms, 
                                           'tau': 10*ms, 'tau_f': 1500.*ms, 'tau_d': 200.*ms, 
                                           }},
@@ -543,7 +544,7 @@ def get_config(name='EI_net', scalar=3):
         conn_cfg = {
             'EE': {'ncons': round_to_even(720, scalar**2), 'self_link':False, 
                   'profile': {'type':'Gaussian', 'params': {'std': 9/scalar}, 'gap': max(2, 6./scalar) },
-                  'synapse': {'type':'tsodysk-markram_jump', 
+                  'synapse': {'type':'tsodyks-markram_jump', 
                               'params': {'J': 0.221*mV*(scalar**2), 'delay':1*ms, 
                                          'tau_f': 1500*ms, 'tau_d': 600*ms, 'U':0.1}},
                   'anisotropy': {
@@ -554,7 +555,7 @@ def get_config(name='EI_net', scalar=3):
             
             'EI': {'ncons': round_to_even(180, scalar**2), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 4.5/scalar}, 'gap': max(2, 6./scalar) },
-                   'synapse': {'type':'tsodysk-markram_jump', 
+                   'synapse': {'type':'tsodyks-markram_jump', 
                                'params': {'J': 0.221*mV*(scalar**2), 'delay':1*ms, 
                                           'tau_f': 1500*ms, 'tau_d': 600*ms, 'U':0.1}},
                    
@@ -596,7 +597,7 @@ def get_config(name='EI_net', scalar=3):
         conn_cfg = {
             'EE': {'ncons': round_to_even(720, scalar**2), 'self_link':False, 
                   'profile': {'type':'Gaussian', 'params': {'std': 9/scalar}, 'gap': max(2, 6./scalar) },
-                  'synapse': {'type':'tsodysk-markram_jump', 
+                  'synapse': {'type':'tsodyks-markram_jump', 
                               'params': {'J': 0.221*mV*(scalar**2), 'delay':1*ms, 
                                          'tau_f': 1500*ms, 'tau_d': 600*ms, 'U':0.1}},
                   'anisotropy': {
@@ -607,7 +608,7 @@ def get_config(name='EI_net', scalar=3):
             
             'EI': {'ncons': round_to_even(180, scalar**2), 'self_link':False, 
                    'profile': {'type':'Gaussian', 'params': {'std': 4.5/scalar}, 'gap': max(2, 6./scalar) },
-                   'synapse': {'type':'tsodysk-markram_jump', 
+                   'synapse': {'type':'tsodyks-markram_jump', 
                                'params': {'J': 0.221*mV*(scalar**2), 'delay':1*ms, 
                                           'tau_f': 1500*ms, 'tau_d': 600*ms, 'U':0.2}},
                    
@@ -651,7 +652,7 @@ def get_config(name='EI_net', scalar=3):
                    'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4}, 'gap': max(2, 6./scalar) },
                    
                    'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   # 'synapse': {'type':'tsodysk-markram_jump', 
+                   # 'synapse': {'type':'tsodyks-markram_jump', 
                    #             'params': {'J': 0.221*mV*(scalar**2), 'delay':1*ms, 
                    #                        'tau_f': 1500*ms, 'tau_d': 600*ms, 'U':0.1}},
                    

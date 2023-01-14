@@ -280,7 +280,7 @@ def get_syn_eqs(conn_name, conn_cfg):
         dg/dt = -g / tau : 1 (clock-driven)
         '''
     
-    tmp_tsodysk_markram = '''
+    tmp_tsodyks_markram = '''
         dx/dt = (1-x)/tau_d: 1 (clock-driven)
         du/dt = (U-u)/tau_f: 1 (clock-driven)
         U: 1
@@ -329,7 +329,7 @@ def get_syn_eqs(conn_name, conn_cfg):
             """
         assert model=='jump', msg
         
-        eqs_str = tmp_tsodysk_markram
+        eqs_str = tmp_tsodyks_markram
         on_pre = '''
             u += U * (1 - u)
             g = u * x
