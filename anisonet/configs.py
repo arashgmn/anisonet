@@ -229,7 +229,7 @@ def get_config(name='EI_net', scalar=3):
     .. _[1]: https://doi.org/10.1371/journal.pcbi.1007432
 
     """
-    if name=='test':
+    if name=='dummy':
         pops_cfg = {
             'I': {'gs': round_to_even(100, scalar), 
                   'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
@@ -242,21 +242,26 @@ def get_config(name='EI_net', scalar=3):
         conn_cfg = {
             'II': {'ncons': round_to_even(1000, scalar**2), 'self_link':False, 
                    'profile': {'type':'Gamma', 'params': {'theta': 3/scalar, 'kappa': 4}, 'gap': max(2, 6./scalar) },
-                   'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
-                   'anisotropy': {
-                       'synaptic': 'cos',
-                       'connectivity': 'shift', 
-                       'params': {'r'  : 1, 
-                                  'phi': {'type': 'perlin', 'args': {'scale':3} }, 
-                                  'U': {'type': 'perlin', 'args': {'scale':2}, 'vmin': 0.01, 'vmax':0.3},
-                                  'Umin':0.1, 'Umax':0.4
-                                  }  
-                       },
+                   #'synapse': {'type':'alpha_current', 'params': {'J': -10*(scalar**2)*pA, 'delay':1*ms, 'tau': 5*ms}},
+                    'synapse': {'type':'tsodyks-markram_jump', 
+                                'params': {'J': -0.221*mV*(scalar**2), 'delay':1*ms, 
+                                           'tau_f': 1500*ms, 'tau_d': 600*ms, 'U':0.1}},
+                    'anisotropy': {
+                        'synaptic': 'cos',
+                         #'connectivity': 'shift', 
+                        'params': {
+                            #'r'  : 1, 
+                            'phi': {'type': 'perlin', 'args': {'scale':3} }, 
+                            },
+                        'vars': {
+                            'U': (0.1, 0.4),
+                            }
+                        },
                    
-                'training': {'type': 'STDP', 
-                             'params': {'taupre': 10*ms,'taupost': 10*ms,
-                                        'Apre': 0.05, 'Apost': -0.055,},
-                             },
+                # 'training': {'type': 'STDP', 
+                #               'params': {'taupre': 10*ms,'taupost': 10*ms,
+                #                         'Apre': 0.1, 'Apost': -0.12,},
+                #               },
                 }
             }
         

@@ -553,21 +553,18 @@ def make_anisotropic_syn(s_loc, t_locs, gs, anisotropy, method):
     delays = np.linalg.norm(rel_locs, axis=1)
     syn_pars['delays'] = delays
     
-    if method == 'cos':
+    if method in ['sin', 'cos']:
         phis = np.arctan2(rel_locs[:,1], rel_locs[:,0])
         phis -= anisotropy['phi']
-        Us = anisotropy['Umin'] + (anisotropy['Umax']-anisotropy['Umin'])*(1+ np.cos(phis))/2# * anisotropy['U'] 
-        
-        syn_pars['Us'] = Us
+        transform = eval('np.'+method)
             
-    elif method == 'sin':
-        phis = np.arctan2(rel_locs[:,1], rel_locs[:,0])
-        phis -= anisotropy['phi']
-        Us = anisotropy['Umin'] + (anisotropy['Umax']-anisotropy['Umin'])*(1+ np.sin(phis))/2# * anisotropy['U'] 
-        
-        syn_pars['Us'] = Us
-        
+        for var, var_range in anisotropy['vars'].items():
+            var_amp = var_range[1] - var_range[0]
+            var_min = var_range[0]
+            aniso_var = var_min + var_amp * (1+transform(phis))/2.
+            
+            syn_pars[var+'s'] = aniso_var        
     else:
-        pass
+        raise NotImplementedError('The anisotropic method is not recognized.')
     
     return syn_pars

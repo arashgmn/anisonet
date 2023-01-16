@@ -206,11 +206,14 @@ class Simulate(object):
             elif init_syn=='het':
                 msg_het = 'No anisotropy method is set of synapses. Check configs.'
                 
-                assert conn_cfg['anisotropy']['synaptic']!=None, msg_het
-                    
+                assert 'synaptic' in  conn_cfg['anisotropy'], msg_het
+                
+                
                 if kernel=='tsodyks-markram':
                     self.syns[syn_name].u = 'rand()'
                     self.syns[syn_name].x = 'rand()'
+                    #TODO: here must check whcih vars are given in anisotropy of syn.
+                    # we can even understand if it is heter or not, automatically.
                     self.syns[syn_name].U = np.load(osjoin(self.data_path, 'Us.npy'))
                 
             else:
@@ -539,36 +542,40 @@ class Simulate(object):
             
             
     def assess_landscape(self):
+        # TODO: It's better to write it such the neccessary args can be retrived
+        # from the functions they call. So that here there's not this mess anymore.
+        
         for pathway in self.conn_cfg.keys():
             aniso = self.conn_cfg[pathway]['anisotropy']
             
             # connectivity anisotropy
-            if aniso['connectivity'] == 'shift':
-                assert 'r' in aniso['params'], "Please provide shift radius of anisotropy for pathway: " +pathway
-                assert 'phi' in aniso['params'], "Please provide shift angle of anisotropy for pathway: " +pathway
-
-            elif aniso['connectivity'] == 'positive-rotate':
-                assert 'phi' in aniso['params'], "Please provide rotation angle of anisotropy for pathway: " +pathway
-            
-            elif aniso['connectivity'] is ['squeeze-rotate', 'positive-squeeze-rotate']:
-                assert 'r' in aniso['params'], "Please provide sqeezing ratio of anisotropy for pathway: " +pathway
-                assert 'phi' in aniso['params'], "Please provide rotation angle of anisotropy for pathway: " +pathway
-            
-            elif aniso['connectivity'] == None:
-                pass
-            else:
-                raise TypeError ("I don't understand the profile's anisotropy method!")
+            if 'connectivity' in aniso:
+                if aniso['connectivity'] == 'shift':
+                    assert 'r' in aniso['params'], "Please provide shift radius of anisotropy for pathway: " +pathway
+                    assert 'phi' in aniso['params'], "Please provide shift angle of anisotropy for pathway: " +pathway
+    
+                elif aniso['connectivity'] == 'positive-rotate':
+                    assert 'phi' in aniso['params'], "Please provide rotation angle of anisotropy for pathway: " +pathway
+                
+                elif aniso['connectivity'] is ['squeeze-rotate', 'positive-squeeze-rotate']:
+                    assert 'r' in aniso['params'], "Please provide sqeezing ratio of anisotropy for pathway: " +pathway
+                    assert 'phi' in aniso['params'], "Please provide rotation angle of anisotropy for pathway: " +pathway
+                
+                else:
+                    raise TypeError ("I don't understand the profile's anisotropy method!")
 
             # synaptic anisotropy
-            if aniso['synaptic'] in ['cos', 'sin']:
-                assert ('tau_f' in aniso['params']) or \
-                       ('tau_d' in aniso['params']) or \
-                       ('U' in aniso['params']), "Do not know which synaptic variable is to be anisotrofied in pathway "+pathway
-                assert 'phi' in aniso['params'], "Please provide angle anisotropy for pathway: " +pathway
-            elif aniso['synaptic'] == None:
-                pass
-            else:
-                raise TypeError ("I don't understand the synaptic anisotropy method!")
+            if 'synaptic' in aniso:
+                if aniso['synaptic'] in ['cos', 'sin']:
+                    assert 'phi' in aniso['params'], "Please provide angle anisotropy for pathway: " +pathway
+                    
+                    # check if the variable and its range are specified
+                    assert len(aniso['vars'].keys())>0, "You have not defined which variable is anisotorpic in synapses of pathway "+pathway
+                    for k,v in aniso['vars'].items():
+                        assert len(v)==2, f"The range of variable {k} is not correctly specified."
+                    
+                else:
+                    raise TypeError ("I don't understand the synaptic anisotropy method!")
             
             # 
             
@@ -683,7 +690,7 @@ class Simulate(object):
                     
                     for k,v in syn_param.items():
                         if k in syn_params:
-                            syn_params[k] = np.concatenate([syn_params[k],v])
+                            syn_params[k] = np.concatenate([syn_params[k],v]) # TODO: should add as list and then reshape
                         else:
                             syn_params[k] = v
                     
@@ -705,6 +712,7 @@ class Simulate(object):
             # append to the class
             self.syns[key] = syn
             #set_trace()
+            
             # save if not saved
             if not self.load_connectivity:
                 row_idx = np.array(syn.i) # pre
@@ -720,7 +728,7 @@ class Simulate(object):
                 del t_coords, s_coord, kws, row_idx, col_idx, data
         del src, trg, eqs, on_pre, on_post, ncons 
         del spop, tpop, syn, t_idxs, w
-     
+    
         
     def configure_monitors(self):
         """
@@ -868,9 +876,7 @@ class Simulate(object):
             if plot_snapshots:  
                 viz.plot_firing_rates(sim=self, suffix='_'+self.state_str,)
             
-            print('before: '+self.state_str)                
             self.save_monitors()
-            print('after: '+self.state_str)                
                     
     
     def update_state(self):
@@ -931,8 +937,16 @@ class Simulate(object):
         logging.info('Visualizing landscape, degress, and connectivity.')
         viz.plot_landscape(self, overlay=overlay)
         viz.plot_in_out_deg(self)
-        viz.plot_realized_landscape(self)
         viz.plot_connectivity(self)
+        
+        print('{} -- Visualizing realized landscape.'.format(time.ctime()))
+        viz.plot_realized_landscape(self)
+        print('{} -- realized landscape vized.'.format(time.ctime()))
+        
+        
+        print('{} -- Visualizing realized aniso weights.'.format(time.ctime()))
+        viz.plot_aniso_weights(self)
+        print('{} -- realized aniso weights vized.'.format(time.ctime()))
         
         logging.info('Visualizing firing rate distribution.')
         viz.plot_firing_rates_dist(self)

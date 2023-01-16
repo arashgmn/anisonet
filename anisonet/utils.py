@@ -323,7 +323,23 @@ def get_anisotropic_U(sim, syn_name, Umax):
         Us[syn_idx] = np.random.beta(alpha, beta, size= len(syn_idx))
     return Us
 
+
+def get_post_idxs(syn, pre_idx):
+    """returns the postsynapse indices of a presynapse with the given index."""
+
+    syns_pre = syn["i=={}".format(pre_idx)]._indices()
+    return syn.j[syns_pre]
+
+
+def get_post_locs(syn, pre_idx):
+    """returns the absolute postsynapse locations of a presynapse from its index."""
+
+    post_idxs = get_post_idxs(syn, pre_idx)
+    return idx2coords(post_idxs, syn.target)
+
 def get_post_rel_locs(syn, pre_idx):
+    """computes the pre-centric location of postsynapses from the pre index."""
+    
     s_loc = idx2coords(pre_idx, syn.source).astype(float)
     s_loc*= syn.target.gs/syn.source.gs*1.
     s_loc = np.round(s_loc).astype(int)
@@ -332,15 +348,9 @@ def get_post_rel_locs(syn, pre_idx):
     t_locs =  (t_locs + syn.target.gs/2) % syn.target.gs - syn.target.gs/2
     return t_locs
 
-def get_post_idxs(syn, pre_idx):
-    syns_pre = syn["i=={}".format(pre_idx)]._indices()
-    return syn.j[syns_pre]
-
-def get_post_locs(syn, pre_idx):
-    post_idxs = get_post_idxs(syn, pre_idx)
-    return idx2coords(post_idxs, syn.target)
-
 def pre_loc2post_loc_rel(t_locs, s_loc, gs):
+    """computes the pre-centric location of post synapses given their location"""
+
     tmp = t_locs - s_loc
     return (tmp +gs/2) % gs - gs/2
     
