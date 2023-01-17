@@ -13,7 +13,7 @@ sim = Simulate('dummy', scalar=2,
                load_connectivity=1, 
                to_event_driven=1,)
 
-sim.setup_net(init_cell='ss',)
+sim.setup_net(init_cell='ss', init_syn='het')
 
 # sim.start(duration=3000*b2.ms, batch_dur=500*b2.ms, 
 #             restore=False, profile=False, plot_snapshots=True)
