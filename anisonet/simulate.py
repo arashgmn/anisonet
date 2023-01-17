@@ -99,6 +99,7 @@ class Simulate(object):
         self.dt = b2.defaultclock.dt
         
     def state_initializer(self, init_cell, init_syn):
+        # TODO: most of the asserts can be moved to configs
         """
         A smart function that intializes the synaptic or cellular state according 
         to the desired mode, based on the provided config file.
@@ -359,6 +360,7 @@ class Simulate(object):
         return name[:-1] #dropping the last seperator
     
     def process_configs(self, to_event_driven):
+        #TODO: Move this to config module
         """
         Every population configuration must have the following keys:
             
@@ -419,8 +421,15 @@ class Simulate(object):
             else:
                 if 'connectivity' not in config['anisotropy']:
                     config['anisotropy']['connectivity'] = None
-                if 'synaptic' not in  config['anisotropy']:
+                else:
+                    #TODO: check the connectivity has the correct form
+                    pass
+                
+                if 'synaptic' not in config['anisotropy']:
                     config['anisotropy']['synaptic'] = None
+                else:
+                    #check if synaptic anisotropy has the correct from
+                    assert 'vars' in config['anisotropy']
         
             # adding types to anisotropy params
             for param, value in config['anisotropy']['params'].items():
@@ -542,6 +551,8 @@ class Simulate(object):
             
             
     def assess_landscape(self):
+        # Move all this to configs
+
         # TODO: It's better to write it such the neccessary args can be retrived
         # from the functions they call. So that here there's not this mess anymore.
         
@@ -560,7 +571,8 @@ class Simulate(object):
                 elif aniso['connectivity'] is ['squeeze-rotate', 'positive-squeeze-rotate']:
                     assert 'r' in aniso['params'], "Please provide sqeezing ratio of anisotropy for pathway: " +pathway
                     assert 'phi' in aniso['params'], "Please provide rotation angle of anisotropy for pathway: " +pathway
-                
+                elif aniso['connectivity']==None:
+                    pass
                 else:
                     raise TypeError ("I don't understand the profile's anisotropy method!")
 
@@ -573,6 +585,8 @@ class Simulate(object):
                     assert len(aniso['vars'].keys())>0, "You have not defined which variable is anisotorpic in synapses of pathway "+pathway
                     for k,v in aniso['vars'].items():
                         assert len(v)==2, f"The range of variable {k} is not correctly specified."
+                elif aniso['synaptic']==None:
+                    pass
                     
                 else:
                     raise TypeError ("I don't understand the synaptic anisotropy method!")
@@ -672,12 +686,18 @@ class Simulate(object):
                                trow = tpop.gs,
                                tcol = tpop.gs,
                                profile = self.conn_cfg[key]['profile'],
-                               anisotropy = {k:v[s_idx] for k,v in self.lscp[key].items()},
-                               # landscape = {'phi': self.lscp[key]['phi'][s_idx], 
-                               #               'r' : self.lscp[key]['r'][s_idx]},
                                self_link = self.conn_cfg[key]['self_link'],
                                recurrent = trg==src,
                                )
+                    
+                    # TODO: anisotopy should be able to pass local 
+                    # or global (constant) anisotopic value for s_idx
+                    anisotropy = {k:v[s_idx] for k,v in self.lscp[key].items()}
+                    anisotropy['vars'] = self.conn_cfg[key]['anisotropy']['vars'] # TODO: THIS IS A PATCH!
+                    kws['anisotropy'] = anisotropy
+                    # landscape = {'phi': self.lscp[key]['phi'][s_idx], 
+                    #               'r' : self.lscp[key]['r'][s_idx]},
+                    
                                 
                     # adding the methods
                     aniso_methods = deepcopy(self.conn_cfg[key]['anisotropy'])
