@@ -145,7 +145,7 @@ def stimulator(sim, stim_cfgs):
 
         # finding amplitude
         if stim_cfg['type']=='const':
-            I_stim = stim_cfg['I_stim']*pA
+            I_stim = stim_cfg['I_stim']
             # b2.TimedArray([stim_cfg['I_stim']]*pA,
             #                                dt=sim.pops[pop].clock.dt)
         else:

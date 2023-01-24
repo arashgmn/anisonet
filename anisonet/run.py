@@ -9,7 +9,7 @@ Created on Fri Nov 18 13:58:11 2022
 from anisonet.simulate import Simulate
 import brian2 as b2
 
-sim = Simulate('I_net_focal_stim', scalar=2, 
+sim = Simulate('test', scalar=2, 
                load_connectivity=1, 
                to_event_driven=1,)
 

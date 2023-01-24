@@ -1,4 +1,4 @@
-    #!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Simulations are configured via nested dictionaries. We treat the population 
@@ -113,7 +113,7 @@ Synapse
    ``<kernel>_<method>``. Please refer to  :ref:`equations:Synapse equations` 
    for possible values of kernels and models.
 #. ``params``: 
-
+tsodyks-markram'
    * ``tau``: synaptic timescales as a Brian time quantity (for exp, and alpha kernels)
    * ``tau_r`` and ``tau_d``: rise and decay timescales as a Brian time quantity (for biexp kernel)
    * ``delay``: synaptic delay  as a Brian time quantity
@@ -163,10 +163,22 @@ The entries in the parameters pool depend on the anisotropy method in use. c.f.
 .. _[1]: https://doi.org/10.1371/journal.pcbi.1007432
 """
 
+
 from brian2.units import pA, mV, ms, pF, nA
 import numpy as np
+from copy import deepcopy
+
 
 np.random.seed(18)
+
+VALID_CELL_TYPES=['LIF']
+VALID_SYN_TYPES=['conductance', 'current', 'jump']
+VALID_SYN_KERNELS = ['jump','alpha','exp','tsodyks-markram']
+VALID_PROFILES = ['Gamma', 'Gaussian']
+VALID_NONUNIFORMITY = ['connectivity','synaptic']
+VALID_SYN_METHODS = ['cos', 'sin']
+VALID_CON_METHODS = ['shift', 'shift-rotate', 'squeeze-rotate', 
+                     'positive-rotate','positive-squeeze-rotate']
 
 
 def round_to_even(gs, scaler):
@@ -178,7 +190,8 @@ def round_to_even(gs, scaler):
         rounded+=1
     return int(rounded)
 
-def get_config(name='EI_net', scalar=3):
+
+def make_config(name='EI_net', scalar=3):
     """
     Generates the population and pathways config dictuinary only by providing 
     the name of the desired network. 
@@ -234,9 +247,12 @@ def get_config(name='EI_net', scalar=3):
             'I': {'gs': round_to_even(100, scalar), 
                   'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
                   'cell': {'type': 'LIF', 
-                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
-                           'tau':10*ms, 'C': 250*pF}
-                          }
+                           'params': {
+                                'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                                'tau': 10*ms, 'C': 250*pF
+                                }
+                           }
+                  }
             }
 
         conn_cfg = {
@@ -267,9 +283,12 @@ def get_config(name='EI_net', scalar=3):
             'I': {'gs': round_to_even(100, scalar), 
                   'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
                   'cell': {'type': 'LIF', 
-                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
-                           'tau':10*ms, 'C': 250*pF}
-                          }
+                           'params': {
+                                'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                                'tau': 10*ms, 'C': 250*pF
+                                }
+                           }
+                  }
             }
 
         conn_cfg = {
@@ -292,9 +311,12 @@ def get_config(name='EI_net', scalar=3):
             'I': {'gs': round_to_even(100, scalar), 
                   'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
                   'cell': {'type': 'LIF', 
-                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
-                           'tau':10*ms, 'C': 250*pF}
-                          }
+                           'params': {
+                                'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                                'tau': 10*ms, 'C': 250*pF
+                                }
+                           }
+                  }
             }
 
         conn_cfg = {
@@ -327,9 +349,12 @@ def get_config(name='EI_net', scalar=3):
             'E': {'gs': round_to_even(100, scalar), 
                   'noise': {'mu': 50*pA, 'sigma': 400*pA, 'noise_dt': 1.*ms},
                   'cell': {'type': 'LIF', 
-                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
-                           'tau':10*ms, 'C': 250*pF}
-                          }
+                           'params': {
+                                'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                                'tau': 10*ms, 'C': 250*pF
+                                }
+                           }
+                  }
             }
 
         conn_cfg = {
@@ -355,16 +380,22 @@ def get_config(name='EI_net', scalar=3):
             'I': {'gs': round_to_even(60, scalar), 
                   'noise': {'mu': 350*pA, 'sigma': 100*pA, 'noise_dt': 1*ms},
                   'cell': {'type': 'LIF', 
-                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
-                           'tau': 10*ms, 'C': 250*pF}
+                           'params': {
+                                'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                                'tau': 10*ms, 'C': 250*pF
+                                }
+                           }
                   },
             
             'E': {'gs': round_to_even(120, scalar), 
                   'noise': {'mu': 350*pA, 'sigma': 100*pA, 'noise_dt': 1*ms},
                   'cell': {'type': 'LIF', 
-                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
-                           'tau': 10*ms, 'C': 250*pF}
-                  }
+                           'params': {
+                                'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                                'tau': 10*ms, 'C': 250*pF
+                                }
+                           }
+                  },
         }
         
         conn_cfg = {
@@ -430,9 +461,12 @@ def get_config(name='EI_net', scalar=3):
             'I': {'gs': round_to_even(100, scalar), 
                   'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
                   'cell': {'type': 'LIF', 
-                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
-                           'tau':10*ms, 'C': 250*pF}
+                           'params': {
+                               'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                               'tau': 10*ms, 'C': 250*pF
+                               }
                           }
+                  }
             }
         
         # Note: For a homogeneous network, `profile` entry can be omitted. 
@@ -455,9 +489,12 @@ def get_config(name='EI_net', scalar=3):
             'I': {'gs': round_to_even(100, scalar), 
                   'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
                   'cell': {'type': 'LIF', 
-                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
-                           'tau':10*ms, 'C': 250*pF}
+                           'params': {
+                               'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                               'tau': 10*ms, 'C': 250*pF
+                               }
                           }
+                  }
             }
         
         # Note: We can model an isotropic network, simply by omitting the 
@@ -477,9 +514,12 @@ def get_config(name='EI_net', scalar=3):
             'I': {'gs': round_to_even(100, scalar), 
                   'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
                   'cell': {'type': 'LIF', 
-                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
-                           'tau':10*ms, 'C': 250*pF}
+                           'params': {
+                               'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                               'tau': 10*ms, 'C': 250*pF
+                               }
                           }
+                  }
             }
         
         # Note: For a homogeneous and isotropic network no `profile` or
@@ -497,9 +537,12 @@ def get_config(name='EI_net', scalar=3):
             'I': {'gs': round_to_even(100, scalar), 
                   'noise': {'mu': 700*pA, 'sigma': 100*pA, 'noise_dt': 1.*ms},
                   'cell': {'type': 'LIF', 
-                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
-                           'tau':10*ms, 'C': 250*pF}
-                          }
+                           'params': {
+                               'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                               'tau': 10*ms, 'C': 250*pF
+                               }
+                           }
+                  }
             }
 
         conn_cfg = {
@@ -528,16 +571,22 @@ def get_config(name='EI_net', scalar=3):
             'I': {'gs': round_to_even(60, scalar), 
                   'noise': {'mu': 350*pA, 'sigma': 100*pA, 'noise_dt': 1*ms},
                   'cell': {'type': 'LIF', 
-                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
-                           'tau': 10*ms, 'C': 250*pF}
+                           'params': {
+                                'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                                'tau': 10*ms, 'C': 250*pF
+                                }
+                           }
                   },
             
             'E': {'gs': round_to_even(120, scalar), 
                   'noise': {'mu': 350*pA, 'sigma': 100*pA, 'noise_dt': 1*ms},
                   'cell': {'type': 'LIF', 
-                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
-                           'tau': 10*ms, 'C': 250*pF}
-                 }
+                           'params': {
+                                'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
+                                'tau': 10*ms, 'C': 250*pF
+                                }
+                           }
+                  }
             }
 
 
@@ -627,11 +676,11 @@ def get_config(name='EI_net', scalar=3):
             }
             
         stim_cfg = {
-            'E_0': {'type': 'const', 'I_stim': 500,
+            'E_0': {'type': 'const', 'I_stim': 500*pA,
                     'domain': {'type': 'r', 'x0': 15, 'y0': 20, 'r':2}
                     },
             
-            # 'I_1': {'type': 'const', 'I_stim': -0,
+            # 'I_1': {'type': 'const', 'I_stim': -0*pA,
             #         'domain': {'type': 'random', 'p': 1}
             #         }
             
@@ -675,11 +724,11 @@ def get_config(name='EI_net', scalar=3):
         }
            
         stim_cfg = {
-            'I_0': {'type': 'const', 'I_stim': 400,
+            'I_0': {'type': 'const', 'I_stim': 400*pA,
                     'domain': {'type': 'r', 'x0': 20, 'y0': 10, 'r':2.5}
                     },
             
-            # 'I_1': {'type': 'const', 'I_stim': 700,
+            # 'I_1': {'type': 'const', 'I_stim': 700*pA,
             #         'domain': {'type': 'r', 'x0': 3, 'y0': 10, 'r': 7}
             #         }
             
@@ -691,37 +740,622 @@ def get_config(name='EI_net', scalar=3):
     return pops_cfg, conn_cfg, stim_cfg
        
 
-class configer(object):
     
-    def __init__(self):
-        self.pops_cfg = {}
-        self.conn_cfg = {}
-        self.stim_cfg = {}
+class Configer(object):
     
-    def add_pop(self, pop_name, gs):
+    def __init__(self, scale=1,
+                 pops_cfg = {}, 
+                 conns_cfg = {}, 
+                 nonuniformity = {},
+                 lscps_cfg = {},
+                 stims_cfg = {},
+                 ):
+        """
+        Provides an interface to generate the default configurations values. 
+        With some methods, it supports modifying these values to the desired 
+        ones.
+        """
+        
+        self.scale = scale
+        self.pops_cfg = pops_cfg
+        self.conns_cfg = conns_cfg 
+        self.nonuniformity= nonuniformity
+        self.lscps_cfg = lscps_cfg 
+        self.stims_cfg = stims_cfg
+        
+    
+    def add_pop(self, name, gs):
         pop_cfg = {}
         pop_cfg['gs'] = gs
+        pop_cfg['noise'] = self.make_noise()
+        pop_cfg['cell'] = self.make_cell()
         
-        # defaults
-        pop_cfg['noise']= {'mu': 0*pA, 'sigma': 0*pA, 'noise_dt': 1.*ms},
-        pop_cfg['cell'] = {'type': 'LIF', 
-                           'thr': -55*mV, 'ref': 2*ms, 'rest': -70*mV,
-                           'tau':10*ms, 'C': 250*pF}
+        if name in self.pops_cfg:
+            self.pops_cfg[name].update(pop_cfg)
+        else:
+            self.pops_cfg[name] = pop_cfg
+        del pop_cfg
         
-        self.pops_cfg[pop_name] = pop_cfg
         
-    def update_neuron(self, pop_name, update):
-        pass
-    
-    def update_noise(self, pop_name, update):
-        pass
-        
-    def add_pathway(self, src, trg, ncons, synapse, self_link=False):
+    def add_pathway(self, src, trg, ncons, self_link=False):
+        """adds the defauls"""
         conn_cfg = {}
-        
         conn_cfg['ncons'] = ncons
         conn_cfg['self_link'] = self_link
+        conn_cfg['synapse'] = self.make_syn()
+        #conn_cfg['profile'] = self.make_profile()
         
-        conn_cfg['synapse'] = self_link
+        
+        if src+trg in self.pops_cfg:
+            self.pops_cfg[src+trg].update(conn_cfg)
+        else:
+            self.conns_cfg[src+trg] = conn_cfg
+        
+        del conn_cfg
+        
+    def add_profile(self, pathway, prof_type, **params):
+        assert pathway in self.conns_cfg.keys(), f'Pathway {pathway} not recognized.'
+        self.conns_cfg[pathway]['profile'] = self.make_profile(prof_type, **params)
+   
+        
+    def add_nonuniformity(self, obj, on='connectivity', method='shift',):
+        assert on in VALID_NONUNIFORMITY, 'Non-uniformity can be applied only on {}'.format(VALID_NONUNIFORMITY)
+        
+        if on =='connectivity':
+            assert method in VALID_CON_METHODS, 'Only the following anisotropic connectivity methods are supported: {}'.format(VALID_CON_METHODS)
+        elif on=='synaptic':
+            assert method in VALID_SYN_METHODS, 'Only the following anisotropic synaptic methods are supported: {}'.format(*VALID_SYN_METHODS)
+        else:
+            raise NotImplementedError
+            
+        nonuniformity = {on: method}
+        if obj in self.nonuniformity:
+            self.nonuniformity[obj].update(nonuniformity)
+        else:
+            self.nonuniformity[obj] = nonuniformity
+        
+        del nonuniformity
+            
+    def add_landscape(self, obj, param_name, **params):
+        
+        lscp = {param_name: self.make_landscape(**params)}
+        if obj in self.lscps_cfg:
+            self.lscps_cfg[obj].update(lscp)
+        else:
+            self.lscps_cfg[obj] = lscp
+        
+        del lscp
+    
+    def add_stim(self, name, I_stim, **params):
+        self.stims_cfg.update( self.make_stim(name, I_stim, **params) )
         
         
+    
+    #### CONFIG GENERATORS 
+    def make_noise(self, **params):
+        cfg = {'mu': 0*pA, 'sigma': 0*pA, 'noise_dt': 1*ms}
+        if params!= None:
+            cfg.update(params)
+        return cfg
+    
+    
+    def make_cell(self, cell_type='LIF', **params):
+        assert cell_type in VALID_CELL_TYPES, 'Only {} neuron types are supported.'.format(VALID_CELL_TYPES)
+        
+        cfg = {'type': 'LIF', 
+              'params': dict(thr=-55*mV, rest=-70*mV, 
+                            tau=10*ms, ref=2*ms, 
+                            C = 250*pF)
+              }
+        if params!=None:
+            cfg['params'].update(params)
+        
+        return cfg
+        
+    
+    def make_syn(self, syn_type='current', syn_kern='alpha', **params):
+        assert syn_type in VALID_SYN_TYPES, 'Only {} synapse types are supported'.format(VALID_SYN_TYPES)
+        assert syn_kern in VALID_SYN_KERNELS, 'Only {} synapse kernels are supported'.format(VALID_SYN_KERNELS)
+    
+        cfg = {'type': syn_kern+'_'+syn_type,
+               'params': dict(delay=1*ms)
+               }
+        
+        if syn_type =='jump': 
+            cfg['params']['J'] = -0.221*mV*(self.scale**2)
+        elif syn_type =='current':
+            cfg['params']['J'] = -10*pA*(self.scale**2)
+        else:
+            pass # must be adapted for conductances
+        
+        if syn_kern == 'tsodyks-markram':
+            cfg['params']['tau_f'] = 1000*ms
+            cfg['params']['tau_d'] = 200*ms
+            cfg['params']['U'] = 0.2
+        else:
+            cfg['params']['tau'] = 5*ms 
+            
+        if params!=None:
+            cfg['params'].update(params)
+        
+        return cfg
+        
+    
+    def make_profile(self, prof_type, 
+                     theta=None, kappa=None,
+                     std=None, gap=None):
+        assert prof_type in VALID_PROFILES, 'Only {} connectivity profiles are supported'.format(VALID_PROFILES)
+        
+        cfg = {'type': prof_type}
+        
+        if prof_type=='Gaussian':
+            assert std!=None
+            params = dict(std=std)
+            
+            if gap==None:
+                gap = max(2, 6./self.scale)
+                
+        else:
+            assert kappa!=None and theta!=None
+            params = dict(kappa=kappa, theta=theta)
+            
+            if gap==None:
+                gap = 0
+        
+        params['gap'] = gap
+        cfg['params'] = params
+        
+        return cfg
+    
+        
+        
+    def make_landscape(self, val=None, vmin=None, vmax=None, 
+                      perlin=False, scale=3):
+        if val!=None:
+            assert type(val)==int or type(val)==float
+            return val
+        
+        else:
+            assert vmin!=None and vmax!=None
+            
+            if perlin:
+                return {'type': 'perlin', 
+                        'args': {'vmin':vmin, 'vmax':vmax, 'scale':scale}
+                        }
+            else:
+                return {'type': 'random', 
+                        'args': {'vmin':vmin, 'vmax':vmax}
+                        }
+     
+    def make_stim(self, name, I_stim, 
+                  x0=None, y0=None, r=None, 
+                  x_min=None, x_max=None, y_min=None, y_max=None,
+                  domain_type='r'):
+        
+        cfg = {}
+        cfg[name] = {'type': 'const', 
+                     'I_stim': I_stim, 
+                     }
+        domain = {'type': domain_type}
+        if domain_type == 'xy':
+            assert x_min!=None and x_max!=None and y_min!=None and y_max!=None
+            
+            domain['x_min'] = x_min
+            domain['x_max'] = x_max
+            domain['y_min'] = y_min
+            domain['y_max'] = y_max
+        else:
+            assert x0!=None and y0!=None and r!=None
+            
+            domain['x0'] = x0
+            domain['y0'] = y0
+            domain['r'] = r
+        
+        cfg[name]['domain'] = domain
+        return cfg
+        
+        
+        
+        
+    # def make_landscape(self, on, method, **params):
+        
+        # if on == 'connectivity':
+        #     # all connectivity methods need the following two
+        #     cfg = {'r': 1, 'phi': np.pi/3}
+        
+        # else: # on=='synaptic'
+        #     cfg = {'U': (0.1, 0.3) }
+            
+        # if params!=None:
+        #     cfg.update(params)
+        
+        # return cfg
+        
+   
+         
+    #### CONFIG UPDATORS 
+    def update_noise(self, name, dict_, reset=False):
+        if not reset:
+            self.pops_cfg[name]['noise'].update(dict_)
+        else:
+            self.pops_cfg[name]['noise'] = dict_
+            
+            
+    def update_cell_params(self, name, dict_, reset=False):
+        if not reset:
+            self.pops_cfg[name]['cell']['params'].update(dict_)
+        else:
+            self.pops_cfg[name]['cell']['params'] = dict_
+                
+        
+    def update_syn(self, pathway, syn_kern=None, syn_type=None, **params):
+        syn_kern_, syn_type_ = self.conns_cfg[pathway]['synapse']['type'].split('_')
+        if syn_kern != None:
+            assert syn_kern in VALID_SYN_KERNELS, f'invalid synaptic kernel: {syn_kern}'
+            syn_kern_ = syn_kern
+        if syn_type != None:
+            assert syn_type in VALID_SYN_TYPES, f'invalid synaptic type: {syn_type}'
+            syn_type_ = syn_type
+        
+        # self.conns_cfg[pathway]['synapse']['type'] = syn_kern_ +'_'+ syn_type_ 
+        self.conns_cfg[pathway]['synapse'] = self.make_syn(syn_type_,syn_kern_)    
+        
+        if params!=None:
+            self.conns_cfg[pathway]['synapse']['params'].update(params)
+            
+    def update_syn_params(self, pathway, dict_, reset=False):
+        if not reset:
+            self.conns_cfg[pathway]['synapse']['params'].update(dict_)
+        else:
+            self.conns_cfg[pathway]['synapse']['params'] = dict_
+        
+        
+    
+    def update_profile_type(self, pathway, new_type):
+        assert new_type in VALID_PROFILES, f'invalid connectivity profile type: {new_type}'
+        self.conns_cfg[pathway]['profile']['type'] = new_type
+        
+    def update_profile_params(self, pathway, dict_, reset=False):
+        if not reset:
+            self.conns_cfg[pathway]['profile']['params'].update(dict_)
+        else:
+            self.conns_cfg[pathway]['profile']['params'] = dict_
+        
+        
+        
+    def update_nonuniformity(self, obj, on, method, reset=False):
+        assert on in VALID_NONUNIFORMITY, f'invalid nonuniformity: {on}'
+        assert method in (VALID_CON_METHODS+VALID_SYN_METHODS), f'invalid nonuniformity method: {method}'
+        
+        if not reset:
+            self.nonuniformity[obj].update({on:method})
+        else:
+            self.nonuniformity[obj] = {on:method}
+        
+        
+    def update_landscape(self, pathway, dict_, reset=False):
+        if not reset:
+            self.lscps_cfg[pathway].update(dict_)
+        else:
+            self.lscps_cfg[pathway] = dict_
+        
+        
+    def update_stimulation(self, stim_name, dict_, reset=False):
+        if not reset:
+            self.stim_cfg[stim_name].update(dict_)
+        else:
+            self.stim_cfg[stim_name] = dict_
+        
+        
+        
+        
+    def get_all(self):
+        self.check()
+        return self.aggregate()
+        
+    
+    def check(self, autoremove=True):
+        
+        def check_mandatories(mandatory_set, set_, name):
+            msg = f'The following are mandatory args for {name} but are not given:\n{mandatory_set-set_}'
+            assert len(mandatory_set-set_)==0, msg
+                
+        def check_extra(mandatory_set, set_, name):
+            if len(set_-mandatory_set)>0:
+                for kw in set_-mandatory_set:
+                    print(f'WARNING: {kw} is not mandatory for {name}.')
+        
+        
+        mandatory_args_noise = set(['mu', 'sigma', 'noise_dt'])
+        mandatory_args_cell = set(['thr', 'rest', 'tau', 'ref', 'C'])
+        mandatory_args_profs = {
+            'Gamma': set(['theta','kappa']),
+            'Gaussian': set(['std', 'gap'])
+            }
+        mandatory_args_syn_kerns = {
+            'alpha': set(['tau']),
+            'biexp': set(['tau_d', 'tau_r']),
+            'exp'  : set(['tau']),
+            'tsodyks-markram':  set(['tau_d', 'tau_f', 'U']),
+            'STDP': set(['taupre','taupost'])
+            }
+        mandatory_args_syn_types = {
+            'conductance': set(['J', 'delay' ,'Erev']),
+            'current': set(['J', 'delay']),
+            'jump': set(['J', 'delay'])
+            }
+        mandatory_args_lscps= {
+            'random': set(['vmin','vmax']),
+            'perlin': set(['vmin','vmax', 'scale'])
+            }
+        mandatory_args_nonunif_methods = {
+            'connectivity': set(['r','phi']),
+            'synaptic': set(['phi']),
+            }
+        
+        ## CHECKING POPS ##            
+        for pop, pop_cfg in self.pops_cfg.items():
+            assert type(pop_cfg['gs'])==int
+            
+            # noise
+            args_noise = set(pop_cfg['noise'].keys())
+            check_mandatories(mandatory_args_noise, args_noise, 'noise')
+            check_extra(mandatory_args_noise, args_noise, 'noise')
+            
+            # cell
+            args_cell = set(pop_cfg['cell']['params'].keys())
+            check_mandatories(mandatory_args_cell, args_cell, 'cell')
+            check_extra(mandatory_args_cell, args_cell, 'cell')
+            
+            
+        
+        ## CHECKING PATHWAY NAMES ##            
+        pop_list = self.pops_cfg.keys()
+        for pathway in self.conns_cfg.keys():
+            src, trg = pathway
+            assert src in pop_list, f'source {src} is not a population in pathway {pathway}'
+            assert trg in pop_list, f'target {trg} is not a population in pathway {pathway}'
+                
+                
+        ## CHECKING NONUNIFORMITY & LANDSCAPE ##            
+        for obj, nonunif in self.nonuniformity.items():
+            assert obj in self.lscps_cfg, f'A nonuniformity is defined for {obj} but no landscape parameters'
+            
+            for on, method in nonunif.items():
+                
+                man_args_nonunif_method = mandatory_args_nonunif_methods[on]
+                args_nonunif_method = set(self.lscps_cfg[obj].keys())
+                
+                name = f'nonuniformity on {on} with method {method}'
+                check_mandatories(man_args_nonunif_method, args_nonunif_method, name)
+                check_extra(man_args_nonunif_method, args_nonunif_method, name)
+                
+            for lscp_name, cfg in self.lscps_cfg[obj].items():
+                if type(cfg)==dict:
+                    man_args_lscp = mandatory_args_lscps[cfg['type']]
+                    args_lscp = set(cfg['args'])
+                    name = f'landscape {lscp_name} with type {cfg["type"]}'
+                    check_mandatories(man_args_lscp, args_lscp, name)
+                    check_extra(man_args_lscp, args_lscp, name)
+                    
+                
+        ## CHECKING PROFILE & ANISOTROPY & SYNAPSES ##            
+        for pathway, conn_cfg in self.conns_cfg.items():
+            assert type(conn_cfg['ncons'])==int
+            assert type(conn_cfg['self_link'])==bool
+                
+        
+            ## SYNAPSE CONFIGS ##
+            syn_cfg = conn_cfg['synapse']
+            syn_kern, syn_type = syn_cfg['type'].split('_')
+
+            man_args_syn_kern = mandatory_args_syn_kerns[syn_kern]
+            man_args_syn_type = mandatory_args_syn_types[syn_type]
+            
+            man_args_syn = man_args_syn_type.union(man_args_syn_kern)
+            args_syn = set(syn_cfg['params'].keys())
+            check_mandatories(man_args_syn, args_syn,'synapse')
+            check_extra(man_args_syn, args_syn,'synapse')
+            
+            ## CHECKING PROFILE ##            
+            if 'profile' in conn_cfg: 
+                prof_cfg = conn_cfg['profile']
+                
+                assert 'type' in prof_cfg
+                assert 'params' in prof_cfg
+                
+                man_args_prof = mandatory_args_profs[prof_cfg['type']]
+                args_prof = set(prof_cfg['params'].keys())
+                check_mandatories(man_args_prof, args_prof, 'profile')
+                check_extra(man_args_prof, args_prof, 'profile')
+    
+                
+        ## CHECKING STIM ## 
+        for stim_name, cfg in self.stims_cfg.items():
+            #set_trace()
+            pop, id_ = stim_name.split('_') 
+            assert pop in pop_list, f'Unrecognized population to stimulate with {pop}'
+            assert id_.isdigit(), 'Stimulation name mus comply with the format `<pop_name>_<digit>`.'
+        
+    def aggregate(self):
+        return (self.pops_cfg, 
+                self.conns_cfg,
+                self.nonuniformity,
+                self.lscps_cfg,
+                self.stims_cfg, 
+                )
+    
+
+# def make_aniso_config(mode, val=None, vmin=None, vmax=None, scale=3):
+#     if mode=='const':
+#         assert val!=None
+#         return val
+#     elif mode=='range':
+#         assert vmin!=None and vmax!=None
+#         return (vmin, vmax)
+#     elif mode=='perlin':
+#         assert vmin!=None and vmax!=None
+#         return {'type': 'perlin' ,'args':{'scale':scale}}
+#     elif mode=='random':
+#         return {'type': 'random'}
+#     else:
+#         raise NotImplementedError('Anisotropic mode not recognized.')
+
+
+    
+def get_config(name, scale):
+    print(f'I am searching for {name}')
+    if name == 'homiso_net':
+        c = deepcopy(Configer(scale))
+        c.add_pop('I', round_to_even(100, scale))
+        c.update_noise('I', {'mu': 700*pA, 'sigma': 100*pA})
+        c.add_pathway('I', 'I', ncons =round_to_even(1000, scale**2))
+        
+    elif name == 'iso_net':
+        c = deepcopy(get_config('homiso_net', scale))
+        c.add_profile('II', 'Gamma', theta=3/c.scale, kappa= 4)
+        
+    elif name == 'homo_net':
+        c = deepcopy(get_config('homiso_net', scale))
+        c.add_nonuniformity('II', on='connectivity', method='shift')
+        c.add_landscape('II', 'r', val=1)
+        c.add_landscape('II', 'phi', vmin=0, vmax=2*np.pi, perlin=True)
+        
+    elif name =='I_net':
+        c = deepcopy(get_config('homiso_net', scale))
+        c.add_profile('II', 'Gamma', theta=3/c.scale, kappa= 4)
+        c.add_nonuniformity('II', on='connectivity', method='shift')
+        c.add_landscape('II', 'r', val=1)
+        c.add_landscape('II', 'phi', vmin=0, vmax=2*np.pi, perlin=True)
+    
+    elif name == 'E_net':
+        c = deepcopy(Configer(scale))
+        
+        c.add_pop('E', round_to_even(100, scale))
+        c.update_noise('E', {'mu': 50*pA, 'sigma': 400*pA})
+        
+        c.add_pathway('E', 'E', ncons =round_to_even(1000, scale**2))
+        c.update_syn_params(pathway='EE', dict_={'J':2.5*(scale**2)*pA})
+    
+        c.add_profile('EE', 'Gamma', theta=3/c.scale, kappa= 4)
+        c.add_nonuniformity('EE', on='connectivity', method='shift')
+        c.add_landscape('EE', 'r', val=1)
+        c.add_landscape('EE', 'phi', vmin=0, vmax=2*np.pi, perlin=True)
+    
+    elif name == 'EI_net':
+        c = deepcopy(Configer(scale))
+        
+        c.add_pop('I', round_to_even(60, scale))
+        c.add_pop('E', round_to_even(120, scale))
+        c.update_noise('I', {'mu': 350*pA, 'sigma': 100*pA})
+        c.update_noise('E', {'mu': 350*pA, 'sigma': 100*pA})
+        
+        c.add_pathway('E','E', ncons=round_to_even(720, scale**2))
+        c.add_pathway('E','I', ncons=round_to_even(180, scale**2))
+        c.add_pathway('I','E', ncons=round_to_even(720, scale**2))
+        c.add_pathway('I','I', ncons=round_to_even(180, scale**2))
+
+        J = 10*(scale**2)*pA
+        g = 8
+        c.update_syn_params(pathway='EE', dict_ = {'J': J})
+        c.update_syn_params(pathway='EI', dict_ = {'J': J})
+        c.update_syn_params(pathway='IE', dict_ = {'J': -g*J})
+        c.update_syn_params(pathway='II', dict_ = {'J': -g*J})
+        
+        
+        c.add_profile(pathway='EE', prof_type='Gaussian', std=9/scale)
+        c.add_profile(pathway='EI', prof_type='Gaussian', std=4.5/scale)
+        c.add_profile(pathway='IE', prof_type='Gaussian', std=12/scale)
+        c.add_profile(pathway='II', prof_type='Gaussian', std=6/scale)
+        
+        c.add_nonuniformity(obj='EE', on='connectivity', method='shift')
+        c.add_landscape(obj='EE', param_name='r', val=1)
+        c.add_landscape(obj='EE', param_name='phi', 
+                        vmin=0, vmax=2*np.pi, perlin=True)
+    
+    
+    elif name == 'I_net_syn_TM':
+        c = deepcopy(get_config('I_net', scale))
+        c.update_syn('II', syn_kern='tsodyks-markram', syn_type='jump')
+    
+    elif name == 'EI_net_syn_TM':
+        c = deepcopy(get_config('EI_net', scale))
+        
+        J = 0.221*mV*scale**2
+        g = 8
+        c.update_syn('EE', syn_kern='tsodyks-markram', syn_type='jump', J=J)
+        c.update_syn('EI', syn_kern='tsodyks-markram', syn_type='jump', J=J)
+        c.update_syn('IE', syn_kern='tsodyks-markram', syn_type='jump', J=-g*J)
+        c.update_syn('II', syn_kern='tsodyks-markram', syn_type='jump', J=-g*J)
+        
+        
+    elif name == 'I_net_stim':
+        c = deepcopy(get_config('I_net', scale))
+        c.add_stim('I_0', I_stim=400*pA, x0=20, y0=10, r=2.5)
+    
+    
+    elif name == 'EI_net_stim':
+        c = deepcopy(get_config('EI_net', scale))
+        c.add_stim('E_0', I_stim=500*pA, x0=20, y0=10, r=2.5)
+        
+    else:
+        raise
+        
+    return c
+        
+
+# class Foo(object):
+#     def __init__(self,):
+#         self.my_char = ''
+        
+#     def add_char(self, new_char=''):
+#         self.my_char  = self.my_char + new_char
+        
+
+# def debug(char):
+    
+#     if char=='a':
+#         x = Foo()
+#         x.add_char('a')
+#     elif char =='ab':
+#         x = debug('a')
+#         x.add_char('b')
+#     elif char =='abc':
+#         x = debug('ab')
+#         x.add_char('c')
+#     else:
+#         raise
+#     return x
+        
+#     if name =='a':
+#         result = name
+#     elif name =='ab':
+#         result = debug('a') + 'b'
+#     elif name =='abc':
+#         result = debug('ab') + 'c'
+#     else:
+#         result = ''
+#     return result
+
+# import gc
+if __name__ == '__main__':
+    
+    a = get_config('I_net_syn_TM',scale=4)
+    print(a, id(a))
+    #del c
+    # gc.collect()
+    
+    b = get_config('EI_net_syn_TM',scale=3)
+    print(b, id(b))
+    #del c
+    # gc.collect()
+
+    d = get_config('I_net_syn_TM',scale=2)
+    print(d, id(d))
+    
+    # a = get_config('iso_net',scale=1)
+    # print(a, id(a))
+    
+    # b = get_config('homiso_net',scale=3)
+    # print(b, id(b))
+    
