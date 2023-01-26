@@ -40,7 +40,7 @@ from noise import pnoise2 as perlin
 from pdb import set_trace
 #TODO: emphasize in the docs that lanscape is reserved for anisotropy
 
-def make_landscape(gs, lscp_cfg, vmin=-np.pi, vmax=np.pi, balance=False,
+def generate_landscape(gs, lscp_cfg, vmin=-np.pi, vmax=np.pi, balance=False,
                    n_levels =None):
     """
     Makes a landscape according for a square grid of size ``gs`` using the 
@@ -64,6 +64,7 @@ def make_landscape(gs, lscp_cfg, vmin=-np.pi, vmax=np.pi, balance=False,
     :rtype: np.array of float
 
     """
+    # TODO: if things are constant, we don't need to have a landscape really.
     if type(lscp_cfg) != type({}):
         lscp = np.ones(gs**2)* lscp_cfg
     else:
@@ -91,7 +92,10 @@ def make_landscape(gs, lscp_cfg, vmin=-np.pi, vmax=np.pi, balance=False,
             lscp *= (vmax-vmin)/lscp.max()
             lscp += vmin
 #            set_trace()
-
+        
+        elif lscp_cfg['type'] == 'constants':
+            lscp = lscp_cfg['args'] 
+            
         else:
             distro = eval('np.'+lscp_cfg['type'])
             lscp = distro(**lscp_cfg['args'], size=gs**2)

@@ -167,18 +167,150 @@ The entries in the parameters pool depend on the anisotropy method in use. c.f.
 from brian2.units import pA, mV, ms, pF, nA
 import numpy as np
 from copy import deepcopy
-
+from pdb import set_trace
 
 np.random.seed(18)
 
+# VALID ARGUMETNS
 VALID_CELL_TYPES=['LIF']
 VALID_SYN_TYPES=['conductance', 'current', 'jump']
 VALID_SYN_KERNELS = ['jump','alpha','exp','tsodyks-markram']
 VALID_PROFILES = ['Gamma', 'Gaussian']
-VALID_NONUNIFORMITY = ['connectivity','synaptic']
-VALID_SYN_METHODS = ['cos', 'sin']
+VALID_NONUNIFORMITY = ['connectivity','tau_f', 'tau_d', 'U', 'J']
+VALID_SYN_METHODS = ['cos', 'sin', 'tan', 'normal']
 VALID_CON_METHODS = ['shift', 'shift-rotate', 'squeeze-rotate', 
                      'positive-rotate','positive-squeeze-rotate']
+
+# MANDATORY ARGS
+MAN_ARGS_NOISE = set(['mu', 'sigma', 'noise_dt'])
+MAN_ARGS_CELL = set(['thr', 'rest', 'tau', 'ref', 'C'])
+MAN_ARGS_PROFILE = {
+    'Gamma': set(['theta','kappa']),
+    'Gaussian': set(['std', 'gap'])
+    }
+MAN_ARGS_SYN_KERNEL = {
+    'alpha': set(['tau']),
+    'biexp': set(['tau_d', 'tau_r']),
+    'exp'  : set(['tau']),
+    'tsodyks-markram':  set(['tau_d', 'tau_f', 'U']),
+    'STDP': set(['taupre','taupost'])
+    }
+MAN_ARGS_SYN_TYPE = {
+    'conductance': set(['J', 'delay' ,'Erev']),
+    'current': set(['J', 'delay']),
+    'jump': set(['J', 'delay'])
+    }
+MAN_ARGS_LANDSCAPE= {
+    'random': set(['vmin','vmax']),
+    'perlin': set(['vmin','vmax', 'scale'])
+    }
+
+MAN_ARGS_NONUNIF_METHODS = {
+    'connectivity': {valid: set(['r', 'phi']) for valid in VALID_CON_METHODS},
+    'U': {valid: set(['phi','Umin','Umax']) for valid in VALID_SYN_METHODS},
+    'tau_f': {valid: set(['phi','tau_fmin','tau_fmax']) for valid in VALID_SYN_METHODS},
+    'tau_d': {valid: set(['phi','tau_dmin','tau_dmax']) for valid in VALID_SYN_METHODS},
+     }
+for variable in ['U','tau_f','tau_d']:
+    MAN_ARGS_NONUNIF_METHODS[variable]['normal'].add('s')
+
+
+
+def config_checker(config_obj, autoremove=True):
+    
+    def check_mandatories(mandatory_set, set_, name):
+        msg = f'The following are mandatory args for {name} but are not given:\n{mandatory_set-set_}'
+        assert len(mandatory_set-set_)==0, msg
+            
+    def check_extra(mandatory_set, set_, name):
+        if len(set_-mandatory_set)>0:
+            for kw in set_-mandatory_set:
+                print(f'INFO: {kw} is not mandatory for {name}.')
+    
+    
+    ## CHECKING POPS ##            
+    for pop, pop_cfg in config_obj.pops_cfg.items():
+        assert type(pop_cfg['gs'])==int
+        
+        # noise
+        args_noise = set(pop_cfg['noise'].keys())
+        check_mandatories(MAN_ARGS_NOISE, args_noise, 'noise')
+        check_extra(MAN_ARGS_NOISE, args_noise, 'noise')
+        
+        # cell
+        args_cell = set(pop_cfg['cell']['params'].keys())
+        check_mandatories(MAN_ARGS_CELL, args_cell, 'cell')
+        check_extra(MAN_ARGS_CELL, args_cell, 'cell')
+        
+    
+    ## CHECKING PATHWAY NAMES ##            
+    pop_list = config_obj.pops_cfg.keys()
+    for pathway in config_obj.conns_cfg.keys():
+        src, trg = pathway
+        assert src in pop_list, f'source {src} is not a population in pathway {pathway}'
+        assert trg in pop_list, f'target {trg} is not a population in pathway {pathway}'
+            
+            
+    ## CHECKING NONUNIFORMITY & LANDSCAPE ##            
+    for obj, nonunif in config_obj.nonuniformity.items():
+        assert obj in config_obj.lscps_cfg, f'A nonuniformity is defined for {obj} but no landscape parameters'
+        
+        for on, method in nonunif.items():
+            #set_trace()
+            man_args_nonunif_method = set(MAN_ARGS_NONUNIF_METHODS[on][method])
+            args_nonunif_method = set(config_obj.lscps_cfg[obj].keys())
+            
+            name = f'nonuniformity on {on} with method {method}'
+            check_mandatories(man_args_nonunif_method, args_nonunif_method, name)
+            check_extra(man_args_nonunif_method, args_nonunif_method, name)
+            
+        for lscp_name, cfg in config_obj.lscps_cfg[obj].items():
+            if type(cfg)==dict:
+                man_args_lscp = MAN_ARGS_LANDSCAPE[cfg['type']]
+                args_lscp = set(cfg['args'])
+                name = f'landscape {lscp_name} with type {cfg["type"]}'
+                check_mandatories(man_args_lscp, args_lscp, name)
+                check_extra(man_args_lscp, args_lscp, name)
+                
+            
+    ## CHECKING PROFILE & ANISOTROPY & SYNAPSES ##            
+    for pathway, conn_cfg in config_obj.conns_cfg.items():
+        assert type(conn_cfg['ncons'])==int
+        assert type(conn_cfg['self_link'])==bool
+            
+    
+        ## SYNAPSE CONFIGS ##
+        syn_cfg = conn_cfg['synapse']
+        syn_kern, syn_type = syn_cfg['type'].split('_')
+
+        man_args_syn_kern = MAN_ARGS_SYN_KERNEL[syn_kern]
+        man_args_syn_type = MAN_ARGS_SYN_TYPE[syn_type]
+        
+        man_args_syn = man_args_syn_type.union(man_args_syn_kern)
+        args_syn = set(syn_cfg['params'].keys())
+        check_mandatories(man_args_syn, args_syn,'synapse')
+        check_extra(man_args_syn, args_syn,'synapse')
+        
+        ## CHECKING PROFILE ##            
+        if 'profile' in conn_cfg: 
+            prof_cfg = conn_cfg['profile']
+            
+            assert 'type' in prof_cfg
+            assert 'params' in prof_cfg
+            
+            man_args_prof = MAN_ARGS_PROFILE[prof_cfg['type']]
+            args_prof = set(prof_cfg['params'].keys())
+            check_mandatories(man_args_prof, args_prof, 'profile')
+            check_extra(man_args_prof, args_prof, 'profile')
+
+            
+    ## CHECKING STIM ## 
+    for stim_name, cfg in config_obj.stims_cfg.items():
+        #set_trace()
+        pop, id_ = stim_name.split('_') 
+        assert pop in pop_list, f'Unrecognized population to stimulate with {pop}'
+        assert id_.isdigit(), 'Stimulation name mus comply with the format `<pop_name>_<digit>`.'
+        
 
 
 def round_to_even(gs, scaler):
@@ -803,10 +935,8 @@ class Configer(object):
         
         if on =='connectivity':
             assert method in VALID_CON_METHODS, 'Only the following anisotropic connectivity methods are supported: {}'.format(VALID_CON_METHODS)
-        elif on=='synaptic':
+        else: # on=='synaptic':
             assert method in VALID_SYN_METHODS, 'Only the following anisotropic synaptic methods are supported: {}'.format(*VALID_SYN_METHODS)
-        else:
-            raise NotImplementedError
             
         nonuniformity = {on: method}
         if obj in self.nonuniformity:
@@ -829,6 +959,9 @@ class Configer(object):
     def add_stim(self, name, I_stim, **params):
         self.stims_cfg.update( self.make_stim(name, I_stim, **params) )
         
+    # TODO
+    def add_training(self):
+        pass
         
     
     #### CONFIG GENERATORS 
@@ -892,40 +1025,42 @@ class Configer(object):
             assert std!=None
             params = dict(std=std)
             
-            if gap==None:
-                gap = max(2, 6./self.scale)
-                
         else:
             assert kappa!=None and theta!=None
             params = dict(kappa=kappa, theta=theta)
             
-            if gap==None:
-                gap = 0
+        if gap==None:
+            gap = max(2, 6./self.scale)
         
         params['gap'] = gap
         cfg['params'] = params
         
         return cfg
-    
         
         
-    def make_landscape(self, val=None, vmin=None, vmax=None, 
-                      perlin=False, scale=3):
+    def make_landscape(self, val=None, vmin=None, vmax=None, vals=None,
+                      mode='perlin', scale=3):
         if val!=None:
             assert type(val)==int or type(val)==float
             return val
         
+        if mode == 'constants':
+            assert vals != None and type(vals)==dict
+            return {'type': 'constant', 'args': vals}
+            
         else:
             assert vmin!=None and vmax!=None
             
-            if perlin:
+            if mode == 'perlin':
                 return {'type': 'perlin', 
                         'args': {'vmin':vmin, 'vmax':vmax, 'scale':scale}
                         }
-            else:
+            elif mode == 'random':
                 return {'type': 'random', 
                         'args': {'vmin':vmin, 'vmax':vmax}
                         }
+            
+            
      
     def make_stim(self, name, I_stim, 
                   x0=None, y0=None, r=None, 
@@ -953,7 +1088,6 @@ class Configer(object):
         
         cfg[name]['domain'] = domain
         return cfg
-        
         
         
         
@@ -1047,136 +1181,11 @@ class Configer(object):
             self.stim_cfg[stim_name] = dict_
         
         
-        
-        
-    def get_all(self):
-        self.check()
+    def get(self):
+        config_checker(self)
         return self.aggregate()
         
     
-    def check(self, autoremove=True):
-        
-        def check_mandatories(mandatory_set, set_, name):
-            msg = f'The following are mandatory args for {name} but are not given:\n{mandatory_set-set_}'
-            assert len(mandatory_set-set_)==0, msg
-                
-        def check_extra(mandatory_set, set_, name):
-            if len(set_-mandatory_set)>0:
-                for kw in set_-mandatory_set:
-                    print(f'WARNING: {kw} is not mandatory for {name}.')
-        
-        
-        mandatory_args_noise = set(['mu', 'sigma', 'noise_dt'])
-        mandatory_args_cell = set(['thr', 'rest', 'tau', 'ref', 'C'])
-        mandatory_args_profs = {
-            'Gamma': set(['theta','kappa']),
-            'Gaussian': set(['std', 'gap'])
-            }
-        mandatory_args_syn_kerns = {
-            'alpha': set(['tau']),
-            'biexp': set(['tau_d', 'tau_r']),
-            'exp'  : set(['tau']),
-            'tsodyks-markram':  set(['tau_d', 'tau_f', 'U']),
-            'STDP': set(['taupre','taupost'])
-            }
-        mandatory_args_syn_types = {
-            'conductance': set(['J', 'delay' ,'Erev']),
-            'current': set(['J', 'delay']),
-            'jump': set(['J', 'delay'])
-            }
-        mandatory_args_lscps= {
-            'random': set(['vmin','vmax']),
-            'perlin': set(['vmin','vmax', 'scale'])
-            }
-        mandatory_args_nonunif_methods = {
-            'connectivity': set(['r','phi']),
-            'synaptic': set(['phi']),
-            }
-        
-        ## CHECKING POPS ##            
-        for pop, pop_cfg in self.pops_cfg.items():
-            assert type(pop_cfg['gs'])==int
-            
-            # noise
-            args_noise = set(pop_cfg['noise'].keys())
-            check_mandatories(mandatory_args_noise, args_noise, 'noise')
-            check_extra(mandatory_args_noise, args_noise, 'noise')
-            
-            # cell
-            args_cell = set(pop_cfg['cell']['params'].keys())
-            check_mandatories(mandatory_args_cell, args_cell, 'cell')
-            check_extra(mandatory_args_cell, args_cell, 'cell')
-            
-            
-        
-        ## CHECKING PATHWAY NAMES ##            
-        pop_list = self.pops_cfg.keys()
-        for pathway in self.conns_cfg.keys():
-            src, trg = pathway
-            assert src in pop_list, f'source {src} is not a population in pathway {pathway}'
-            assert trg in pop_list, f'target {trg} is not a population in pathway {pathway}'
-                
-                
-        ## CHECKING NONUNIFORMITY & LANDSCAPE ##            
-        for obj, nonunif in self.nonuniformity.items():
-            assert obj in self.lscps_cfg, f'A nonuniformity is defined for {obj} but no landscape parameters'
-            
-            for on, method in nonunif.items():
-                
-                man_args_nonunif_method = mandatory_args_nonunif_methods[on]
-                args_nonunif_method = set(self.lscps_cfg[obj].keys())
-                
-                name = f'nonuniformity on {on} with method {method}'
-                check_mandatories(man_args_nonunif_method, args_nonunif_method, name)
-                check_extra(man_args_nonunif_method, args_nonunif_method, name)
-                
-            for lscp_name, cfg in self.lscps_cfg[obj].items():
-                if type(cfg)==dict:
-                    man_args_lscp = mandatory_args_lscps[cfg['type']]
-                    args_lscp = set(cfg['args'])
-                    name = f'landscape {lscp_name} with type {cfg["type"]}'
-                    check_mandatories(man_args_lscp, args_lscp, name)
-                    check_extra(man_args_lscp, args_lscp, name)
-                    
-                
-        ## CHECKING PROFILE & ANISOTROPY & SYNAPSES ##            
-        for pathway, conn_cfg in self.conns_cfg.items():
-            assert type(conn_cfg['ncons'])==int
-            assert type(conn_cfg['self_link'])==bool
-                
-        
-            ## SYNAPSE CONFIGS ##
-            syn_cfg = conn_cfg['synapse']
-            syn_kern, syn_type = syn_cfg['type'].split('_')
-
-            man_args_syn_kern = mandatory_args_syn_kerns[syn_kern]
-            man_args_syn_type = mandatory_args_syn_types[syn_type]
-            
-            man_args_syn = man_args_syn_type.union(man_args_syn_kern)
-            args_syn = set(syn_cfg['params'].keys())
-            check_mandatories(man_args_syn, args_syn,'synapse')
-            check_extra(man_args_syn, args_syn,'synapse')
-            
-            ## CHECKING PROFILE ##            
-            if 'profile' in conn_cfg: 
-                prof_cfg = conn_cfg['profile']
-                
-                assert 'type' in prof_cfg
-                assert 'params' in prof_cfg
-                
-                man_args_prof = mandatory_args_profs[prof_cfg['type']]
-                args_prof = set(prof_cfg['params'].keys())
-                check_mandatories(man_args_prof, args_prof, 'profile')
-                check_extra(man_args_prof, args_prof, 'profile')
-    
-                
-        ## CHECKING STIM ## 
-        for stim_name, cfg in self.stims_cfg.items():
-            #set_trace()
-            pop, id_ = stim_name.split('_') 
-            assert pop in pop_list, f'Unrecognized population to stimulate with {pop}'
-            assert id_.isdigit(), 'Stimulation name mus comply with the format `<pop_name>_<digit>`.'
-        
     def aggregate(self):
         return (self.pops_cfg, 
                 self.conns_cfg,
@@ -1219,14 +1228,14 @@ def get_config(name, scale):
         c = deepcopy(get_config('homiso_net', scale))
         c.add_nonuniformity('II', on='connectivity', method='shift')
         c.add_landscape('II', 'r', val=1)
-        c.add_landscape('II', 'phi', vmin=0, vmax=2*np.pi, perlin=True)
+        c.add_landscape('II', 'phi', vmin=0, vmax=2*np.pi, mode='perlin')
         
     elif name =='I_net':
         c = deepcopy(get_config('homiso_net', scale))
         c.add_profile('II', 'Gamma', theta=3/c.scale, kappa= 4)
         c.add_nonuniformity('II', on='connectivity', method='shift')
         c.add_landscape('II', 'r', val=1)
-        c.add_landscape('II', 'phi', vmin=0, vmax=2*np.pi, perlin=True)
+        c.add_landscape('II', 'phi', vmin=0, vmax=2*np.pi, mode='perlin')
     
     elif name == 'E_net':
         c = deepcopy(Configer(scale))
@@ -1240,7 +1249,7 @@ def get_config(name, scale):
         c.add_profile('EE', 'Gamma', theta=3/c.scale, kappa= 4)
         c.add_nonuniformity('EE', on='connectivity', method='shift')
         c.add_landscape('EE', 'r', val=1)
-        c.add_landscape('EE', 'phi', vmin=0, vmax=2*np.pi, perlin=True)
+        c.add_landscape('EE', 'phi', vmin=0, vmax=2*np.pi, mode='perlin')
     
     elif name == 'EI_net':
         c = deepcopy(Configer(scale))
@@ -1271,7 +1280,7 @@ def get_config(name, scale):
         c.add_nonuniformity(obj='EE', on='connectivity', method='shift')
         c.add_landscape(obj='EE', param_name='r', val=1)
         c.add_landscape(obj='EE', param_name='phi', 
-                        vmin=0, vmax=2*np.pi, perlin=True)
+                        vmin=0, vmax=2*np.pi, mode='perlin')
     
     
     elif name == 'I_net_syn_TM':
@@ -1298,6 +1307,23 @@ def get_config(name, scale):
         c = deepcopy(get_config('EI_net', scale))
         c.add_stim('E_0', I_stim=500*pA, x0=20, y0=10, r=2.5)
         
+    elif name == 'I_net_synaniso':
+        c = deepcopy(get_config('I_net', scale))
+        c.add_nonuniformity('II', on='U', method='cos')
+        c.add_landscape('II', param_name='Umin', val=0.1)
+        c.add_landscape('II', param_name='Umax', val=0.3)
+    
+    elif name == 'I_net_syn_TM_synaniso':
+        c = deepcopy(get_config('I_net_syn_TM', scale))
+        c.add_nonuniformity('II', on='tau_f', method='cos')
+        c.add_landscape('II', param_name='tau_fmin', val=0.8)
+        c.add_landscape('II', param_name='tau_fmax', val=2.5)
+        
+        c.add_nonuniformity('II', on='tau_d', method='normal')
+        c.add_landscape('II', param_name='tau_dmin', val=0.1)
+        c.add_landscape('II', param_name='tau_dmax', val=0.3)
+        c.add_landscape('II', param_name='s', val=1)
+
     else:
         raise
         

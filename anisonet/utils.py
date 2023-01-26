@@ -344,3 +344,31 @@ def pre_loc2post_loc_rel(t_locs, s_loc, gs):
     tmp = t_locs - s_loc
     return (tmp +gs/2) % gs - gs/2
     
+def get_local_lscp(idx, lscp):
+    local_lscp = {}
+    
+    for k,v in lscp.items():
+        if type(v)== type(np.array([])):
+            local_lscp[k] = v[idx]
+        else:
+            local_lscp[k] = v
+            
+    return local_lscp 
+
+def dict_extractor(key, var):
+    """
+    Sometimes its nice to just check if a specific key exists in a config.
+    This does that as a generator. Kudos goes to:
+        https://stackoverflow.com/questions/9807634/find-all-occurrences-of-a-key-in-nested-dictionaries-and-lists
+    """
+    if hasattr(var,'items'):
+        for k, v in var.items():
+            if k == key:
+                yield v
+            if isinstance(v, dict):
+                for result in dict_extractor(key, v):
+                    yield result
+            elif isinstance(v, list):
+                for d in v:
+                    for result in dict_extractor(key, d):
+                        yield result

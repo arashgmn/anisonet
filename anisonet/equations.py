@@ -229,9 +229,9 @@ def get_nrn_eqs(pop_name, pops_cfg):
         
     eqs_str = eqs_str.replace('_pop', '_'+pop_name)
     eqs = b2.Equations(eqs_str, 
-                    C = pops_cfg[pop_name]['cell']['C'],
-                    E = pops_cfg[pop_name]['cell']['rest'],
-                    tau = pops_cfg[pop_name]['cell']['tau'])
+                    C = pops_cfg[pop_name]['cell']['params']['C'],
+                    E = pops_cfg[pop_name]['cell']['params']['rest'],
+                    tau = pops_cfg[pop_name]['cell']['params']['tau'])
     
     return eqs
 
@@ -283,7 +283,6 @@ def get_syn_eqs(conn_name, conn_cfg):
     tmp_tsodyks_markram = '''
         dx/dt = (1-x)/tau_d: 1 (clock-driven)
         du/dt = (U-u)/tau_f: 1 (clock-driven)
-        U: 1
         '''
     
     tmp_hebbian = '''
@@ -320,14 +319,14 @@ def get_syn_eqs(conn_name, conn_cfg):
     	eqs_str = 'g = 1 : 1'
     	on_pre = '' # none 
     
-    elif kernel=='tsodysk-markram':
+    elif kernel=='tsodyks-markram':
         msg = """
             tsodysk-markram model is defined only for the jump kernel. i.e. 
             incremental in the membrane voltage whenever there is a spike. It 
             is possible to extend this kernel to current/conductance models but
-            it would be a novel kernel.
+            it would require a novel kernel.
             """
-        assert model=='jump', msg
+        assert model=='jump', msg # current can be supported later
         
         eqs_str = tmp_tsodyks_markram
         on_pre = '''

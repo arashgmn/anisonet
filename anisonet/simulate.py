@@ -26,7 +26,7 @@ import anisonet.utils as utils
 import anisonet.configs as configs # default configurations
 import anisonet.analyze as analyze
 import anisonet.equations as eq
-from anisonet.landscape import make_landscape
+from anisonet.landscape import generate_landscape
 from anisonet.anisofy import draw_posts
 
 from pdb import set_trace
@@ -68,17 +68,20 @@ class Simulate(object):
         root = osjoin(result_path, net_name)
                 
         # initialize with defaults
-        self.pops_cfg, self.conn_cfg, self.stim_cfgs = configs.get_config(net_name, scalar=scalar)
+        confs = configs.get_config(net_name, scale=scalar)
+        self.pops_cfg, self.conns_cfg, self.nonuniformity, self.lscps_cfg, self.stims_cfg = confs.get()
+        #self.pops_cfg, self.conns_cfg, self.stim_cfgs = configs.get_config(net_name, scalar=scalar)
         
         # processing configs
         self.process_configs(to_event_driven) 
-        self.assess_landscape()
+        #self.assess_landscape()
         #self.base = self.get_synaptic_base()
         self.has_plastic = self.check_plasticity()
         
         self.load_connectivity = load_connectivity
         
-        self.name = self.generate_name(scalar, net_name)
+        self.name = 'dummy_name'#self.generate_name(scalar, net_name) #TODO better
+        
         self.res_path = osjoin(root, self.name)#+'results')
         self.data_path = osjoin(root, self.name)#+'data')
         
@@ -98,7 +101,10 @@ class Simulate(object):
         
         self.dt = b2.defaultclock.dt
         
-    def state_initializer(self, init_cell, init_syn):
+        self.overlay=True
+        
+        
+    def state_initializer(self, init_cell='rand', init_syn='rand'):
         """
         A smart function that intializes the synaptic or cellular state according 
         to the desired mode, based on the provided config file.
@@ -145,17 +151,18 @@ class Simulate(object):
         for pop, pop_cfg in zip(self.pops, self.pops_cfg.values()):         
             # setting up voltage
             if pop_cfg['cell']['type']=='LIF':
-                minV = pop_cfg['cell']['rest']
-                maxV = pop_cfg['cell']['thr']
+                minV = pop_cfg['cell']['params']['rest']
+                maxV = pop_cfg['cell']['params']['thr']
             else:
                 raise NotImplementedError(msg0 + msg_cell)
+               
             
             if init_cell=='ss':
                 self.pops[pop].v = minV
             elif init_cell=='rand':
                 self.pops[pop].v = '({}+ rand()*({}))*mV'.format(minV/b2.mV, (maxV-minV)/b2.mV)
             else:
-                raise NotImplementedError(msg0 + msg_mode)
+                raise NotImplementedError('Initialization method not recognized')
             
             
             # setting up noise level
@@ -163,34 +170,38 @@ class Simulate(object):
             self.pops[pop].sigma = pop_cfg['noise']['sigma']
             
             # setting up the stimuli
-            if len(pop_cfg['stim'].keys())==0:
+            if pop not in self.stims_cfg:
                 self.pops[pop].I_stim = 0*b2.nA
-            
+            else:
+                #TODO: What will happen really?
+                pass
         
-        # for id_, conn_cfg in zip(range(len(self.syns)), self.conn_cfg.values()):
+        
+        # for id_, conn_cfg in zip(range(len(self.syns)), self.conns_cfg.values()):
         #     kernel, model = conn_cfg['synapse']['type'].split('_')
         for syn_name in self.syns.keys():
-            conn_cfg = self.conn_cfg[syn_name]
+            conn_cfg = self.conns_cfg[syn_name]
             kernel, model = conn_cfg['synapse']['type'].split('_')
+            
             
             if init_syn=='ss':
                 if kernel=='tsodyks-markram':
                     self.syns[syn_name].u = conn_cfg['synapse']['params']['U']
                     self.syns[syn_name].x = 1
-                    self.syns[syn_name].U = conn_cfg['synapse']['params']['U']
-                elif kernel in ['alpha','exp','biexp']:
-                    self.syns[syn_name].g = 0
-                elif kernel == 'const':
+                    # if 'U' not in hetrosyn_vars:
+                    #     self.syns[syn_name].U = conn_cfg['synapse']['params']['U']
+                
+                elif kernel in ['alpha','exp','biexp', 'const']: 
+                    # self.syns[syn_name].g = 0 #default is 0 anyway
                     pass
                 else:
                     raise NotImplementedError(msg0 + msg_kernel.format(kernel))
                 
-            
             elif init_syn=='rand':
                 if kernel=='tsodyks-markram':
                     self.syns[syn_name].u = 'rand()'
                     self.syns[syn_name].x = 'rand()'
-                    self.syns[syn_name].U = conn_cfg['synapse']['params']['U']
+                    # self.syns[syn_name].U = conn_cfg['synapse']['params']['U']
                     
                     # else:
                     #     self.syns[syn_name].U = utils.get_anisotropic_U(self, 
@@ -203,18 +214,9 @@ class Simulate(object):
                 else:
                     raise NotImplementedError(msg0 + msg_kernel.format(kernel))
             
-            elif init_syn=='het':
-                msg_het = 'No anisotropy method is set of synapses. Check configs.'
-                
-                assert conn_cfg['anisotropy']['synaptic']!=None, msg_het
-                    
-                if kernel=='tsodyks-markram':
-                    self.syns[syn_name].u = 'rand()'
-                    self.syns[syn_name].x = 'rand()'
-                    self.syns[syn_name].U = np.load(osjoin(self.data_path, 'Us.npy'))
-                
             else:
-                raise NotImplementedError(msg0 + msg_mode)
+                raise NotImplementedError('Initialization method not recognized')
+                
             
             self.syns[syn_name].J = conn_cfg['synapse']['params']['J']
             
@@ -225,7 +227,41 @@ class Simulate(object):
             
             if conn_cfg['training']['type']=='STDP':
                 self.syns[syn_name].w  = 0.5 
+            
+            
+        # now we impose possible non-uniformities
+        for obj_name, nonunif in self.nonuniformity.items():
+            # nonuniformity imposed on the population
+            if len(obj_name)==1:
+                for var in self.nonuniformity[obj_name].keys():
+                    self.pops[obj_name].set_states(
+                        {var: np.load(osjoin(self.data_path, var+'.npy'))},
+                        units=False)
                 
+            else:
+                for var in self.nonuniformity[obj_name].keys():
+                    if var!='connectivity':
+                        self.syns[obj_name].set_states(
+                            {var: np.load(osjoin(self.data_path, var+'.npy'))},
+                            units=False)
+                    
+        # if syn_name in self.nonuniformity:
+        #     hetrosyn_vars = self.nonuniformity[syn_name].keys()
+        #     if 'connectivity' in hetrosyn_vars:
+        #         hetrosyn_vars.remove('connectivity')
+                    
+        # if 'synaptic' in self.nonuniformity[syn_name]:
+        #     # msg_het = 'No anisotropy method is set of synapses. Check configs.'
+        #     # assert conn_cfg['anisotropy']['synaptic']!=None, msg_het
+                
+        #     if kernel=='tsodyks-markram':
+        #         self.syns[syn_name].u = 'rand()'
+        #         self.syns[syn_name].x = 'rand()'
+        #         self.syns[syn_name].U = np.load(osjoin(self.data_path, 'Us.npy'))
+            
+        # else:
+        #     raise NotImplementedError(msg0 + msg_mode)
+        
                 
     def get_synaptic_base(self):
         """
@@ -234,7 +270,7 @@ class Simulate(object):
         when we define the governing equations.
         """
         
-        syn_type = list(self.conn_cfg.values())[0]['synapse']['type']
+        syn_type = list(self.conns_cfg.values())[0]['synapse']['type']
         
         return syn_type
         # if 'current' in syn_type:
@@ -251,10 +287,12 @@ class Simulate(object):
         """
         Transfaers the current-based synapses into an (almost) equivalent 
         voltage jump increment model. Look at ``Equation`` module for more info.
+        
+        Note: For the ``tsodyks_markram`` kernel, we omit the steady-state term.
         """
         
-        for pathway in self.conn_cfg.keys():
-            syn_cfg = self.conn_cfg[pathway]['synapse']
+        for pathway in self.conns_cfg.keys():
+            syn_cfg = self.conns_cfg[pathway]['synapse']
             src, trg = pathway
             
             kernel, model = syn_cfg['type'].split('_') # identify kernel and model
@@ -282,27 +320,37 @@ class Simulate(object):
                     model""".format(kernel)
                 
                 assert kernel != 'const', msg
-                assert kernel != 'tsodysk_markram', msg
+                assert kernel != 'tsodyks_markram', msg
                 
                 # compute conversion factor for valid kernels
                 if kernel=='exp':
-                    C_m = self.pops_cfg[src]['cell']['C']
                     tau_s = syn_cfg['params']['tau']
-                    syn_cfg['params']['J']*= (tau_s/C_m)
-                
+                    factor = tau_s
+                    
                 elif kernel=='alpha':
-                    C_m = self.pops_cfg[src]['cell']['C']
                     tau_s = syn_cfg['params']['tau']
-                    syn_cfg['params']['J']*= (tau_s/C_m)*np.exp(1)
+                    factor = tau_s*np.exp(1)
                 
+                elif kernel == 'tsodyks_markram':
+                    # Here we omit the constant current 
+                    tau_f = syn_cfg['params']['tau_f']
+                    tau_d = syn_cfg['params']['tau_d']
+                    U = syn_cfg['params']['tau_d']
+                    factor = (1-U)*tau_d - U*tau_f - U*(1-U)/(1./tau_f + 1./tau_d)
+                    assert factor > 0
+                    
+                elif kernel == 'biexp':
+                    tau_r = syn_cfg['params']['tau_r'] 
+                    tau_d = syn_cfg['params']['tau_d'] 
+                    factor = 1 # TODO: need to find the correct conversion 
+                    
                 else:
-                    # TODO: need to find the correct conversion 
-                    tau_r = syn_cfg['params']['tau'] # tau_r instead of tau
-                    tau_d = syn_cfg['params']['tau'] # tau_d instead of tau
-                
+                    raise
+                C_m = self.pops_cfg[src]['cell']['params']['C']
+                syn_cfg['params']['J']*= factor/C_m
                 syn_cfg['type'] = 'const_jump'
                 
-                self.conn_cfg[pathway]['synapse'] = syn_cfg # update
+                self.conns_cfg[pathway]['synapse'] = syn_cfg # update
                 
             
     def generate_name(self, scalar, net_name):
@@ -319,7 +367,7 @@ class Simulate(object):
         
         print('\t* populations: '+', '.join(pop_str))
         print('\t* pathways: ')
-        for item in self.conn_cfg.items():
+        for item in self.conns_cfg.items():
             pw_name, pw_cfg = item
             
             name += pw_name
@@ -389,50 +437,59 @@ class Simulate(object):
         """
         
         # filling the None with appropriate values
-        for pathway in self.conn_cfg.keys():
+        for pathway in self.conns_cfg.keys():
             src, trg = pathway
-            config = self.conn_cfg[pathway]
+            config = self.conns_cfg[pathway]
             
-            # Filling omitted optional configs
-            if 'training' not in self.conn_cfg[pathway]:
-                self.conn_cfg[pathway]['training'] = {'type': None }
-                
-            if 'profile' not in self.conn_cfg[pathway]:
-                self.conn_cfg[pathway]['profile'] = {'type': 'homog', 'params':{}}
             
-            if 'anisotropy' not in self.conn_cfg[pathway]:
-                self.conn_cfg[pathway]['anisotropy'] = {'params': {},
-                                                        'connectivity': None,
-                                                        'synaptic': None}
+            # Filling the omitted optional configs
+            if 'profile' not in self.conns_cfg[pathway]:
+                 self.conns_cfg[pathway]['profile'] = {'type': 'homog' }
+            
+            if 'training' not in self.conns_cfg[pathway]:
+                self.conns_cfg[pathway]['training'] = {'type': None }
+            
+            # if 'anisotropy' not in self.conns_cfg[pathway]:
+            #     self.conns_cfg[pathway]['anisotropy'] = {'params': {},
+            #                                             'connectivity': None,
+            #                                             'synaptic': None}
+            
             # filling None profiles with homog
             # if config['profile']==None:
-            #     self.conn_cfg[pathway]['profile'] = {'type': 'homog', 'params':{}}
+            #     self.conns_cfg[pathway]['profile'] = {'type': 'homog', 'params':{}}
             
             # # filling None anisotropy with empty parameters
             # if config['anisotropy']==None:
-            #      self.conn_cfg[pathway]['anisotropy'] = {'params': {},
+            #      self.conns_cfg[pathway]['anisotropy'] = {'params': {},
             #                                              'connectivity': None,
             #                                              'synaptic': None}
-            else:
-                if 'connectivity' not in config['anisotropy']:
-                    config['anisotropy']['connectivity'] = None
-                if 'synaptic' not in  config['anisotropy']:
-                    config['anisotropy']['synaptic'] = None
+            
+            # add None for ommitted nonuniformity methods
+            # if pathway not in self.nonuniformity:
+            #     self.nonuniformity[pathway] = {'connectivity': None, 
+            #                                     #'synaptic': None
+            #                                     }
+            # else:
+            #     if 'connectivity' not in self.nonuniformity[pathway]:
+            #         self.nonuniformity[pathway]['connectivity'] = None
+            #     if 'synaptic' not in self.nonuniformity[pathway]:
+            #         self.nonuniformity[pathway]['synaptic'] = None
+        
         
             # adding types to anisotropy params
-            for param, value in config['anisotropy']['params'].items():
-                if type(value)==type({}):
-                    if 'type' not in value:
-                        config['anisotropy']['params'][param]['type'] = None
-                    if 'args' not in value:
-                        config['anisotropy']['params'][param]['args'] = None
+            # for param, value in config['anisotropy']['params'].items():
+            #     if type(value)==type({}):
+            #         if 'type' not in value:
+            #             config['anisotropy']['params'][param]['type'] = None
+            #         if 'args' not in value:
+            #             config['anisotropy']['params'][param]['args'] = None
                 
                 
-        # TODO: check what does it do. Probably nothing!                
         # adding stimulation variable
-        for pop in self.pops_cfg.keys():
-            if 'stim' not in self.pops_cfg[pop]:
-                self.pops_cfg[pop]['stim'] = {}
+        # for pop in self.pops_cfg.keys():
+        #     if 'stim' not in self.pops_cfg[pop]:
+        #         self.pops_cfg[pop]['stim'] = {}
+        
         
         # converting to models to jump if necessary
         if to_event_driven:
@@ -440,11 +497,12 @@ class Simulate(object):
         
         # checking if current models are consistent 
         for pop in self.pops_cfg.keys():
-            for pathway in self.conn_cfg.keys():
+            
+            for pathway in self.conns_cfg.keys():
                 src, trg = pathway
                 
                 if trg == pop:
-                    _, model = self.conn_cfg[pathway]['synapse']['type'].split('_')
+                    _, model = self.conns_cfg[pathway]['synapse']['type'].split('_')
                     
                     if 'input_model' in self.pops_cfg[pop]:
                         msg = """ Synaptic input models impinging on population {} are not consistent: {} and {} are both given in the pathways configuration.
@@ -481,7 +539,10 @@ class Simulate(object):
         self.net.add(self.mons)
         print('Net set up.')
         
-    
+        # for viz
+        if len(list(utils.dict_extractor('phi', self.lscps)))==0:
+            self.overlay=False
+        
     def setup_pops(self):
         """
         Each population is set up from the ``pops_cfg`` which is a nested 
@@ -503,11 +564,13 @@ class Simulate(object):
         self.pops = {}
         for pop_name in self.pops_cfg.keys():
             gs = self.pops_cfg[pop_name]['gs'] # grid size
-            cell_cfg = self.pops_cfg[pop_name]['cell']
+            cell_cfg = self.pops_cfg[pop_name]['cell']['params']
             noise_cfg = self.pops_cfg[pop_name]['noise']
             
             # initialize population
             eqs = eq.get_nrn_eqs(pop_name, self.pops_cfg,)
+            eqs = self.get_nonunif_eqs(pop_name, eqs) # adjust equations for nonuniformities
+            
             pop = b2.NeuronGroup(N = gs**2, 
                                  name = pop_name, 
                                  model = eqs, 
@@ -538,39 +601,44 @@ class Simulate(object):
             del x,y, cell_cfg, noise_cfg, gs, eqs
             
             
-    def assess_landscape(self):
-        for pathway in self.conn_cfg.keys():
-            aniso = self.conn_cfg[pathway]['anisotropy']
+    # def assess_landscape(self):
+    #     for obj_name, nonunif in self.nonuniformity.keys():
+    #         lscp = self.lscpss_cfg[obj_name]
             
-            # connectivity anisotropy
-            if aniso['connectivity'] == 'shift':
-                assert 'r' in aniso['params'], "Please provide shift radius of anisotropy for pathway: " +pathway
-                assert 'phi' in aniso['params'], "Please provide shift angle of anisotropy for pathway: " +pathway
+    #         # connectivity anisotropy
+    #         if 'connectivity' in nonunif:
+    #             # all connectivity methods must have r and phi
+    #             assert 
+                    
+                    
+    #         if aniso['connectivity'] == 'shift':
+    #             assert 'r' in aniso['params'], "Please provide shift radius of anisotropy for pathway: " +pathway
+    #             assert 'phi' in aniso['params'], "Please provide shift angle of anisotropy for pathway: " +pathway
 
-            elif aniso['connectivity'] == 'positive-rotate':
-                assert 'phi' in aniso['params'], "Please provide rotation angle of anisotropy for pathway: " +pathway
+    #         elif aniso['connectivity'] == 'positive-rotate':
+    #             assert 'phi' in aniso['params'], "Please provide rotation angle of anisotropy for pathway: " +pathway
             
-            elif aniso['connectivity'] is ['squeeze-rotate', 'positive-squeeze-rotate']:
-                assert 'r' in aniso['params'], "Please provide sqeezing ratio of anisotropy for pathway: " +pathway
-                assert 'phi' in aniso['params'], "Please provide rotation angle of anisotropy for pathway: " +pathway
+    #         elif aniso['connectivity'] is ['squeeze-rotate', 'positive-squeeze-rotate']:
+    #             assert 'r' in aniso['params'], "Please provide sqeezing ratio of anisotropy for pathway: " +pathway
+    #             assert 'phi' in aniso['params'], "Please provide rotation angle of anisotropy for pathway: " +pathway
             
-            elif aniso['connectivity'] == None:
-                pass
-            else:
-                raise TypeError ("I don't understand the profile's anisotropy method!")
+    #         elif aniso['connectivity'] == None:
+    #             pass
+    #         else:
+    #             raise TypeError ("I don't understand the profile's anisotropy method!")
 
-            # synaptic anisotropy
-            if aniso['synaptic'] in ['cos', 'sin']:
-                assert ('tau_f' in aniso['params']) or \
-                       ('tau_d' in aniso['params']) or \
-                       ('U' in aniso['params']), "Do not know which synaptic variable is to be anisotrofied in pathway "+pathway
-                assert 'phi' in aniso['params'], "Please provide angle anisotropy for pathway: " +pathway
-            elif aniso['synaptic'] == None:
-                pass
-            else:
-                raise TypeError ("I don't understand the synaptic anisotropy method!")
+    #         # synaptic anisotropy
+    #         if aniso['synaptic'] in ['cos', 'sin']:
+    #             assert ('tau_f' in aniso['params']) or \
+    #                    ('tau_d' in aniso['params']) or \
+    #                    ('U' in aniso['params']), "Do not know which synaptic variable is to be anisotrofied in pathway "+pathway
+    #             assert 'phi' in aniso['params'], "Please provide angle anisotropy for pathway: " +pathway
+    #         elif aniso['synaptic'] == None:
+    #             pass
+    #         else:
+    #             raise TypeError ("I don't understand the synaptic anisotropy method!")
             
-            # 
+    #         # 
             
     def setup_landscape(self):
         """
@@ -583,24 +651,49 @@ class Simulate(object):
         """
         print('{} -- Setting up ladscapes.'.format(time.ctime()))
 
-        self.lscp = {}
-        for conn_name in self.conn_cfg.keys():
-            src, trg = conn_name
-            
-            lscp_cfg = self.conn_cfg[conn_name]['anisotropy']
+        self.lscps = {}
+        for pathway, lscp in self.lscps_cfg.items():
+            src, trg = pathway
             gs = self.pops_cfg[src]['gs'] # grid size
             
-            # this might be inefficient for constant values
-            # rs, phis = make_landscape(gs=gs, aniso=anisotropy)
-            # self.lscp[conn_name] = {'phi' : phis, 'r' :rs}
-            self.lscp[conn_name] = {}
-            for param, cfg in lscp_cfg['params'].items():
-                #set_trace()
+            self.lscps[pathway] = {}
+            for param_name, cfg in lscp.items():
+                self.lscps[pathway][param_name] = generate_landscape(gs, cfg)
+        
                 
-                self.lscp[conn_name][param] = make_landscape(gs, cfg)
+                
+                
+        # for param_name, params in self.lscps_cfg.values():
+            
+        #     lscp_cfg = self.conns_cfg[conn_name]['anisotropy']
+            
+        #     # this might be inefficient for constant values
+        #     # rs, phis = generate_landscape(gs=gs, aniso=anisotropy)
+        #     # self.lscps[conn_name] = {'phi' : phis, 'r' :rs}
+        #     self.lscps[conn_name] = {}
+        #     for param, cfg in lscp_cfg['params'].items():
+        #         #set_trace()
+                
+        #         self.lscps[conn_name][param] = generate_landscape(gs, cfg)
         
         # del rs, phis, gs, lscp_cfg, src, trg
         
+    def get_nonunif_eqs(self, obj, eqs):
+        if obj in self.nonuniformity:
+            for var in self.nonuniformity[obj].keys():
+                if var=='connectivity':
+                    pass
+                else:
+                    if 'tau' in var:
+                        unit='second'
+                    elif 'C' in var:
+                        unit='farad'
+                    else:
+                        unit ='1'
+                    #set_trace()
+                    
+                    eqs += b2.Equations(var+':'+unit)
+        return eqs
         
     def setup_syns(self, visualize=False, init='rand'):
         """
@@ -621,11 +714,13 @@ class Simulate(object):
         print('{} -- Setting up synapses ...'.format(time.ctime()))
         
         self.syns = {}
-        for key in sorted(self.conn_cfg.keys()):
-            src, trg = key
+        for pathway in sorted(self.conns_cfg.keys()):
+            src, trg = pathway
             
-            eqs, on_pre, on_post, namespace = eq.get_syn_eqs(key, self.conn_cfg)
-            ncons = self.conn_cfg[key]['ncons']
+            eqs, on_pre, on_post, namespace = eq.get_syn_eqs(pathway, self.conns_cfg)
+            eqs = self.get_nonunif_eqs(pathway, eqs) # adjust equations for nonuniformities
+            
+            ncons = self.conns_cfg[pathway]['ncons']
             spop = self.pops[src]
             tpop = self.pops[trg]
             
@@ -636,10 +731,11 @@ class Simulate(object):
                               on_post=on_post,
                               namespace = namespace,
                               method='exact',
-                              name = 'syn_'+key
+                              name = 'syn_'+pathway
                               )
+            
             # load or save connectivity 
-            w_name = self.name+'_w_'+key
+            w_name = self.name+'_w_'+pathway
             if self.load_connectivity:
                 try:
                     print('\tLoading connectivity matrix: {}'.format(w_name))
@@ -651,31 +747,38 @@ class Simulate(object):
                     print('\tWarning: Computing connectivity from scratch.')                    
                     self.load_connectivity = False
                     
+                    
             # computing anisotropic post-synapses
             syn_params = {}
+            nonunif = {}
+            if pathway in self.nonuniformity:
+                nonunif = self.nonuniformity[pathway]
+                
+            # these kws will be used for anisotropic linking
+            kws = dict(s_coord = None, local_landscape = None, 
+                       ncons = ncons,
+                       srow= spop.gs, scol= spop.gs,
+                       trow= tpop.gs, tcol= tpop.gs,
+                       profile= self.conns_cfg[pathway]['profile'], 
+                       nonuniformity = nonunif,
+                       self_link= self.conns_cfg[pathway]['self_link'],
+                       recurrent= trg==src,
+                       )
             for s_idx in range(len(spop)):
                 if self.load_connectivity:
                     t_idxs = w.col[w.row==s_idx]
-                    # TODO: add a function that computes delays
+                
                 else:
-                    kws = dict(s_coord = spop.coord[s_idx],
-                               ncons = ncons,
-                               srow = spop.gs,
-                               scol = spop.gs,
-                               trow = tpop.gs,
-                               tcol = tpop.gs,
-                               profile = self.conn_cfg[key]['profile'],
-                               anisotropy = {k:v[s_idx] for k,v in self.lscp[key].items()},
-                               # landscape = {'phi': self.lscp[key]['phi'][s_idx], 
-                               #               'r' : self.lscp[key]['r'][s_idx]},
-                               self_link = self.conn_cfg[key]['self_link'],
-                               recurrent = trg==src,
-                               )
-                                
+                    local_lscp={}
+                    if pathway in self.lscps:
+                        local_lscp = utils.get_local_lscp(s_idx, self.lscps[pathway]) 
+                            
+                    kws.update({'s_coord': spop.coord[s_idx],
+                                'local_landscape': local_lscp})
                     # adding the methods
-                    aniso_methods = deepcopy(self.conn_cfg[key]['anisotropy'])
-                    aniso_methods.pop('params')
-                    kws['aniso_methods'] = aniso_methods
+                    # aniso_methods = deepcopy(self.conns_cfg[key]['anisotropy'])
+                    # aniso_methods.pop('params')
+                    # kws['aniso_methods'] = aniso_methods
                     
                     #set_trace()
                     s_coord, t_coords, syn_param = draw_posts(**kws) # projects s_coord
@@ -690,20 +793,20 @@ class Simulate(object):
                 syn.connect(i = s_idx, j = t_idxs)
                 
             # Setting up delays
-            # syn.J = self.conn_cfg[key]['synapse']['params']['J']
+            # syn.J = self.conns_cfg[key]['synapse']['params']['J']
             # syn.delay = np.array(delays).ravel()*b2.ms
             #syn.delay = np.random.uniform(0.5, 2.5, len(syn.delay))*b2.ms
             
-            #self.state_initializer(syn, self.conn_cfg[key], mode='rand')
+            #self.state_initializer(syn, self.conns_cfg[key], mode='rand')
             syn.add_attribute('is_plastic')
             syn.is_plastic = False
             for plastic_model in _plastic_models:
-                if plastic_model in self.conn_cfg[key]['synapse']['type']:
+                if plastic_model in self.conns_cfg[pathway]['synapse']['type']:
                     syn.is_plastic = True 
             
             
             # append to the class
-            self.syns[key] = syn
+            self.syns[pathway] = syn
             #set_trace()
             # save if not saved
             if not self.load_connectivity:
@@ -712,7 +815,6 @@ class Simulate(object):
                 data = np.ones_like(row_idx)
                 w = sparse.coo_matrix((data, (row_idx, col_idx)))
                 sparse.save_npz(osjoin(self.data_path, w_name+'.npz'), w)
-                
                 for k,v in syn_params.items():
                     np.save(osjoin(self.data_path, k), v)
                     
@@ -866,7 +968,7 @@ class Simulate(object):
                 print(profiling_summary(self.net))
             
             if plot_snapshots:  
-                viz.plot_firing_rates(sim=self, suffix='_'+self.state_str,)
+                viz.plot_firing_rates(sim=self, suffix='_'+self.state_str)
             
             print('before: '+self.state_str)                
             self.save_monitors()
@@ -925,11 +1027,11 @@ class Simulate(object):
         self.net.add(self.mons)
         
     
-    def post_process(self, overlay=True, ss_dur=10):
+    def post_process(self, ss_dur=10):
         print('{} -- Starting postprocessing ...'.format(time.ctime()))
         
         logging.info('Visualizing landscape, degress, and connectivity.')
-        viz.plot_landscape(self, overlay=overlay)
+        viz.plot_landscape(self)
         viz.plot_in_out_deg(self)
         viz.plot_realized_landscape(self)
         viz.plot_connectivity(self)
@@ -938,7 +1040,7 @@ class Simulate(object):
         viz.plot_firing_rates_dist(self)
         
         logging.info('Making activity animation.')
-        viz.plot_animation(self, overlay=overlay, ss_dur=ss_dur) 
+        viz.plot_animation(self, ss_dur=ss_dur) 
 
         logging.info('Computing synchrony order parameter.')
         #viz.plot_R(self)
@@ -975,7 +1077,7 @@ class Simulate(object):
     def check_plasticity(self):
         has_plasticity = False
         
-        for pathway_cfg in self.conn_cfg.values():
+        for pathway_cfg in self.conns_cfg.values():
             for model in _plastic_models:
                 if model in pathway_cfg['synapse']['type']:
                     has_plasticity = True
@@ -983,7 +1085,7 @@ class Simulate(object):
         return has_plasticity 
     
     def set_protocol(self):
-        stim_cfgs = utils.stimulator(self, self.stim_cfgs)
+        stim_cfgs = utils.stimulator(self, self.stims_cfg)
         for stim_id, stim_cfg in stim_cfgs.items():
             pop, id_ = stim_id.split('_')
             

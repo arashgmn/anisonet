@@ -91,7 +91,7 @@ def plot_in_out_deg(sim):
 def plot_firing_rates(sim, suffix='', 
                       conv_size=3, wl_size=10, 
                       z_score=False,
-                      overlay=True):
+                      ):
     """
     Plots the overal firing rates within the active monitors of the ``sim``
     objects. The firing rate is also covolved with a 2D ricker kernel to show 
@@ -155,12 +155,15 @@ def plot_firing_rates(sim, suffix='',
             ax.set_aspect('equal')
             ax.get_yaxis().set_ticks([])
         
-        if overlay:
-            if 'phi' in sim.lscp[2*src.name[-1]]: # for isotropic there's no phi
-                phis = sim.lscp[2*src.name[-1]]['phi']
+        # TODO: there should be a mechanism that changes overlay if necessary
+        if sim.overlay:
+            try:
+                phis = sim.lscps[2*src.name[-1]]['phi']
                 for ax in axs[:, id_]:
                     overlay_phis(phis, ax)
-                
+            except KeyError:
+                pass
+            
     path = osjoin(sim.res_path, 'rates'+suffix+'.png')
     plt.savefig(path, dpi=200, bbox_inches='tight')
     plt.close()
@@ -230,7 +233,7 @@ def plot_field(field, figpath, vmin=None, vmax=None, phis=None):
     
     
 def plot_periodicity(sim, N=10):
-    for id_, key in enumerate(sim.conn_cfg.keys()):
+    for id_, key in enumerate(sim.conns_cfg.keys()):
         src, trg = key
         spop = sim.pops[src]
         tpop = sim.pops[trg]
@@ -296,7 +299,7 @@ def plot_periodicity(sim, N=10):
             plot_id += 1
         del post_cntr, pres, posts
         
-def plot_landscape(sim, overlay=True):
+def plot_landscape(sim):
     """
     Plots the intended landscape (only :math:`\\phi`) for all the populations
     set in a simulation.
@@ -304,7 +307,7 @@ def plot_landscape(sim, overlay=True):
     :param sim: ``simulate`` object
     :type sim: object
     """
-    for key, val in sim.lscp.items():
+    for key, val in sim.lscps.items():
         for lscp_id, lscp in val.items():
             if len(np.unique(lscp))>1:
                 figpath = osjoin(sim.res_path, 'landscape_'+key+'_'+lscp_id+'.png')
@@ -313,8 +316,8 @@ def plot_landscape(sim, overlay=True):
                            vmin=lscp.min(), vmax = lscp.max())
 
                 
-        # if 'phi' in sim.lscp[key]:
-        #     phis = sim.lscp[key]['phi']
+        # if 'phi' in sim.lscps[key]:
+        #     phis = sim.lscps[key]['phi']
         #     gs = int(np.sqrt(len(phis)))
         #     figpath = osjoin(sim.res_path, 'gen_phi_'+key+'.png')
         #     if overlay:	    
@@ -333,7 +336,7 @@ def plot_realized_landscape(sim):
     :param sim: ``simulate`` object
     :type sim: object
     """
-    # for id_, key in enumerate(sim.conn_cfg.keys()):
+    # for id_, key in enumerate(sim.conns_cfg.keys()):
     for syn in sim.syns.values():
         spop = syn.source
         tpop = syn.target
@@ -381,7 +384,7 @@ def plot_connectivity(sim):
     """
     from scipy import sparse
     
-    for pathway in sim.conn_cfg.keys():
+    for pathway in sim.conns_cfg.keys():
         path = osjoin(sim.data_path, sim.name+'_w_'+pathway+'.npz')
         w = sparse.load_npz(path).toarray()
     
@@ -493,7 +496,7 @@ def animator(fig, axs, imgs, vals, ts_bins=[]):
 
     return anim
 
-def plot_animation(sim, ss_dur=25, fps=10, overlay=True):
+def plot_animation(sim, ss_dur=25, fps=10):
     """
     Aggregates the firing rate from disk and make an animation.
     
@@ -532,10 +535,10 @@ def plot_animation(sim, ss_dur=25, fps=10, overlay=True):
                                     )
         axs[id_].set_title('Population '+mon.name[-1])
         
-        if overlay:
-            if 'phi' in sim.lscp[2*mon.name[-1]]:
-                phis = sim.lscp[2*mon.name[-1]]['phi']
-                overlay_phis(phis, axs[id_])
+        if sim.overlay:
+            # if 'phi' in sim.lscps[2*mon.name[-1]]:
+            phis = sim.lscps[2*mon.name[-1]]['phi']
+            overlay_phis(phis, axs[id_])
         
         field_vals.append(field_val)
         field_imgs.append(field_img)
@@ -769,7 +772,7 @@ def plot_manifold(sim, ncomp = 2):
     color-coded by the location on the x-axis.
     
     """
-    for syn_name in sim.conn_cfg.keys():
+    for syn_name in sim.conns_cfg.keys():
         w = sparse.load_npz(osjoin(sim.data_path, 
                                    sim.name + '_w_'+ syn_name +'.npz'))
         
@@ -809,8 +812,8 @@ def plot_LT_weights(sim):
     """
     plots the long-term weight distribution if training is done.
     """
-    for syn_name in sim.conn_cfg.keys():
-        if sim.conn_cfg[syn_name]['training']['type']=='STDP':
+    for syn_name in sim.conns_cfg.keys():
+        if sim.conns_cfg[syn_name]['training']['type']=='STDP':
             s = sim.syns[syn_name]
             
             plt.figure()

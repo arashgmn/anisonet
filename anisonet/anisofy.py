@@ -388,7 +388,9 @@ from anisonet.utils import pre_loc2post_loc_rel
 def draw_posts(s_coord, ncons,
               srow, scol, trow, tcol, 
               profile,
-              anisotropy, aniso_methods,
+              nonuniformity, 
+              local_landscape,
+              # anisotropy, aniso_methods,
               recurrent=True, self_link= False, 
               ):
     """
@@ -400,8 +402,7 @@ def draw_posts(s_coord, ncons,
     extra postsynapses are drawn untill ``ncons`` post that 
     differ from pre is obtained.
     """
-    
-   
+    #set_trace()
     # source neuron's location on the target population
     scale_x, scale_y = 1.*trow/srow, 1.*tcol/scol
     s_coord = np.round([s_coord[0]*scale_x, s_coord[1]*scale_y]).astype(int) 
@@ -429,8 +430,8 @@ def draw_posts(s_coord, ncons,
         
         # making anisotropic connectivity
         x_, y_ = make_anisotropic_profile(x_, y_, 
-                                          anisotropy, 
-                                          aniso_methods['connectivity'])    
+                                          local_landscape, 
+                                          nonuniformity)    
         
         # make coordinates periodic around the presynapse
         x[redraw] = (x_ + tcol/2) % tcol - tcol/2
@@ -453,8 +454,8 @@ def draw_posts(s_coord, ncons,
     #set_trace()
     # make anisotropic parameters
     synaptic_params = make_anisotropic_syn(s_coord, t_coords, tcol, 
-                                           anisotropy = anisotropy,
-                                           method = aniso_methods['synaptic'])
+                                           local_landscape = local_landscape,
+                                           nonuniformity = nonuniformity)
     
     
     return s_coord, t_coords.astype(int), synaptic_params
@@ -489,25 +490,31 @@ def get_radial_profile(nconn, profile):
     # post-synapse which is closer than the specified gap. Note that this gap
     # may be squeezed/sheared during the anisotrofy step. But, it is ok, as the
     # mexican hat profile is introduced only for the radial profile. 
-    if 'gap' in profile:
-        radius[radius< 0] -= profile['gap']
-        radius[radius>=0] += profile['gap']
+    if 'gap' in profile['params']:
+        radius[radius< 0] -= profile['params']['gap']
+        radius[radius>=0] += profile['params']['gap']
     
     return radius
 
 
-def make_anisotropic_profile(x,y, aniso, method='shift'):
+def make_anisotropic_profile(x,y, local_landscape, nonuniformity):
     """
     takes an isotropic set of coordinates and transforms them
     into anisotropic ones according to the provided ``method``.
     """
     from scipy.spatial.transform import Rotation as R
     
+    if 'connectivity' in nonuniformity:
+        method = nonuniformity['connectivity']
+    else:
+        method = None
+    #set_trace()
+        
     if method!= None:
         # for convenience
         # TODO: This might not be applicable for later forms of profile anisotorpy
-        r = aniso['r']
-        phi = aniso['phi']
+        r = local_landscape['r']
+        phi = local_landscape['phi']
         r0 = np.array([x, y])
      
         
@@ -547,27 +554,56 @@ def make_anisotropic_profile(x,y, aniso, method='shift'):
     return np.round(x).astype(int), np.round(y).astype(int)
     
 
-def make_anisotropic_syn(s_loc, t_locs, gs, anisotropy, method):
+def make_anisotropic_syn(s_loc, t_locs, gs, local_landscape, nonuniformity):
+    
     syn_pars = {}
+    
+    # delays
     rel_locs = pre_loc2post_loc_rel(s_loc, t_locs, gs)
     delays = np.linalg.norm(rel_locs, axis=1)
     syn_pars['delays'] = delays
     
-    if method == 'cos':
-        phis = np.arctan2(rel_locs[:,1], rel_locs[:,0])
-        phis -= anisotropy['phi']
-        Us = anisotropy['Umin'] + (anisotropy['Umax']-anisotropy['Umin'])*(1+ np.cos(phis))/2# * anisotropy['U'] 
-        
-        syn_pars['Us'] = Us
+    for param, method in nonuniformity.items():
+        if param!= 'connectivity':
             
-    elif method == 'sin':
-        phis = np.arctan2(rel_locs[:,1], rel_locs[:,0])
-        phis -= anisotropy['phi']
-        Us = anisotropy['Umin'] + (anisotropy['Umax']-anisotropy['Umin'])*(1+ np.sin(phis))/2# * anisotropy['U'] 
+            phis = np.arctan2(rel_locs[:,1], rel_locs[:,0])
+            phis -= local_landscape['phi']
+            
+            pmin = local_landscape[param+'min']
+            pmax = local_landscape[param+'max']
+            if 's' not in local_landscape: 
+                s = 1
+            else:
+                s = local_landscape['s'] # scale factor 
+                
+            
+            if method == 'cos':
+                transform = (1+ np.cos(phis/s))/2
+            elif method =='sin':
+                transform = (1+ np.sin(phis/s))/2
+            elif method =='arctan':
+                transform = np.arctan(phis/s)
+            elif method == 'normal':
+                transform = np.exp(-(phis**2)/(2*s**2))
+            else:
+                raise NotImplementedError('Method not recognized.')
+            
+            transform -= transform.min()
+            transform *= (pmax-pmin)/transform.max()
+            transform += pmin
+            
+            # if param =='U':
+            #     set_trace()
+                
+            syn_pars[param] = transform
+            # elif method == 'sin':
+            #     phis = np.arctan2(rel_locs[:,1], rel_locs[:,0])
+            #     phis -= local_landscape['phi']
+            #     Us = local_landscape['Umin'] + (local_landscape['Umax']-local_landscape['Umin'])*(1+ np.sin(phis))/2# * anisotropy['U'] 
+                
+            #     syn_pars['Us'] = Us
         
-        syn_pars['Us'] = Us
-        
-    else:
-        pass
+    # else:
+    #     pass
     
     return syn_pars
