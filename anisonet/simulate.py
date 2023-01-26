@@ -540,7 +540,7 @@ class Simulate(object):
         print('Net set up.')
         
         # for viz
-        if len(list(utils.dict_extractor('phi', self.lscps)))==0:
+        if len(list(utils.dict_extractor('phi', self.lscps)))!=len(self.pops.keys()):
             self.overlay=False
         
     def setup_pops(self):

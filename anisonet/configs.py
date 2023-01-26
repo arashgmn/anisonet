@@ -1300,7 +1300,7 @@ def get_config(name, scale):
         
     elif name == 'I_net_stim':
         c = deepcopy(get_config('I_net', scale))
-        c.add_stim('I_0', I_stim=400*pA, x0=20, y0=10, r=2.5)
+        c.add_stim('I_0', I_stim=500*pA, x0=20, y0=10, r=4)
     
     
     elif name == 'EI_net_stim':

@@ -157,12 +157,9 @@ def plot_firing_rates(sim, suffix='',
         
         # TODO: there should be a mechanism that changes overlay if necessary
         if sim.overlay:
-            try:
-                phis = sim.lscps[2*src.name[-1]]['phi']
-                for ax in axs[:, id_]:
-                    overlay_phis(phis, ax)
-            except KeyError:
-                pass
+            phis = sim.lscps[2*src.name[-1]]['phi']
+            for ax in axs[:, id_]:
+                overlay_phis(phis, ax)
             
     path = osjoin(sim.res_path, 'rates'+suffix+'.png')
     plt.savefig(path, dpi=200, bbox_inches='tight')
@@ -536,7 +533,6 @@ def plot_animation(sim, ss_dur=25, fps=10):
         axs[id_].set_title('Population '+mon.name[-1])
         
         if sim.overlay:
-            # if 'phi' in sim.lscps[2*mon.name[-1]]:
             phis = sim.lscps[2*mon.name[-1]]['phi']
             overlay_phis(phis, axs[id_])
         
