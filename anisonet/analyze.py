@@ -7,7 +7,7 @@ osjoin = os.path.join # an alias for convenient
 import time 
 import numpy as np
 import pandas as pd
-from scipy import sparse
+from scipy import sparse, signal
 from scipy.interpolate import make_interp_spline
 
 from sklearn import manifold
@@ -348,3 +348,12 @@ def find_manifold(sim, plot=True):
         
     return ward
     
+def compute_autocorr(spk_trn, half=False):
+    st = spk_trn.sum(axis=0)
+    autocorr = signal.correlate(st - st.mean(), st - st.mean(), 'full')  # Compute the autocorrelation
+    autocorr /= autocorr.max()
+    lags = signal.correlation_lags(len(st), len(st), 'full')
+    if half:
+        autocorr = autocorr[autocorr.size//2:]
+        lags = lags[lags.size//2:]
+    return autocorr, lags

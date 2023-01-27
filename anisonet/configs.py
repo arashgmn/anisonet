@@ -212,7 +212,7 @@ MAN_ARGS_NONUNIF_METHODS = {
     'tau_d': {valid: set(['phi','tau_dmin','tau_dmax']) for valid in VALID_SYN_METHODS},
      }
 for variable in ['U','tau_f','tau_d']:
-    MAN_ARGS_NONUNIF_METHODS[variable]['normal'].add('s')
+    MAN_ARGS_NONUNIF_METHODS[variable]['normal'].add('s'+variable)
 
 
 
@@ -1308,10 +1308,11 @@ def get_config(name, scale):
         c.add_stim('E_0', I_stim=500*pA, x0=20, y0=10, r=2.5)
         
     elif name == 'I_net_synaniso':
-        c = deepcopy(get_config('I_net', scale))
-        c.add_nonuniformity('II', on='U', method='cos')
+        c = deepcopy(get_config('I_net_syn_TM', scale))
+        c.add_nonuniformity('II', on='U', method='normal')
         c.add_landscape('II', param_name='Umin', val=0.1)
         c.add_landscape('II', param_name='Umax', val=0.3)
+        c.add_landscape('II', param_name='s', val=1)
     
     elif name == 'I_net_syn_TM_synaniso':
         c = deepcopy(get_config('I_net_syn_TM', scale))

@@ -55,18 +55,26 @@ def idx2coords(idxs, net):
     return coords
 
 
-def make_full_train(sim, mon_name):
+def get_spike_train(sim, mon_name, dense=True, idx=True):
     mon_dict = aggregate_mons(sim, mon_name, SI=True)
-    idxs = mon_dict['i']
+    pop_name = mon_name.split('_')[-1]
+    
     ts = mon_dict['t']
+    ts -= ts.min()
+    idxs = mon_dict['i'] # doesn't contains all indices necessarily
     
-    tmin, tmax = ts.min(), ts.max()
-    idxs = sorted(np.unique(idxs))
+    tmax = ts.max()
+    nidxs = sim.pops[pop_name].gs**2  # number of all neurons
+    ntime = int((tmax)//sim.dt) + 1
     
+    t = np.linspace(0, tmax, ntime, endpoint=True)
+    spk_trn = np.zeros((nidxs, ntime), dtype=int)
+    for idx in sorted(set(idxs)):
+        indices = (ts[idxs==idx]/(sim.dt/b2.second)).astype(int)
+        spk_trn[idx, indices] += 1
     
-    ts = np.zeros( (len(idxs), int((tmax-tmin)//sim.dt) + 1))
+    return t, spk_trn
     
-    # for idx in idxs:
         
     
     

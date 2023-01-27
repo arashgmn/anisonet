@@ -1036,8 +1036,9 @@ class Simulate(object):
         viz.plot_realized_landscape(self)
         viz.plot_connectivity(self)
         
-        logging.info('Visualizing firing rate distribution.')
+        logging.info('Visualizing firing rate distribution and autocorrelation.')
         viz.plot_firing_rates_dist(self)
+        viz.plot_autocorr(self)
         
         logging.info('Making activity animation.')
         viz.plot_animation(self, ss_dur=ss_dur) 

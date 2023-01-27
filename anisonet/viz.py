@@ -25,7 +25,7 @@ import os
 osjoin = os.path.join # an alias for convenient
 
 import anisonet.utils as utils 
-from anisonet.analyze import connectivity_manifold
+from anisonet.analyze import connectivity_manifold, compute_autocorr
 
 from pdb import set_trace
 
@@ -822,3 +822,25 @@ def plot_LT_weights(sim):
             figpath = osjoin(sim.res_path, f'LTW_{syn_name}.png')
             plt.savefig(figpath,dpi=200, bbox_inches='tight', )
             plt.close()
+
+def plot_autocorr(sim, half=True):
+    fig, axs = plt.subplots(len(sim.pops),1, figsize=(8, 4*len(sim.pops)),
+                            sharex=True)
+    if  len(sim.pops)==1:
+        axs = [axs]
+    
+    for id_, pop in enumerate(sim.pops_cfg.keys()):
+        t, spk_trn = utils.get_spike_train(sim, 'mon_'+pop)
+        autocorr, lags = compute_autocorr(spk_trn, half=half)
+        lags = lags.astype(float)*(sim.dt/second)
+        
+        axs[id_].loglog(lags, abs(autocorr), label=pop)
+    
+    for ax in axs:
+        ax.set_ylabel(r'Autocorrelation $C(\tau)$')
+        ax.legend()
+    ax.set_xlabel('Temporal lag [s]')
+    
+    figpath = osjoin(sim.res_path, 'autocorr.png')
+    plt.savefig(figpath,dpi=200, bbox_inches='tight', )
+    plt.close()
