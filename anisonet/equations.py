@@ -267,7 +267,7 @@ def get_syn_eqs(conn_name, conn_cfg):
     :rtype: (Brian Equation object, str, str)
 
     """
-    
+
     # equation templates
     tmp_alpha = '''
         dg/dt = (-g+h) / tau : 1 (clock-driven)
@@ -285,9 +285,10 @@ def get_syn_eqs(conn_name, conn_cfg):
         du/dt = (U-u)/tau_f: 1 (clock-driven)
         '''
     
-    tmp_hebbian = '''
-        
-    '''
+    
+    # w is used for training (a.k.a long-term plasticity). If no training is 
+    # performed, it takes the value of 1 and will be shared among all synapses.
+    
     
     # this is modified STDP rule that ensures the weight stays between (0,1).
     # The main treatment is in `on_pre` and `on_post` expression. However, it
@@ -298,6 +299,17 @@ def get_syn_eqs(conn_name, conn_cfg):
         w: 1
     '''
     
+    tmp_SynScl = '''
+        dapre/dt = -apre / taupre : 1 (event-driven)
+        dapost/dt = -apost / taupost : 1 (event-driven)
+        dh/dt = -h/tauw  : 1 (clock-driven)
+        w: 1
+    '''
+    # dw/dt = -w*(h/tauw - F) : 1 (clock-driven)
+    # dw/dt = F*h*w**2: 1 (clock-driven)
+    # F: Hz
+    # dw/dt = w**2 *F/tauw : 1 
+
     # Constructing equations
     kernel, model = conn_cfg[conn_name]['synapse']['type'].split('_') # identify kernel and model
     namespace = copy.deepcopy(conn_cfg[conn_name]['synapse']['params'])
@@ -321,7 +333,7 @@ def get_syn_eqs(conn_name, conn_cfg):
     
     elif kernel=='tsodyks-markram':
         msg = """
-            tsodysk-markram model is defined only for the jump kernel. i.e. 
+            tsodyks-markram model is defined only for the jump kernel. i.e. 
             incremental in the membrane voltage whenever there is a spike. It 
             is possible to extend this kernel to current/conductance models but
             it would require a novel kernel.
@@ -359,14 +371,21 @@ def get_syn_eqs(conn_name, conn_cfg):
         raise NotImplementedError('synaptic model type "{}" is not recognized!'.format(model))
     
     on_post = ''
-    if conn_cfg[conn_name]['training']!=None:
+    
+    if conn_cfg[conn_name]['training']['type'] != None:
         eqs_str = eqs_str.replace('(shared)', '')
+        
+        # adding w to the synaptic equations. Note that we enforce w to be in
+        # the interval [0,1] with the baseline being at w=0.5. Thus, it is 
+        # important to mutlipliy w by 2 before updating the synaptic variables.
+        eqs_str = eqs_str.replace('J*g', '2*w*J*g')
+        on_pre  = on_pre.replace('J*g', '2*w*J*g')
+        on_post = on_post.replace('J*g', '2*w*J*g')
         
         if conn_cfg[conn_name]['training']['type'] =='STDP':
             eqs_str += tmp_STDP
             
             on_pre +='''
-                J *= 2*w
                 apre = Apre
                 w += w*apost
                 '''
@@ -375,8 +394,30 @@ def get_syn_eqs(conn_name, conn_cfg):
                 apost = Apost
                 w += (1-w)*apre
                 '''
-            namespace.update(conn_cfg[conn_name]['training']['params'])
+                
+        elif conn_cfg[conn_name]['training']['type'] =='SynScl':
+            eqs_str += tmp_SynScl
             
+            on_pre +='''
+                apre = Apre * 2 / ( 1+exp( (h-F*tauw)/h0 ) ) 
+                w += w*apost
+                '''
+                
+            on_post += '''
+                h += 1
+                apost = Apost / 2 * ( 1+exp( (h-F*tauw)/h0 ) ) 
+                w += (1-w)*apre 
+                '''
+                # h += h/(F*tauw)
+                # w += apre - sign(J)*h*h0
+        else:
+            pass
+        
+        namespace.update(conn_cfg[conn_name]['training']['params'])
+    
+    
+    
+    
     # if syn_base=='alpha_conductance':
     #     # J is the maximum conductance
     #     eqs_str = tmp_alpha
@@ -420,7 +461,7 @@ def get_syn_eqs(conn_name, conn_cfg):
     # else:
     #     print(syn_base)
     #     raise NotImplementedError
-        
+    
     eqs = b2.Equations(eqs_str)
     namespace.pop('J')
     return eqs, on_pre, on_post, namespace
