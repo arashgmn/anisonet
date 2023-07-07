@@ -164,7 +164,7 @@ The entries in the parameters pool depend on the anisotropy method in use. c.f.
 """
 
 
-from brian2.units import pA, mV, ms, pF, nA
+from brian2.units import pA, mV, ms, pF, nA, Hz
 import numpy as np
 from copy import deepcopy
 from pdb import set_trace
@@ -869,7 +869,7 @@ def make_config(name='EI_net', scalar=3):
     else:
         raise
     
-    return pops_cfg, conn_cfg, stim_cfg
+    return pops_cfg, conn_cfg
        
 
     
@@ -895,7 +895,6 @@ class Configer(object):
         self.lscps_cfg = lscps_cfg 
         self.stims_cfg = stims_cfg
         
-    
     def add_pop(self, name, gs):
         pop_cfg = {}
         pop_cfg['gs'] = gs
@@ -959,10 +958,19 @@ class Configer(object):
     def add_stim(self, name, I_stim, **params):
         self.stims_cfg.update( self.make_stim(name, I_stim, **params) )
         
-    # TODO
-    def add_training(self):
-        pass
+    
+    def add_training(self, obj, type, params):
+        train_cfg = {'type':type,  'params': params}
         
+        if 'training' in self.conns_cfg[obj]:
+            self.conns_cfg[obj]['training'].update(train_cfg)
+        else:
+            self.conns_cfg[obj]['training'] = train_cfg
+
+        del train_cfg
+    
+    
+    
     
     #### CONFIG GENERATORS 
     def make_noise(self, **params):
@@ -987,6 +995,7 @@ class Configer(object):
         
     
     def make_syn(self, syn_type='current', syn_kern='alpha', **params):
+        
         assert syn_type in VALID_SYN_TYPES, 'Only {} synapse types are supported'.format(VALID_SYN_TYPES)
         assert syn_kern in VALID_SYN_KERNELS, 'Only {} synapse kernels are supported'.format(VALID_SYN_KERNELS)
     
@@ -994,13 +1003,13 @@ class Configer(object):
                'params': dict(delay=1*ms)
                }
         
-        if syn_type =='jump': 
-            cfg['params']['J'] = -0.221*mV*(self.scale**2)
+        if syn_type =='jump':
+            cfg['params']['J'] = -0.221*mV*(self.scale**2) 
         elif syn_type =='current':
             cfg['params']['J'] = -10*pA*(self.scale**2)
         else:
             pass # must be adapted for conductances
-        
+            
         if syn_kern == 'tsodyks-markram':
             cfg['params']['tau_f'] = 1000*ms
             cfg['params']['tau_d'] = 200*ms
@@ -1131,6 +1140,7 @@ class Configer(object):
             assert syn_type in VALID_SYN_TYPES, f'invalid synaptic type: {syn_type}'
             syn_type_ = syn_type
         
+        
         # self.conns_cfg[pathway]['synapse']['type'] = syn_kern_ +'_'+ syn_type_ 
         self.conns_cfg[pathway]['synapse'] = self.make_syn(syn_type_,syn_kern_)    
         
@@ -1191,7 +1201,7 @@ class Configer(object):
                 self.conns_cfg,
                 self.nonuniformity,
                 self.lscps_cfg,
-                self.stims_cfg, 
+                self.stims_cfg,
                 )
     
 
@@ -1325,6 +1335,87 @@ def get_config(name, scale):
         c.add_landscape('II', param_name='tau_dmax', val=0.3)
         c.add_landscape('II', param_name='s', val=1)
 
+    elif name == 'iNWG':
+        # c = deepcopy(get_config('homiso_net', scale))
+        
+        # I_net
+        # c.add_profile('II', 'Gamma', theta=3/c.scale, kappa= 4)
+        
+        # c.add_nonuniformity('II', on='connectivity', method='shift')
+        # c.add_landscape('II', 'r', val=2)
+        # c.add_landscape('II', 'phi', vmin=0, vmax=2*np.pi, mode='perlin')
+    
+    
+        # adding STP
+        # c.update_syn('II', syn_kern='tsodyks-markram', syn_type='jump')
+    
+        
+        # STDP
+        # c.add_training('II', type='STDP', 
+        #                 params={'taupre': 10*ms,'taupost': 10*ms,
+        #                       'Apre': 0.05, 'Apost': -0.055,}
+        #                 )
+        
+        # STDP+SynScaling
+        # c.add_training('II', type='SynScl',
+        #                 params={'taupre': 10*ms,'taupost': 10*ms,
+        #                       'Apre': 0.05, 'Apost': -0.055,
+        #                       'F': 50*Hz, 'tauw':1000*ms, 'h0': 0.01*Hz }
+        #                 )
+        pass 
+    
+    elif name=='eNWG':
+        c = deepcopy(Configer(scale))
+        c.add_pop('E', round_to_even(100, scale))
+        c.add_pop('I', 1)
+        
+        c.update_noise('E', {'mu': 0*pA, 'sigma': 200*pA})
+        c.update_noise('I', {'mu': 0*pA, 'sigma': 200*pA})
+        
+        # c.add_stim('E_0', I_stim=350*pA, x0 = 30, y0 = 10, r=3, domain_type='r')
+        # c.add_stim('E_1', I_stim=350*pA, x0 = 20, y0 = 20, r=1.5, domain_type='r')
+        # c.add_stim('E_2', I_stim=350*pA, x_min=3, x_max=7, y_min = 3, y_max=20, domain_type='xy')
+        # c.add_stim('E_3', I_stim=350*pA, x_min=8, x_max=30, y_min=30, y_max=35, domain_type='xy')
+        
+        c.add_stim('E_0', I_stim=350*pA, 
+                   x0 = int(round_to_even(100, scale)/2), 
+                   y0 = int(round_to_even(100, scale)/2),
+                   r = int(round_to_even(100, scale)/5)
+                   )
+                   
+                   
+        c.add_pathway('E','E', ncons=round_to_even(1000, scale**2))
+        c.add_pathway('E','I', ncons=-1)  # every E sends one link to I
+        c.add_pathway('I','E', ncons=-1)  # I sends one link to every E
+        c.add_pathway('I','I', ncons=1, self_link=True)
+
+        J = 10*(scale**2)*pA
+        g = 2 * round_to_even(100, scale)**2 # = N_syn_E / N_syn_I
+        
+        c.update_syn_params(pathway='EE', dict_ = {'J':  J})
+        c.update_syn_params(pathway='EI', dict_ = {'J':  J})
+        c.update_syn_params(pathway='IE', dict_ = {'J':-g*J})
+        c.update_syn_params(pathway='II', dict_ = {'J':-g*J})
+        
+        c.add_profile('EE', 'Gaussian', std=2/scale, gap=0)
+        
+        # c.add_nonuniformity('EE', on='connectivity', method='shift')
+        # c.add_landscape('EE', 'r', val=2)
+        # c.add_landscape('EE', 'phi', vmin=0, vmax=2*np.pi, mode='perlin')
+        
+        # adding STP
+        # c.update_syn('EE', syn_kern='tsodyks-markram', syn_type='jump', 
+        #               J= J*.221*mV/(10*pA))
+        
+        
+        # adding STDP + SynScaling
+        c.add_training('EE', type='STDP',
+                        params={'taupre': 10*ms,'taupost': 10*ms,
+                              'Apre': 0.05, 'Apost': -0.055,
+                              'F': 10*Hz, 'tauw':1000*ms, 'h0': 5}
+                        )
+        
+        
     else:
         raise
         
@@ -1365,24 +1456,24 @@ def get_config(name, scale):
 #     return result
 
 # import gc
-if __name__ == '__main__':
+# if __name__ == '__main__':
     
-    a = get_config('I_net_syn_TM',scale=4)
-    print(a, id(a))
+    # a = get_config('I_net_syn_TM',scale=4)
+    # print(a, id(a))
     #del c
     # gc.collect()
     
-    b = get_config('EI_net_syn_TM',scale=3)
-    print(b, id(b))
+    # b = get_config('EI_net_syn_TM',scale=3)
+    # print(b, id(b))
     #del c
     # gc.collect()
 
-    d = get_config('I_net_syn_TM',scale=2)
-    print(d, id(d))
+    # d = get_config('I_net_syn_TM',scale=2)
+    # print(d, id(d))
     
     # a = get_config('iso_net',scale=1)
     # print(a, id(a))
     
     # b = get_config('homiso_net',scale=3)
-    # print(b, id(b))
-    
+    # # print(b, id(b))
+    # e = get_config('NWG', scale=2)

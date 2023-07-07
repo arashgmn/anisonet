@@ -34,12 +34,12 @@ def get_cax(ax):
     Returns a human-friendly colorbar axis from a given ax, to be used with 
     matplotlib's colorbar method.
     """
+    
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
     
     cax = inset_axes(ax, width="5%", height="100%", 
-                     loc='lower left', bbox_to_anchor=(1.05, 0., 1, 1),
-                     bbox_transform= ax.transAxes, borderpad=0)
-    
+                    loc='lower left', bbox_to_anchor=(1.05, 0., 1, 1),
+                    bbox_transform= ax.transAxes, borderpad=0)
     return cax
 
 
@@ -202,7 +202,8 @@ def plot_firing_snapshots(sim, tmin=None, tmax=None, alpha=0.1):
         
         
 
-def plot_field(field, figpath, vmin=None, vmax=None, phis=None):
+def plot_field(field, figpath, vmin=None, vmax=None, phis=None, ax=None,
+               cmap='twilight_shifted'):
     """
     Plots a field; a landscape, firing rate, or any heatmap.
     
@@ -216,18 +217,18 @@ def plot_field(field, figpath, vmin=None, vmax=None, phis=None):
     :type vmax: float, optional
     """
     
-    m = plt.pcolormesh(field, vmin=vmin, vmax=vmax, shading='flat', 
-                       cmap='twilight_shifted')
+    
+    m = plt.pcolormesh(field, vmin=vmin, vmax=vmax, shading='flat', cmap=cmap)
     ax=plt.gca()
     ax.set_aspect('equal')
     plt.colorbar(m)
     
     if phis is not None:
-        overlay_phis(phis, ax)
-        
+        overlay_phis(phis, ax,)
+    
     plt.savefig(figpath, dpi=200, bbox_inches='tight')
     plt.close()
-    
+
     
 def plot_periodicity(sim, N=10):
     for id_, key in enumerate(sim.conns_cfg.keys()):
@@ -296,6 +297,7 @@ def plot_periodicity(sim, N=10):
             plot_id += 1
         del post_cntr, pres, posts
         
+        
 def plot_landscape(sim):
     """
     Plots the intended landscape (only :math:`\\phi`) for all the populations
@@ -325,6 +327,257 @@ def plot_landscape(sim):
         #         plot_field(phis.reshape((gs, gs)), figpath, 
         #                    vmin=-np.pi, vmax = np.pi)
 
+
+
+def plot_positional_weight(sim, syn):
+    
+    # ang = np.load(osjoin(sim.res_path, 'angles_'+syn+'.npy'))
+    d = np.load(osjoin(sim.res_path, 'distances_'+syn+'.npy'))
+    # gs = sim.syns[syn].target.gs
+    
+    t_idxs = [0,1,2,-3,-2,-1]
+    
+    fig, axs = plt.subplots(3, 2, sharex=True, sharey=True, figsize=(10,8))
+    for t_idx in t_idxs:
+        # STP        
+        path = 'eNWG/random_name/mon_'
+        mon = utils.aggregate_mons_from_disk(path+'STP','mon_syn_'+syn)
+        d_stp = mon['u'][t_idxs, :]*mon['x'][t_idxs,:] #* d 
+        
+        # LTP
+        mon = utils.aggregate_mons_from_disk(path+'LTP','mon_syn_'+syn)
+        d_ltp = mon['w'][t_idxs, :]
+        
+        # LSTP
+        mon = utils.aggregate_mons_from_disk(path+'LSTP','mon_syn_'+syn)
+        d_lstp_ux = mon['u'][t_idxs, :]*mon['x'][t_idxs,:]
+        d_lstp_w  = mon['w'][t_idxs,:]
+        t = mon['t'][t_idx]
+        
+        axs[0,0].scatter(d+t_idx/50, d_lstp_ux[t_idx,:], s=1, label=str(t)+' s')
+        axs[1,0].scatter(d+t_idx/50, d_lstp_w[t_idx,:], s=1, label=str(t)+' s')
+        axs[2,0].scatter(d+t_idx/50, d_lstp_ux[t_idx,:] * d_lstp_w[t_idx,:], s=1, label=str(t)+' s')
+
+        axs[0,1].scatter(d+t_idx/50, d_stp[t_idx,:], s=1, label=str(t)+' s')
+        axs[1,1].scatter(d+t_idx/50, d_ltp[t_idx,:], s=1, label=str(t)+' s')
+        
+    axs[0,0].set_ylabel('ux')
+    axs[1,0].set_ylabel('w')
+    axs[2,0].set_ylabel('uxw')
+    
+    axs[0,0].set_title('LTP + STP')
+    axs[0,1].set_title('LTP/STP only')
+    
+    for ax in axs[:,0]:
+        ax.set_ylim(0,1)
+    for ax in axs[-1, :]:
+        ax.set_xlabel('distance')
+    
+    for ax in axs.ravel():
+        ax.legend(ncol=3, loc='upper right')
+        
+    plt.tight_layout()
+    figpath = osjoin(sim.res_path, 'positional_weight'+ syn+'.png')
+    fig.savefig(figpath, bbox_inches='tight', dpi=350)
+    plt.close()
+    
+        
+        
+
+def plot_anisotropy_in_time(sim, efferent=True):
+    # set_trace()
+    plastic_syns = []
+    for syn in sim.syns:
+        if 'stp' in sim.syns[syn].plasticity_type or 'ltp' in sim.syns[syn].plasticity_type:
+            plastic_syns.append(syn)
+            
+    # plastic_syns = [syn for syn in sim.syns if sim.syns[syn].plasticity_type=='stp_ltp']
+    for id_, syn in enumerate(plastic_syns):
+        
+        if 'stp' in sim.syns[syn].plasticity_type:
+            syn_pla_type = 'stp'
+            nrow = 1
+        if 'ltp' in sim.syns[syn].plasticity_type:
+            syn_pla_type = 'ltp'
+            nrow = 1
+        if 'stp_ltp' in sim.syns[syn].plasticity_type:
+            syn_pla_type = 'stp_ltp'
+            nrow = 3
+            
+        mon = utils.aggregate_mons(sim, 'mon_'+sim.syns[syn].name)
+        
+        fig0, axs0 = plt.subplots(nrow, len(mon['t']), sharex=True, sharey=True,
+                                   figsize=(1.25*len(mon['t']), 4)
+                                  )
+        fig1, axs1 = plt.subplots(nrow, len(mon['t']), sharex=True, sharey=True,
+                                   figsize=(1.25*len(mon['t']), 4)
+                                  )
+        fig2, axs2 = plt.subplots(nrow, len(mon['t']), sharex=True, sharey=True,
+                                   figsize=(1.25*len(mon['t']), 4)
+                                  )
+        
+        axs0 = np.reshape(axs0, (nrow,-1))
+        axs1 = np.reshape(axs1, (nrow,-1))
+        axs2 = np.reshape(axs2, (nrow,-1))
+        
+        ang = np.load(osjoin(sim.res_path, 'angles_'+syn+'.npy'))
+        d = np.load(osjoin(sim.res_path, 'distances_'+syn+'.npy'))
+        X = d * np.cos(ang)#.reshape(gs, gs, -1).mean(axis=-1)
+        Y = d * np.sin(ang)#.reshape(gs, gs, -1).mean(axis=-1)
+        # set_trace()
+        if efferent:
+            suffix='eff'
+            gs = sim.syns[syn].target.gs
+            X = X.reshape(gs, gs, -1).mean(axis=-1)
+            Y = Y.reshape(gs, gs, -1).mean(axis=-1)
+            
+        else:
+            suffix='aff'
+            ang *= -1 # to flip the direction
+            gs = sim.syns[syn].source.gs
+            post_sorted = np.argsort(sim.syns[syn].j)
+            split_by_post = np.cumsum(sim.syns[syn].N_incoming_post)[:-1]
+            
+            X = [x.mean() for x in np.split(X, split_by_post)]
+            Y = [y.mean() for y in np.split(Y, split_by_post)]
+            
+            X = np.reshape(X, (gs,gs))
+            Y = np.reshape(Y, (gs,gs))
+        
+        mean_phis0 = np.arctan2(Y,X)
+        mean_dist0 = np.sqrt(Y**2 + X**2)
+        
+        for t_idx in range(len(mon['t'])):
+            ds = []
+            if 'stp' in syn_pla_type:
+                d_stp = mon['u'][t_idx, :]*mon['x'][t_idx,:] #* d 
+                ds.append(d_stp)
+            if 'ltp' in syn_pla_type:
+                d_ltp = mon['w'][t_idx, :]#* d 
+                ds.append(d_ltp)
+            if 'stp_ltp' in syn_pla_type:
+                d_sltp= mon['u'][t_idx, :]*mon['x'][t_idx,:]*mon['w'][t_idx,:]#* d 
+                ds.append(d_sltp)
+            
+            for ax_idx, _d in enumerate(ds):
+                _X = _d * np.cos(ang)
+                _Y = _d * np.sin(ang)
+                
+                if efferent:
+                    _X = _X.reshape(gs, gs, -1).mean(axis=-1)
+                    _Y = _Y.reshape(gs, gs, -1).mean(axis=-1)
+                else:
+                    _X = [_x.mean() for _x in np.split(_X, split_by_post)]
+                    _Y = [_y.mean() for _y in np.split(_Y, split_by_post)]
+                    
+                    _X = np.reshape(_X, (gs,gs))
+                    _Y = np.reshape(_Y, (gs,gs))
+                
+                mean_phis = np.arctan2(_Y, _X)
+                mean_dist = np.sqrt(_Y**2 + _X**2)
+                
+                m0 = axs0[ax_idx, t_idx].pcolormesh(mean_phis, 
+                                              vmin=-np.pi, vmax=np.pi,
+                                              cmap='twilight_shifted'
+                                              )
+                
+                m1 = axs1[ax_idx, t_idx].pcolormesh(mean_phis-mean_phis0, 
+                                              vmin=-np.pi, vmax=np.pi,
+                                              cmap='twilight_shifted'
+                                              )
+                
+                m2 = axs2[ax_idx, t_idx].pcolormesh(mean_dist/(mean_dist0+1e-12), 
+                                                vmin=0, vmax=2,
+                                                cmap='coolwarm')
+    
+        figs = [fig0, fig1, fig2]
+        axss = [axs0, axs1, axs2]
+        ms = [m0, m1, m2]
+        
+        for ax0, ax1, ax2 in zip(axs0.ravel(), axs1.ravel(), axs2.ravel()):
+            ax0.set_xticks([], [])
+            ax0.set_yticks([], [])
+            ax0.set_aspect('equal')
+        
+            ax1.set_xticks([], [])
+            ax1.set_yticks([], [])
+            ax1.set_aspect('equal')
+        
+            ax2.set_xticks([], [])
+            ax2.set_yticks([], [])
+            ax2.set_aspect('equal')
+        
+        for t_idx in range(len(mon['t'])):
+            axs0[0,t_idx].set_title(f't={mon["t"][t_idx]}')
+            axs1[0,t_idx].set_title(f't={mon["t"][t_idx]}')
+            axs2[0,t_idx].set_title(f't={mon["t"][t_idx]}')
+        
+        alignment_cfg = dict(rotation='horizontal', ha='right', va='center',)
+        
+        for axs in [axs0[:,0], axs1[:,0], axs2[:,0]]:
+            if syn_pla_type== 'stp':
+                axs[0].set_ylabel('STP', **alignment_cfg)
+            elif syn_pla_type == 'ltp':
+                axs[0].set_ylabel('LTP', **alignment_cfg)
+            else:    
+                axs[0].set_ylabel('STP', **alignment_cfg)
+                axs[1].set_ylabel('LTP', **alignment_cfg)
+                axs[2].set_ylabel('L+STP', **alignment_cfg)
+            
+            
+        cbr_cfg = dict(
+            # location='bottom', 
+            # fraction= 0.04*1.5*len(mon['t'])/4, 
+            orientation = 'vertical',
+            # pad=0.04, 
+            # aspect = 20,
+                       )
+        
+        # set_trace()
+        fig_id = 0
+        labels = [r'$\Phi(t)$', r'$\Phi(t) - \Phi(0)$', r'$r(t)/r(0)$']
+
+        
+        for m, fig, axs in zip(ms, figs, axss):
+            # fig.subplots_adjust(wspace=0.2/len(mon['t']), hspace=0.05)
+            
+            # p0 = axs[0, 0].get_position().get_points().flatten()
+            # p1 = axs[-1,0].get_position().get_points().flatten()
+            # print(p0)
+            # print(p1)
+            # print('-'*10)
+            # cax= fig.add_axes([p0[0]-0.05, p1[0], 0.15/len(mon['t']), p0[3]-p1[3]])
+            
+            # p0 = axs[-1, 0].get_position().get_points().flatten()
+            # p1 = axs[-1,-1].get_position().get_points().flatten()
+            # cax= fig.add_axes([p0[0], 0.05, p1[2]-p0[0], 0.05])
+            
+            # fig.colorbar(m, cax=cax, label = labels[fig_id], **cbr_cfg)
+            
+            # fig.colorbar(m, ax=axs[:,-1])
+            # fig.subplots_adjust(left=0.05, bottom=0.06, right=1-0.04, top=1-0.04)
+            # cax = fig.add_axes((0.05, 0.06, 1-0.09, 1-.1))
+            fig.colorbar(m, ax=axs.ravel().tolist(), label = labels[fig_id], **cbr_cfg)
+            fig_id += 1
+
+        # fig0.colorbar(m0, ax=axs0.ravel().tolist(), 
+        #               cax = get_cax(axs0.ravel(), location='bottom'),
+        #               label=r'$\Phi(t)$', **cbr_cfg)
+        # fig1.colorbar(m1, ax=axs1.ravel().tolist(), label=r'$\Phi(t) - \Phi(0)$', **cbr_cfg)
+        # fig2.colorbar(m2, ax=axs2.ravel().tolist(), label=r'$r(t)/r(0)$', **cbr_cfg)
+        
+        # plt.tight_layout()
+        
+        figpath0 = osjoin(sim.res_path, 'evol_phi_'+ syn+'_'+suffix+'.png')
+        figpath1 = osjoin(sim.res_path, 'evol_dphi_'+ syn+'_'+suffix+'.png')
+        figpath2 = osjoin(sim.res_path, 'evol_dist_'+ syn+'_'+suffix+'.png')
+        fig0.savefig(figpath0, bbox_inches='tight', dpi=350)
+        fig1.savefig(figpath1, bbox_inches='tight', dpi=350)
+        fig2.savefig(figpath2, bbox_inches='tight', dpi=350)
+        
+        plt.close('all')
+        
+    
 def plot_realized_landscape(sim):
     """
     Plots the realized landscape (only :math:`\\phi`) for all the populations
@@ -334,42 +587,75 @@ def plot_realized_landscape(sim):
     :type sim: object
     """
     # for id_, key in enumerate(sim.conns_cfg.keys()):
-    for syn in sim.syns.values():
-        spop = syn.source
-        tpop = syn.target
-        gs_s = spop.gs # source pop grid size
-        gs_t = tpop.gs # target pop grid size
-        key = syn.name.split('_')[-1]
+    # for syn in sim.syns.values():
+        # spop = syn.source
+        # tpop = syn.target
+        # gs_s = spop.gs # source pop grid size
+        # gs_t = tpop.gs # target pop grid size
+        # key = syn.name.split('_')[-1]
         
-        phis = np.zeros(spop.N) # containts realized phi        
-        posts = syn.j.__array__()
-        pres = syn.i.__array__()
+        # phis = np.zeros(spop.N) # containts realized phi        
+        # posts = syn.j.__array__()
+        # pres = syn.i.__array__()
         
-        for _, s_idx in enumerate(sorted(set(pres))):
-            t_idxs = posts[pres==s_idx]
-            t_coords = utils.idx2coords(t_idxs, tpop)
-            s_coord = utils.idx2coords(s_idx, spop)*gs_t/gs_s
+        # for _, s_idx in enumerate(sorted(set(pres))):
+        #     t_idxs = posts[pres==s_idx]
+        #     t_coords = utils.idx2coords(t_idxs, tpop)
+        #     s_coord = utils.idx2coords(s_idx, spop)*gs_t/gs_s
             
-            post_cntr = t_coords-s_coord # centers
-            post_cntr = (post_cntr + gs_t/2) % gs_t- gs_t/2 # make periodic
-            phis[s_idx] = np.arctan2(post_cntr[:,1].mean(), post_cntr[:,0].mean())
-            #phis[s_idx] = np.arctan2(post_cntr[:,1], post_cntr[:,0]).mean()
+        #     _, phis[s_idx] = utils.compute_anisotropy(s_coord, t_coords, gs_t)
+        #     # post_cntr = t_coords-s_coord # centers
+        #     # post_cntr = (post_cntr + gs_t/2) % gs_t- gs_t/2 # make periodic
+        #     # phis[s_idx] = np.arctan2(post_cntr[:,1].mean(), post_cntr[:,0].mean())
+        #     # phis[s_idx] = np.arctan2(post_cntr[:,1], post_cntr[:,0]).mean()
+
+    for syn in sim.syns:
+        gs = sim.syns[syn].target.gs
+        # the realized distances and angles are the one of the postsynaptic
+        # 'center of mass' and not the average of individual postsynapses
         
-        figpath = osjoin(sim.res_path, 'realized_phi_'+ key+'.png')
-        plot_field(phis.reshape(gs_s, gs_s), figpath=figpath, vmin=-np.pi, vmax=np.pi)
+        phis = np.load(osjoin(sim.res_path, 'angles_'+syn+'.npy'))
+        ds = np.load(osjoin(sim.res_path, 'distances_'+syn+'.npy'))
         
-        # density plot
-        plt.hist(phis, bins=50, density =True)
-        plt.xlabel(r'$\phi$')
-        plt.ylabel(r'$p(\phi)$')
-        plt.title(r'Realized $\phi$ for '+key)
+        # computing the posts' center of mass
+        X = (ds * np.cos(phis)).reshape(gs, gs, -1).mean(axis=-1)
+        Y = (ds * np.sin(phis)).reshape(gs, gs, -1).mean(axis=-1)
+        
+        mean_phis = np.arctan2(Y,X)
+        mean_dist = np.sqrt(Y**2 + X**2)
+
+        # plotting angles        
+        figpath = osjoin(sim.res_path, 'realized_phi_'+ syn+'.png')
+        plot_field(mean_phis, vmin=-np.pi, vmax=np.pi, figpath=figpath,)
+        
+        # plotting distances
+        figpath = osjoin(sim.res_path, 'realized_distance_'+ syn+'.png')
+        plot_field(mean_dist, vmin=0, vmax=max(mean_dist.max(), gs/5.), 
+                   figpath=figpath, cmap=None)
+
+        
+        # density plots
+        fig, axs = plt.subplots(1,2, figsize=(8,3))
+        
+        axs[0].hist(mean_phis.ravel(), bins=50, density =True)
+        axs[0].set_xlabel(r'$\phi$')
+        axs[0].set_ylabel(r'$p(\phi)$')
+        axs[0].set_title(r'Realized $\phi$ for '+syn)
+        axs[0].set_xlim(-np.pi, np.pi)
+        
+        
+        axs[1].hist(mean_dist.ravel(), bins=50, density =True)
+        axs[1].set_xlabel(r'$d$')
+        axs[1].set_ylabel(r'$p(d)$')
+        axs[1].set_title(r'Realized distances for '+syn)
+        axs[1].set_xlim(0, max(mean_dist.max(), gs/5.))
+        
         plt.tight_layout()
-        plt.xlim(-np.pi, np.pi)
         
-        figpath = osjoin(sim.res_path, 'realized_phi_density_'+ key+'.png')
+        figpath = osjoin(sim.res_path, 'realized_density_'+syn+'.png')
         plt.savefig(figpath, bbox_inches='tight', dpi=200)
         plt.close()
-        del post_cntr, pres, posts
+        
         
 def plot_connectivity(sim):
     """
@@ -395,7 +681,7 @@ def plot_connectivity(sim):
         plt.savefig(figpath, bbox_inches='tight', dpi=200)
         plt.close()
 
-def overlay_phis(phis, ax, size=5, color='k', scale=0.3, **kwargs):
+def overlay_phis(phis, ax, size=5, color='white', scale=0.3, **kwargs):
     gs = len(phis)
     if len(phis.shape)==1:
         gs = np.sqrt(gs).astype(int)
@@ -406,7 +692,7 @@ def overlay_phis(phis, ax, size=5, color='k', scale=0.3, **kwargs):
     X,Y = np.meshgrid(np.arange(gs), np.arange(gs))
     
     #we need to adjust the gating size if it is not divisible to the grid size
-    adjust_needed = gs%size # 
+    adjust_needed = gs%size 
     
     # in case size adjustment is needed, we do so by hopping up and down around
     # the given size to find the closest size which is divisible to the gs. So
@@ -415,9 +701,9 @@ def overlay_phis(phis, ax, size=5, color='k', scale=0.3, **kwargs):
     #   it 2: size + 1
     #   it 3: size - 2
     #   it 4: size + 2
-    #   ...                        
+    #   ...   
     counter = 1
-    while adjust_needed:
+    while adjust_needed and counter<25:
         # this spans back and forth for a good size
         size += (-1)**counter * (counter)
         if size>1:
@@ -429,10 +715,16 @@ def overlay_phis(phis, ax, size=5, color='k', scale=0.3, **kwargs):
     s = np.sin(phi).reshape(gs//size, size, gs//size, size).mean(axis=(1, 3))
     c = np.cos(phi).reshape(gs//size, size, gs//size, size).mean(axis=(1, 3))
     
+    kwargs= dict(edgecolor='k', facecolor='white', linewidth = 0.5,
+                 minlength=.05, width=0.5, 
+                 headlength=2, headaxislength=1.75,
+                 alpha=.5
+                 )
     ax.quiver(X[::size, ::size] + size/2, Y[::size, ::size] + size/2,
               c, s, 
               units='xy', 
-              color=color, scale=scale, **kwargs)
+              color=color, #scale=.078,#scale,
+              **kwargs)
     
 def plot_firing_rates_dist(sim):
     """
@@ -480,11 +772,11 @@ def animator(fig, axs, imgs, vals, ts_bins=[]):
                 imgs[pop_idx].set_array(vals[pop_idx][frame_id])
         else:
             imgs[0].set_array(vals[0][frame_id])
-            
+
         if len(ts_bins) > 0:
-            fig.suptitle('%s' % ts_bins[frame_id])
+            fig.suptitle('%.1f ms' % (ts_bins[frame_id]/ms))
         else:
-            fig.suptitle('%s' % frame_id)
+            fig.suptitle('%.1f ms' % (frame_id/ms))
         
         return *imgs,
 
@@ -506,9 +798,9 @@ def plot_animation(sim, ss_dur=25, fps=10):
         defaults to 50 (corresponding to 50 ms)
     :type ss_dur: int, optional
     """
-    fig, axs = plt.subplots(1, len(sim.pops))
+    fig, axs = plt.subplots(1, len(sim.pops), figsize=(0.5+5*len(sim.pops), 4))
     if  len(sim.pops)==1:
-        axs = [axs]
+        axs = np.array([axs])
     
     ts_bins = np.arange(0, sim.net.t/ms + 1, ss_dur) * ms
     
@@ -524,18 +816,26 @@ def plot_animation(sim, ss_dur=25, fps=10):
         gs = int(np.sqrt(sim.pops[mon.name[-1]].N))
         
         h = np.histogram2d(ts, idxs, bins=[ts_bins, range(gs**2 + 1)])[0]
-        field_val = h.reshape(-1, gs, gs)
+        field_val = h.reshape(-1, gs, gs) # index count
+        field_val/= np.diff(ts_bins)[:, np.newaxis, np.newaxis] # frequency
+
         field_img = axs[id_].imshow(field_val[0], 
                                     vmin=0, vmax=np.max(field_val), 
                                     # norm = LogNorm(vmin=1e0, vmax=np.max(field_val)), 
                                     origin='lower' # to match snapshots 
                                     )
         axs[id_].set_title('Population '+mon.name[-1])
+        plt.colorbar(field_img, cax = get_cax(axs[id_]), 
+                     label = 'Firing rate [Hz]')
+        
         
         if sim.overlay:
             phis = sim.lscps[2*mon.name[-1]]['phi']
             overlay_phis(phis, axs[id_])
         
+        for ax in axs.ravel():
+            ax.set_aspect('equal')
+            
         field_vals.append(field_val)
         field_imgs.append(field_img)
         
@@ -655,71 +955,72 @@ def plot_bump_speed(sim, disp, name):
     plt.close()
     
 def plot_relative_weights(sim, logx=False):
-    plastic_syns = [syn for syn in sim.syns.values() if syn.is_plastic]
+    plastic_syns = [syn for syn in sim.syns.values() if 'stp' in syn.plasticity_type]
     
-    fig, axs = plt.subplots(3, len(plastic_syns) , sharex=True)
-    axs = np.reshape(axs, (3,-1))
-    
-    for id_, syn in enumerate(plastic_syns):
-    
-        mon = utils.aggregate_mons(sim, 'mon_'+syn.name)
-        for idx_t in range(len(mon['t'])):
-            alpha = (idx_t+1.)/len(mon['t'])
+    if len(plastic_syns):
+        fig, axs = plt.subplots(3, len(plastic_syns) , sharex=True)
+        axs = np.reshape(axs, (3,-1))
+        
+        for id_, syn in enumerate(plastic_syns):
+        
+            mon = utils.aggregate_mons(sim, 'mon_'+syn.name)
+            for idx_t in range(len(mon['t'])):
+                alpha = (idx_t+1.)/len(mon['t'])
+                
+                axs[0, id_].hist(mon['u'][idx_t,:]*mon['x'][idx_t,:], bins=100, 
+                                 histtype='step', color='b', alpha=alpha)
+                
+                axs[1, id_].hist(mon['u'][idx_t,:], bins=100, 
+                                 histtype='step', color='g', alpha=alpha)
+                
+                axs[2, id_].hist(mon['x'][idx_t,:]*mon['x'][idx_t,:], bins=100, 
+                                 histtype='step', color='r', alpha=alpha)
             
-            axs[0, id_].hist(mon['u'][idx_t,:]*mon['x'][idx_t,:], bins=100, 
-                             histtype='step', color='b', alpha=alpha)
+            for ax in axs[:,id_]:
+                ax.set_ylim(1e-1, 10**( int( np.log10(len(syn.u)) )+1 ) )
+                
+                # vertical lines of stationary states 
+                # ylims = ax.get_ylim()
+                # ax.vlines(syn.namespace['U'], ylims[0], ylims[1], 
+                #           colors='darkgreen', linestyle='--')
+                # ax.vlines(1, ylims[0], ylims[1], 
+                #           colors='darkred', linestyle='--')
             
-            axs[1, id_].hist(mon['u'][idx_t,:], bins=100, 
-                             histtype='step', color='g', alpha=alpha)
+                
+        for syn_id, syn in enumerate(plastic_syns):
+            ylims = axs[0, syn_id].get_ylim()
             
-            axs[2, id_].hist(mon['x'][idx_t,:]*mon['x'][idx_t,:], bins=100, 
-                             histtype='step', color='r', alpha=alpha)
-        
-        for ax in axs[:,id_]:
-            ax.set_ylim(1e-1, 10**( int( np.log10(len(syn.u)) )+1 ) )
-            
-            # vertical lines of stationary states 
-            # ylims = ax.get_ylim()
-            # ax.vlines(syn.namespace['U'], ylims[0], ylims[1], 
-            #           colors='darkgreen', linestyle='--')
-            # ax.vlines(1, ylims[0], ylims[1], 
-            #           colors='darkred', linestyle='--')
-        
-            
-    for syn_id, syn in enumerate(plastic_syns):
-        ylims = axs[0, syn_id].get_ylim()
-        
-        axs[0, syn_id].plot([],[],'b', label='w=ux')
-        axs[1, syn_id].plot([],[],'g', label='u')
-        axs[2, syn_id].plot([],[],'r', label='x')
-
-        axs[0, syn_id].vlines(syn.namespace['U'], ylims[0], ylims[1], 
-                  colors='b', linestyle='--')
-        
-        axs[1, syn_id].vlines(syn.namespace['U'], ylims[0], ylims[1], 
-                  colors='g', linestyle='--')
-        
-        axs[2, syn_id].vlines(1, ylims[0], ylims[1], 
-                  colors='r', linestyle='--')
-        
-        
-    for ax in axs[:,0]:
-        ax.set_ylabel('frequency')
+            axs[0, syn_id].plot([],[],'b', label='w=ux')
+            axs[1, syn_id].plot([],[],'g', label='u')
+            axs[2, syn_id].plot([],[],'r', label='x')
     
-    for ax in axs.ravel():
-        ax.set_yscale('log')
-        ax.set_xlim(-.05, 1.05)
-        ax.legend(loc='best')
+            axs[0, syn_id].vlines(syn.namespace['U'], ylims[0], ylims[1], 
+                      colors='b', linestyle='--')
+            
+            axs[1, syn_id].vlines(syn.namespace['U'], ylims[0], ylims[1], 
+                      colors='g', linestyle='--')
+            
+            axs[2, syn_id].vlines(1, ylims[0], ylims[1], 
+                      colors='r', linestyle='--')
+            
+            
+        for ax in axs[:,0]:
+            ax.set_ylabel('frequency')
         
-        if logx:
-            ax.set_xscale('log')
-    
-    figpath = osjoin(sim.res_path, 'weight_modulation.png')
-    plt.savefig(figpath, bbox_inches='tight', dpi=200)
-    plt.close()
-    
+        for ax in axs.ravel():
+            ax.set_yscale('log')
+            ax.set_xlim(-.05, 1.05)
+            ax.legend(loc='best')
+            
+            if logx:
+                ax.set_xscale('log')
+        
+        figpath = osjoin(sim.res_path, 'weight_modulation.png')
+        plt.savefig(figpath, bbox_inches='tight', dpi=200)
+        plt.close()
+        
 def plot_relative_weights_2d(sim,):
-    plastic_syns = [syn for syn in sim.syns.values() if syn.is_plastic]
+    plastic_syns = [syn for syn in sim.syns.values() if 'stp' in syn.plasticity_type]
     
     for id_, syn in enumerate(plastic_syns):
         
@@ -732,15 +1033,15 @@ def plot_relative_weights_2d(sim,):
         for idx_t in range(len(mon['t'])):
             ax = axs[0, idx_t]
 
-            ax.hist2d(mon['x'][idx_t,:], mon['u'][idx_t,:], 
+            counts, xedges, yedges, im = ax.hist2d(mon['x'][idx_t,:], mon['u'][idx_t,:], 
                       bins =[100, 100], norm=LogNorm()
                       )            
             
             x_ = np.linspace(0,1,101)
             for w_idx, w_ in enumerate([0.01, 0.05, 0.1, 0.25]): # countours
-                ax.plot(x_, w_/(x_+1e-12), '--k', label=f'w={w_}',
+                ax.plot(x_, w_/(x_+1e-12), '--k', label=f'ux={w_}',
                         linewidth = (1+w_idx)*0.5,)    
-            
+        plt.colorbar(im, cax = get_cax(ax), norm= LogNorm())
         
         axs[0,0].set_ylabel('u')
         for idx, ax in enumerate(axs[0,:]):
@@ -757,10 +1058,10 @@ def plot_relative_weights_2d(sim,):
             # ax.vlines(1, ylims[0], ylims[1], 
             #           colors='darkred', linestyle='--')
         
-    figpath = osjoin(sim.res_path, 'weight_modulation_mat.png')
-    plt.savefig(figpath,dpi=200, bbox_inches='tight', )
-    plt.close()
-    
+        figpath = osjoin(sim.res_path, 'weight_modulation_mat.png')
+        plt.savefig(figpath, dpi=150, bbox_inches='tight', )
+        plt.close()
+        
     
 def plot_manifold(sim, ncomp = 2):
     """
@@ -809,7 +1110,7 @@ def plot_LT_weights(sim):
     plots the long-term weight distribution if training is done.
     """
     for syn_name in sim.conns_cfg.keys():
-        if sim.conns_cfg[syn_name]['training']['type']=='STDP':
+        if sim.conns_cfg[syn_name]['training']['type']!=None:
             s = sim.syns[syn_name]
             
             plt.figure()

@@ -10,6 +10,7 @@ osjoin = os.path.join # an alias for convenient
 
 import pickle
 import numpy as np
+from scipy import sparse
 from collections import defaultdict
 
 import brian2 as b2
@@ -55,6 +56,19 @@ def idx2coords(idxs, net):
     return coords
 
 
+def get_syn_id_from_coord(sim, pop, coords, pathway):
+    idxs = coord2idx(coords, sim.pops[pop])
+    nconn = sim.conns_cfg[pathway]['ncons']
+    # syn_idxs = []
+    # set_trace()
+    # for idx in idxs:
+    #     for syn_idx in range(idx*nconn, (idx+1)*nconn):
+    #         syn_idxs.append(syn_idx)
+    syn_idxs = [syn_idx for idx in idxs for syn_idx in range(idx*nconn, (idx+1)*nconn)]
+    
+    return syn_idxs
+    
+
 def get_spike_train(sim, mon_name, dense=True, idx=True):
     mon_dict = aggregate_mons(sim, mon_name, SI=True)
     pop_name = mon_name.split('_')[-1]
@@ -70,12 +84,46 @@ def get_spike_train(sim, mon_name, dense=True, idx=True):
     t = np.linspace(0, tmax, ntime, endpoint=True)
     spk_trn = np.zeros((nidxs, ntime), dtype=int)
     for idx in sorted(set(idxs)):
-        indices = (ts[idxs==idx]/(sim.dt/b2.second)).astype(int)
+        indices = (ts[idxs==idx]//(sim.dt/b2.second)).astype(int)
         spk_trn[idx, indices] += 1
     
     return t, spk_trn
     
         
+def aggregate_mons_from_disk(path, mon_name):
+    
+    # data_path = sim.data_path
+    # name_pattern = sim.name+ '_'+ mon_name+'_*.dat'
+    
+    name_pattern = 'random_name_'+ mon_name+'_*.dat'
+    files_list = sorted(glob.glob( osjoin(path, name_pattern)))
+    mon = {}
+    for file in sorted(files_list):
+        with open(file, 'rb') as f:
+            data = pickle.load(f)
+            
+            for key, value in data.items():
+                if key in mon:
+                    mon[key] = np.append(mon[key], value)
+                else:
+                    mon[key] = value
+            # ts.append(list(data['t']/ms))
+            
+            # idxs.append(list(data['i']))
+    
+    # if not SpikeMonitor, then we have to reshape the monitors
+    if 'syn' in mon_name:
+        for key, value in mon.items():
+            if key not in ['t', 'N']:
+                mon[key] = value.reshape(len(mon['t']),-1)
+                
+    # if SI:
+    #     mon['t'] /= (1*second)
+    # # idxs = np.concatenate(idxs)
+    # # ts = np.concatenate(ts)
+
+    return mon
+
     
     
 def aggregate_mons(sim, mon_name, SI=False):
@@ -177,6 +225,36 @@ def get_line_idx(x0, y0, c, pop, eps=2):
     idxs = coord2idx(coords, pop)
     return idxs, coords
     
+ 
+    
+def compute_eff_anisotropy(s_coord, t_coords, gs):
+    """Efference anisotropy computes the radius and angle of the averagte 
+    pre to post vector."""
+    # post_cntr = t_coords-s_coord # centers
+    # post_cntr = (post_cntr + gs/2) % gs- gs/2 # make periodic
+    posts_centered = compute_precentric_posts(t_coords, s_coord, gs )
+    
+    # mean = np.arctan2(post_cntr[:,1].mean(), post_cntr[:,0].mean())
+    phis = np.arctan2(posts_centered[:,1], posts_centered[:,0])
+    rs = np.sqrt(posts_centered[:,1]**2 + posts_centered[:,0]**2)
+    
+    return estimate_order_parameter(phis, rs)
+    
+
+def compute_aff_anisotropy(t_coord, s_coords, gs):
+    """Efference anisotropy computes the radius and angle of the average post
+    to pre vector."""
+    
+    # post_cntr = compute_precentric_posts(t_coords, s_coord, gs )
+    pres_centered = compute_postcentric_pres(s_coords, t_coord, gs)
+    
+    # mean = np.arctan2(post_cntr[:,1].mean(), post_cntr[:,0].mean())
+    phis = np.arctan2(pres_centered [:,1], pres_centered [:,0])
+    rs = np.sqrt(pres_centered [:,1]**2 + pres_centered [:,0]**2)
+    
+    return estimate_order_parameter(phis, rs)
+
+    
     
 def phase_estimator(idxs, ts, dt):
     t = np.linspace(0, ts.max(), int(ts.max()//dt) + 1)
@@ -202,15 +280,20 @@ def phase_estimator(idxs, ts, dt):
     
     return t, phis
 
-def estimate_order_parameter(phis, k=None):
 
-    if k==None:
+
+def estimate_order_parameter(phis, k=None, order=1):
+
+    if type(k)==type(None):
         k = np.ones(phis.shape[0])
     else:
         assert len(k)==phis.shape[0]
         
-    R = np.average(np.exp(1j*phis), weights=k, axis=0)
+    R = np.average(np.exp(1j*phis*order), weights=k, axis=0)
     return np.abs(R), np.angle(R)
+
+
+
 
 
 def make_circular(r, r_max):
@@ -331,27 +414,85 @@ def get_anisotropic_U(sim, syn_name, Umax):
         Us[syn_idx] = np.random.beta(alpha, beta, size= len(syn_idx))
     return Us
 
+
+def get_inward_angles(sim, w_name, save_path):
+    
+    for syn in sim.syns:
+        # w = sparse.load_npz(osjoin(sim.res_path, 'w_'+sim.name+'.npz'))
+        # npres = []
+        # idxs = np.zeros(w.nnz,2)
+        dists = np.zeros(syn.target.N)
+        angles = np.zeros(syn.target.N)
+    
+        # for post_idx in range(w.shape[1]):
+        #     pre_reps = w.getcol(post_idx).data # n connections with the same pre-post
+        #     pre_idxs = w.getcol(post_idx).nonzero()[0].tolist() # unique pres
+        #     pre_idxs = np.repeat(pre_idxs, pre_reps) # non-unique_pres
+        
+        for post_idx in range(syn.target.N):
+            rel_dist = get_pre_rel_locs(syn, post_idx)
+            
+            
+        
+
+def get_post_idxs(syn, pre_idx):
+    return syn.j["i=={}".format(pre_idx)]
+    
+def get_pre_idxs(syn, post_idx):
+    return syn.i["j=={}".format(post_idx)]
+    
+def get_post_locs(syn, pre_idx):
+    post_idxs = get_post_idxs(syn, pre_idx)
+    return idx2coords(post_idxs, syn.target)
+
+def get_pre_locs(syn, post_idx):
+    pre_idxs = get_pre_idxs(syn, post_idx)
+    return idx2coords(pre_idxs, syn.source)
+
+
+def compute_precentric_posts(t_locs, s_loc, gs):
+    """relative position of post synapses w.r.t. a pre synapse"""
+    
+    tmp = t_locs - s_loc
+    return (tmp +gs/2) % gs - gs/2
+
+def compute_postcentric_pres(s_locs, t_loc, gs):
+    """relative position of pre synapses w.r.t. a psot synapse."""
+    
+    # I am not sure if the second line works if I compute the "post to pre" 
+    # vector. So instead I compute "pre to post" vectors, and then negate.
+    tmp = t_loc - s_locs
+    tmp = (tmp +gs/2) % gs - gs/2
+    return -tmp 
+
+
 def get_post_rel_locs(syn, pre_idx):
     s_loc = idx2coords(pre_idx, syn.source).astype(float)
     s_loc*= syn.target.gs/syn.source.gs*1.
     s_loc = np.round(s_loc).astype(int)
     
+    # alternative way
+    # t_locs = get_post_locs(syn, pre_idx)
+    # t_locs = compute_precentric_posts(t_locs, s_loc, syn.target.gs)
+    
     t_locs = get_post_locs(syn, pre_idx) - s_loc
-    t_locs =  (t_locs + syn.target.gs/2) % syn.target.gs - syn.target.gs/2
+    t_locs = (t_locs + syn.target.gs/2) % syn.target.gs - syn.target.gs/2
     return t_locs
 
-def get_post_idxs(syn, pre_idx):
-    syns_pre = syn["i=={}".format(pre_idx)]._indices()
-    return syn.j[syns_pre]
 
-def get_post_locs(syn, pre_idx):
-    post_idxs = get_post_idxs(syn, pre_idx)
-    return idx2coords(post_idxs, syn.target)
-
-def pre_loc2post_loc_rel(t_locs, s_loc, gs):
-    tmp = t_locs - s_loc
-    return (tmp +gs/2) % gs - gs/2
+def get_pre_rel_locs(syn, post_idx):
+    t_loc = idx2coords(post_idx, syn.target).astype(float)
+    t_loc*= syn.source.gs/syn.target.gs*1.
+    t_loc = np.round(t_loc).astype(int)
     
+    # alternative way
+    s_locs = get_pre_locs(syn, post_idx)
+    s_locs = compute_postcentric_pres(s_locs, t_loc, syn.source.gs)
+    return s_locs
+
+
+
+
 def get_local_lscp(idx, lscp):
     local_lscp = {}
     

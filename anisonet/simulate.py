@@ -31,9 +31,10 @@ from anisonet.anisofy import draw_posts
 
 from pdb import set_trace
 
-b2.seed(81)
+b2.seed(8)
 
-_plastic_models = ['tsodyks-markram']
+_stp_models = ['tsodyks-markram']
+_ltp_models = ['STDP', 'SynScl']
 
 
 class Simulate(object):
@@ -42,7 +43,7 @@ class Simulate(object):
     """
     
     def __init__(self, net_name='I_net', load_connectivity=True,  scalar=1,
-                 result_path=None, to_event_driven = True,):
+                 result_path=None, to_event_driven = True, name=''):
         """
         Initializes the simulator object for the given network configuration. 
         By default, tries to load the connectivity matrix from disk, otherwise
@@ -76,11 +77,11 @@ class Simulate(object):
         self.process_configs(to_event_driven) 
         #self.assess_landscape()
         #self.base = self.get_synaptic_base()
-        self.has_plastic = self.check_plasticity()
+        self.plasticity_type = self.check_plasticity()
         
         self.load_connectivity = load_connectivity
         
-        self.name = 'dummy_name'#self.generate_name(scalar, net_name) #TODO better
+        self.name = name
         
         self.res_path = osjoin(root, self.name)#+'results')
         self.data_path = osjoin(root, self.name)#+'data')
@@ -225,9 +226,12 @@ class Simulate(object):
             if kernel=='tsodyks-markram':
                 self.syns[syn_name].J /= conn_cfg['synapse']['params']['U']
             
-            if conn_cfg['training']['type']=='STDP':
+            if conn_cfg['training']['type']!=None:
                 self.syns[syn_name].w  = 0.5 
             
+            
+            delays = np.load(osjoin(self.res_path,f'distances_{syn_name}.npy'))
+            self.syns[syn_name].delay = delays * 1* b2.ms
             
         # now we impose possible non-uniformities
         for obj_name, nonunif in self.nonuniformity.items():
@@ -302,7 +306,7 @@ class Simulate(object):
                 msg = """
                     Pathway {} is already configured as voltage-based. Noting
                     was converted.""".format(pathway)
-                logging.info(msg)
+                print(msg)
                 
             elif model =='conductance':
                 msg = """
@@ -447,7 +451,7 @@ class Simulate(object):
                  self.conns_cfg[pathway]['profile'] = {'type': 'homog' }
             
             if 'training' not in self.conns_cfg[pathway]:
-                self.conns_cfg[pathway]['training'] = {'type': None }
+                self.conns_cfg[pathway]['training'] = {'type': None , 'params': {}}
             
             # if 'anisotropy' not in self.conns_cfg[pathway]:
             #     self.conns_cfg[pathway]['anisotropy'] = {'params': {},
@@ -717,20 +721,23 @@ class Simulate(object):
         for pathway in sorted(self.conns_cfg.keys()):
             src, trg = pathway
             
-            eqs, on_pre, on_post, namespace = eq.get_syn_eqs(pathway, self.conns_cfg)
+            # if src==trg=='I':
+            #     set_trace()
+                
+            eqs, on_pre, on_post, namespace = eq.get_syn_eqs(pathway, 
+                                                             self.conns_cfg)
             eqs = self.get_nonunif_eqs(pathway, eqs) # adjust equations for nonuniformities
             
             ncons = self.conns_cfg[pathway]['ncons']
             spop = self.pops[src]
             tpop = self.pops[trg]
             
-            
             syn = b2.Synapses(spop, tpop, 
                               model=eqs, 
                               on_pre=on_pre,
                               on_post=on_post,
                               namespace = namespace,
-                              method='exact',
+                              method='euler',
                               name = 'syn_'+pathway
                               )
             
@@ -740,7 +747,7 @@ class Simulate(object):
                 try:
                     print('\tLoading connectivity matrix: {}'.format(w_name))
                     w = sparse.load_npz(osjoin(self.data_path, w_name+'.npz'))
-                    delays = np.load(osjoin(self.data_path, 'delays.npy'))
+                    # delays = np.load(osjoin(self.data_path, 'delays.npy'))
                 except Exception as e: 
                     print(e)
                     print('\tWarning: Connecitivy file {} was not found.'.format(w_name))                    
@@ -764,6 +771,7 @@ class Simulate(object):
                        self_link= self.conns_cfg[pathway]['self_link'],
                        recurrent= trg==src,
                        )
+            
             for s_idx in range(len(spop)):
                 if self.load_connectivity:
                     t_idxs = w.col[w.row==s_idx]
@@ -783,7 +791,7 @@ class Simulate(object):
                     #set_trace()
                     s_coord, t_coords, syn_param = draw_posts(**kws) # projects s_coord
                     t_idxs = utils.coord2idx(t_coords, tpop)
-                    
+                
                     for k,v in syn_param.items():
                         if k in syn_params:
                             syn_params[k] = np.concatenate([syn_params[k],v])
@@ -798,16 +806,20 @@ class Simulate(object):
             #syn.delay = np.random.uniform(0.5, 2.5, len(syn.delay))*b2.ms
             
             #self.state_initializer(syn, self.conns_cfg[key], mode='rand')
-            syn.add_attribute('is_plastic')
-            syn.is_plastic = False
-            for plastic_model in _plastic_models:
-                if plastic_model in self.conns_cfg[pathway]['synapse']['type']:
-                    syn.is_plastic = True 
+            syn.add_attribute('plasticity_type')
+            syn.plasticity_type = ''
+            
+            for stp_model in _stp_models:
+                if stp_model in self.conns_cfg[pathway]['synapse']['type']:
+                    syn.plasticity_type += 'stp_'
+
+            if self.conns_cfg[pathway]['training']['type']!= None:
+                syn.plasticity_type += 'ltp'
             
             
             # append to the class
             self.syns[pathway] = syn
-            #set_trace()
+            
             # save if not saved
             if not self.load_connectivity:
                 row_idx = np.array(syn.i) # pre
@@ -816,7 +828,7 @@ class Simulate(object):
                 w = sparse.coo_matrix((data, (row_idx, col_idx)))
                 sparse.save_npz(osjoin(self.data_path, w_name+'.npz'), w)
                 for k,v in syn_params.items():
-                    np.save(osjoin(self.data_path, k), v)
+                    np.save(osjoin(self.data_path, k +'_'+ pathway), v)
                     
                     
                 del t_coords, s_coord, kws, row_idx, col_idx, data
@@ -824,7 +836,7 @@ class Simulate(object):
         del spop, tpop, syn, t_idxs, w
      
         
-    def configure_monitors(self):
+    def configure_monitors(self, batch_size=1000*b2.ms):
         """
         Defines a list of spike monitor called ``mon_<population_name>`` for 
         each population, and adds them to the ``Simulate`` object.
@@ -851,9 +863,16 @@ class Simulate(object):
                                              record=True, name='mon_'+pop_name))
 
         for syn in self.syns.values():
-            if syn.is_plastic:    
-                self.mons.append(b2.StateMonitor(syn, variables=['u','x'], 
-                                                 record=True, dt = 500*b2.ms,
+            if syn.plasticity_type != '':
+                _vars = []
+                if 'stp' in syn.plasticity_type:
+                    _vars.append('u')
+                    _vars.append('x')
+                if 'ltp' in syn.plasticity_type:
+                    _vars.append('w')
+                    
+                self.mons.append(b2.StateMonitor(syn, variables=_vars, 
+                                                 record=True, dt = batch_size,
                                                  name='mon_'+syn.name))        
             
             #self.mons.append(b2.StateMonitor(self.syns[0], variables=['x','u','g','g_tmp'], record=True, name='syn_'+pop_name))
@@ -958,7 +977,7 @@ class Simulate(object):
         # fmt = '{:0>%d}'%(np.log10(nbatch)+1) #suffix_format
         
         for n in range(nbatch):
-            self.reset_monitors()
+            self.reset_monitors(batch_dur)
             
             dur = min(batch_dur, duration-n*batch_dur)
             print('{} -- Starting simulation part {}/{}'.format(time.ctime(), n+1, nbatch))
@@ -1016,47 +1035,52 @@ class Simulate(object):
             
             del txy, files_list
             
-    def reset_monitors(self):
+    def reset_monitors(self, batch_size):
         """
         Resets the monitors by removing them, redefining them, and adding them
         to the network again. This is necessary in Brian (look here:
         https://brian.discourse.group/t/how-to-reset-network-monitors/548)
         """
         self.net.remove(self.mons)
-        self.configure_monitors()
+        self.configure_monitors(batch_size)
         self.net.add(self.mons)
         
     
     def post_process(self, ss_dur=10):
         print('{} -- Starting postprocessing ...'.format(time.ctime()))
         
-        logging.info('Visualizing landscape, degress, and connectivity.')
+        print('Visualizing landscape, degress, and connectivity.')
         viz.plot_landscape(self)
         viz.plot_in_out_deg(self)
         viz.plot_realized_landscape(self)
         viz.plot_connectivity(self)
         
-        logging.info('Visualizing firing rate distribution and autocorrelation.')
+        print('Visualizing firing rate distribution and autocorrelation.')
         viz.plot_firing_rates_dist(self)
         viz.plot_autocorr(self)
         
-        logging.info('Making activity animation.')
-        viz.plot_animation(self, ss_dur=ss_dur) 
-
-        logging.info('Computing synchrony order parameter.')
+        # print('Computing synchrony order parameter.')
         #viz.plot_R(self)
         
         # short-term weights
-        if self.has_plastic:
+        # TODO: we must differentiate between long and short term plasticity plots
+        if 'stp' in self.plasticity_type:
             viz.plot_relative_weights(self)
             viz.plot_relative_weights_2d(self)
         
         # Long term weights
-        viz.plot_LT_weights(self)
-        
-        
-        analyze.find_bumps(self, plot=True)
-        viz.plot_manifold(self, 2)
+        if 'ltp' in self.plasticity_type:
+            viz.plot_LT_weights(self)
+
+        if 'stp' in self.plasticity_type or 'ltp' in self.plasticity_type:
+            viz.plot_anisotropy_in_time(self, efferent=True)
+            viz.plot_anisotropy_in_time(self, efferent=False)
+                
+        print('Making activity animation.')
+        viz.plot_animation(self, ss_dur=ss_dur, fps=20) 
+
+        # analyze.find_bumps(self, plot=True)
+        # viz.plot_manifold(self, 2)
         
         
     def get_syn_mons(self):
@@ -1076,20 +1100,22 @@ class Simulate(object):
         return syn_mons
         
     def check_plasticity(self):
-        has_plasticity = False
+        plasticity  = ''
         
         for pathway_cfg in self.conns_cfg.values():
-            for model in _plastic_models:
+            for model in _stp_models:
                 if model in pathway_cfg['synapse']['type']:
-                    has_plasticity = True
-    
-        return has_plasticity 
+                    plasticity += 'stp_'
+            
+            if pathway_cfg['training']['type'] != None:
+                plasticity += 'ltp'
+        
+        return plasticity 
     
     def set_protocol(self):
         stim_cfgs = utils.stimulator(self, self.stims_cfg)
         for stim_id, stim_cfg in stim_cfgs.items():
             pop, id_ = stim_id.split('_')
-            
             self.pops[pop].I_stim[ stim_cfg['idxs'] ] = stim_cfg['I_stim']#.values[0]
         
     def train(self):

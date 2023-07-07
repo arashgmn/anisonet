@@ -131,7 +131,7 @@ trianglumertic transformation:
 
 from pdb import set_trace
 import numpy as np
-from anisonet.utils import pre_loc2post_loc_rel 
+from anisonet.utils import compute_precentric_posts 
 
 # def draw_post_syns(s_coord, ncons,
 #                   srow, scol, trow, tcol, 
@@ -407,49 +407,56 @@ def draw_posts(s_coord, ncons,
     scale_x, scale_y = 1.*trow/srow, 1.*tcol/scol
     s_coord = np.round([s_coord[0]*scale_x, s_coord[1]*scale_y]).astype(int) 
     
-    # initialzing containers for postsynapse coordiantes
-    x = np.zeros(ncons, dtype=int)
-    y = np.zeros(ncons, dtype=int)
+    if ncons<0:
+        x,y = np.meshgrid(np.arange(tcol), np.arange(trow))
+        t_coords = np.array([x.ravel(), y.ravel()]).T 
     
-    # intialzing synaptic parameters
-    delays = np.zeros(ncons, dtype=float)
-    
-    redraw = (x==0) & (y==0)  # index of those who must be redrawn. Now, all.
-    while sum(redraw)>0:
-        ncon = sum(redraw)
+    else:
+        # initialzing containers for postsynapse coordiantes
+        x = np.zeros(ncons, dtype=int)
+        y = np.zeros(ncons, dtype=int)
         
-        # making a (for now isotropic) point cloud around the presynapse
-        if profile['type']=='homog':
-            x_= np.random.randint(0,tcol, size=ncon)-s_coord[0]
-            y_= np.random.randint(0,trow, size=ncon)-s_coord[1]
+        # intialzing synaptic parameters
+        # dists = np.zeros(ncons, dtype=float)
+        # angles = np.zeros(ncons, dtype=float)
         
-        else:
-            alpha = np.random.uniform(-np.pi, np.pi, ncon)
-            radius = get_radial_profile(ncon, profile)
-            x_, y_ = radius*np.cos(alpha), radius*np.sin(alpha) 
-        
-        # making anisotropic connectivity
-        x_, y_ = make_anisotropic_profile(x_, y_, 
-                                          local_landscape, 
-                                          nonuniformity)    
-        
-        # make coordinates periodic around the presynapse
-        x[redraw] = (x_ + tcol/2) % tcol - tcol/2
-        y[redraw] = (y_ + trow/2) % trow - trow/2
-        delays[redraw] = np.sqrt(x_**2 + y_**2)/2.5 # this division is arbitrary
-        
-        # mark self-links for redraw, if necessary
-        if (recurrent) and (not self_link):
-            redraw = (x==0) & (y==0)
-        else:
-            # source and target populations are different.
-            # No self-link can possibly occur. 
-            redraw = np.zeros_like(x, dtype=bool)
+        redraw = (x==0) & (y==0)  # index of those who must be redrawn. Now, all.
+        while sum(redraw)>0:
+            ncon = sum(redraw)
             
-    # translating the coordinates w.r.t. source coordinates
-    x = (x + s_coord[0]) % tcol
-    y = (y + s_coord[1]) % trow
-    t_coords = np.array([x,y]).T 
+            # making a (for now isotropic) point cloud around the presynapse
+            if profile['type']=='homog':
+                x_= np.random.randint(0,tcol, size=ncon)-s_coord[0]
+                y_= np.random.randint(0,trow, size=ncon)-s_coord[1]
+            
+            else:
+                alpha = np.random.uniform(-np.pi, np.pi, ncon)
+                radius = get_radial_profile(ncon, profile)
+                x_, y_ = radius*np.cos(alpha), radius*np.sin(alpha) 
+            
+            # making anisotropic connectivity
+            x_, y_ = make_anisotropic_profile(x_, y_, 
+                                              local_landscape, 
+                                              nonuniformity)    
+            
+            # make coordinates periodic around the presynapse
+            x[redraw] = (x_ + tcol/2) % tcol - tcol/2
+            y[redraw] = (y_ + trow/2) % trow - trow/2
+            # dists[redraw] = np.sqrt(x_**2 + y_**2)
+            # angles[redraw] = np.arctan2(y_/x_)
+            
+            # mark self-links for redraw, if necessary
+            if (recurrent) and (not self_link):
+                redraw = (x==0) & (y==0)
+            else:
+                # source and target populations are different.
+                # No self-link can possibly occur. 
+                redraw = np.zeros_like(x, dtype=bool)
+                
+        # translating the coordinates w.r.t. source coordinates
+        x = (x + s_coord[0]) % tcol
+        y = (y + s_coord[1]) % trow
+        t_coords = np.array([x,y]).T 
     
     #set_trace()
     # make anisotropic parameters
@@ -559,15 +566,14 @@ def make_anisotropic_syn(s_loc, t_locs, gs, local_landscape, nonuniformity):
     syn_pars = {}
     
     # delays
-    rel_locs = pre_loc2post_loc_rel(s_loc, t_locs, gs)
-    delays = np.linalg.norm(rel_locs, axis=1)
-    syn_pars['delays'] = delays
+    rel_locs = compute_precentric_posts(t_locs, s_loc, gs)
+    syn_pars['distances'] = np.linalg.norm(rel_locs, axis=1)
+    syn_pars['angles'] = np.arctan2(rel_locs[:,1],rel_locs[:,0])
     
     for param, method in nonuniformity.items():
-        if param!= 'connectivity':
-            
-            phis = np.arctan2(rel_locs[:,1], rel_locs[:,0])
-            phis -= local_landscape['phi']
+        if param != 'connectivity':
+            # difference of local angle and landscape
+            dphis = syn_pars['angles'] - local_landscape['phi']
             
             pmin = local_landscape[param+'min']
             pmax = local_landscape[param+'max']
@@ -578,13 +584,13 @@ def make_anisotropic_syn(s_loc, t_locs, gs, local_landscape, nonuniformity):
                 
             
             if method == 'cos':
-                transform = (1+ np.cos(phis/s))/2
+                transform = (1+ np.cos(dphis/s))/2
             elif method =='sin':
-                transform = (1+ np.sin(phis/s))/2
+                transform = (1+ np.sin(dphis/s))/2
             elif method =='arctan':
-                transform = np.arctan(phis/s)
+                transform = np.arctan(dphis/s)
             elif method == 'normal':
-                transform = np.exp(-(phis**2)/(2*s**2))
+                transform = np.exp(-(dphis**2)/(2*s**2))
             else:
                 raise NotImplementedError('Method not recognized.')
             
