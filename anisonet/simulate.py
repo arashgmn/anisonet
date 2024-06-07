@@ -64,7 +64,7 @@ class Simulate(object):
         """
         
         if result_path==None:
-            result_path = os.getcwd()
+            result_path = osjoin(os.getcwd(), 'results')
         root = osjoin(result_path, net_name)
                 
         # initialize with defaults
@@ -913,7 +913,7 @@ class Simulate(object):
                 pickle.dump(data, f)
         
         # saving monitors means the a new batch will be configured next
-        # so we can update the sate safely.
+        # so we can update the state safely.
         self.update_state()
         
         del mon, data, path

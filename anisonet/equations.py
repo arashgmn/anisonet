@@ -312,20 +312,20 @@ def get_syn_eqs(conn_name, conn_cfg):
     
     # kernel related components (only traces updates are given here)
     if kernel == 'alpha':
-    	eqs_str = tmp_alpha
-    	on_pre = 'h += exp(1)\n' 
+        eqs_str = tmp_alpha
+        on_pre = 'h += exp(1)\n' 
     
     elif kernel== 'biexp':
-    	eqs_str = tmp_biexp
-    	on_pre = '' # TODO: we have to decide how do we normalize exp kernel
+        eqs_str = tmp_biexp
+        on_pre = '' # TODO: we have to decide how do we normalize exp kernel
     
     elif kernel== 'exp':
-    	eqs_str = tmp_exp
-    	on_pre = 'g += 1\n' # TODO: we have to decide how do we normalize exp kernel
+        eqs_str = tmp_exp
+        on_pre = 'g += 1\n' # TODO: we have to decide how do we normalize exp kernel
         
     elif kernel=='const' : # constant kernel
-    	eqs_str = 'g = 1 : 1'
-    	on_pre = '' # none 
+        eqs_str = 'g = 1 : 1'
+        on_pre = '' # none 
     
     elif kernel=='tsodyks-markram':
         msg = """
