@@ -10,7 +10,7 @@ This is a `Brian2` implementation of an anisotropic network introduced in [From 
 - pandas, scikit-learn, seaborn, ... (may be removed or expanded during development) 
 
 # Documentation
-For further details check the documentation here: [https://arashgmn.github.io/snn-toolbox](https://arashgmn.github.io/snn-toolbox)
+For further details check the documentation here: [https://arashgmn.github.io/anisonet](https://arashgmn.github.io/anisonet)
 
 # Installation
 ## Download/clone repository
