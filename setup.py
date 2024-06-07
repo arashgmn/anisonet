@@ -18,13 +18,13 @@ setup(
     license='MIT',
     packages=['anisonet'],
     install_requires=[
-        'numpy==1.22',
-	'matplotlib==3.5',
-	'brian2==2.5',
+        'numpy',
+		'matplotlib',
+		'brian2==2.6',
         'scipy',
         'pandas',
         'scikit-learn',
-	'noise',             
+		'noise',             
     ],
 
     # classifiers=[
