@@ -290,9 +290,16 @@ def get_syn_eqs(conn_name, conn_cfg):
         
     '''
     
-    # this is modified STDP rule that ensures the weight stays between (0,1).
+    # this is modified STDP rule that ensures the weight stays between (0,1),
+    # a.k.a soft bound STDP: 
+    # http://www.scholarpedia.org/article/Spike-timing_dependent_plasticity
     # The main treatment is in `on_pre` and `on_post` expression. However, it
-    # also requires the Apre and Apost to be absolutely less than 1.
+    # also requires the Apre and Apost to be absolutely less than 1. Our `A`s
+    # are equivalent ot the `eta`s of the article above.
+    # In addition, our implementation only considers the nearest-neighbor 
+    # spike-interaction, since we update the trace values to their maximum and
+    # are not added together. This can be easily changed though.
+    
     tmp_STDP = '''
         dapre/dt = -apre / taupre : 1 (event-driven)
         dapost/dt = -apost / taupost : 1 (event-driven)
@@ -320,7 +327,7 @@ def get_syn_eqs(conn_name, conn_cfg):
     	eqs_str = 'g = 1 : 1'
     	on_pre = '' # none 
     
-    elif kernel=='tsodysk-markram':
+    elif kernel=='tsodyks-markram':
         msg = """
             tsodysk-markram model is defined only for the jump kernel. i.e. 
             incremental in the membrane voltage whenever there is a spike. It 
@@ -366,11 +373,13 @@ def get_syn_eqs(conn_name, conn_cfg):
         if conn_cfg[conn_name]['training']['type'] =='STDP':
             eqs_str += tmp_STDP
             
-            on_pre +='''
+            # Note that since updates should take place before any other action
+            # we do not use += here.
+            on_pre ='''
                 J *= 2*w
                 apre = Apre
                 w += w*apost
-                '''
+                ''' + on_pre
                 
             on_post += '''
                 apost = Apost
@@ -421,7 +430,13 @@ def get_syn_eqs(conn_name, conn_cfg):
     # else:
     #     print(syn_base)
     #     raise NotImplementedError
-        
+    
+    # print('This is equation:\n')
+    # print(eqs_str)
+    # print('This is on_pre:\n')
+    # print(on_pre)
+    # print('This is on_post:\n')
+    # print(on_post)
     eqs = b2.Equations(eqs_str)
     namespace.pop('J')
     return eqs, on_pre, on_post, namespace

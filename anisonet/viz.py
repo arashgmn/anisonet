@@ -347,14 +347,17 @@ def plot_realized_landscape(sim):
         
         for _, s_idx in enumerate(sorted(set(pres))):
             t_idxs = posts[pres==s_idx]
-            t_coords = utils.idx2coords(t_idxs, tpop)
-            s_coord = utils.idx2coords(s_idx, spop)*gs_t/gs_s
             
-            post_cntr = t_coords-s_coord # centers
-            post_cntr = (post_cntr + gs_t/2) % gs_t- gs_t/2 # make periodic
+            # t_coords = utils.idx2coords(t_idxs, tpop)
+            # s_coord = utils.idx2coords(s_idx, spop)*gs_t/gs_s
+            
+            # post_cntr = t_coords-s_coord # centers
+            # post_cntr = (post_cntr + gs_t/2) % gs_t- gs_t/2 # make periodic
+            
+            post_cntr = utils.get_post_rel_locs(syn, s_idx)
             phis[s_idx] = np.arctan2(post_cntr[:,1].mean(), post_cntr[:,0].mean())
             #phis[s_idx] = np.arctan2(post_cntr[:,1], post_cntr[:,0]).mean()
-        
+
         figpath = osjoin(sim.res_path, 'realized_phi_'+ key+'.png')
         plot_field(phis.reshape(gs_s, gs_s), figpath=figpath, vmin=-np.pi, vmax=np.pi)
         
@@ -823,3 +826,37 @@ def plot_LT_weights(sim):
             figpath = osjoin(sim.res_path, f'LTW_{syn_name}.png')
             plt.savefig(figpath,dpi=200, bbox_inches='tight', )
             plt.close()
+
+def plot_aniso_weights(sim):
+    """
+    Plots the effective direction of the connectivity for each neuron based on
+    the modified synaptic weights.
+    """
+    
+    from brian2 import mV
+    
+    # for id_, key in enumerate(sim.conn_cfg.keys()):
+    for syn in sim.syns.values():
+        spop = syn.source
+        gs_s = spop.gs # source pop grid size
+        key = syn.name.split('_')[-1]
+        
+        phis = np.zeros(spop.N) # containts realized phi        
+        posts = syn.j.__array__()
+        pres = syn.i.__array__()
+        
+        Js = syn.J/mV
+        Nconn = syn.N_outgoing_pre[0] # assuming all have the same
+        
+        for _, s_idx in enumerate(sorted(set(pres))):
+            post_cntr = utils.get_post_rel_locs(syn, s_idx)
+            
+            phis[s_idx] = np.arctan2(
+                np.average(post_cntr[:,1]*Js[s_idx*Nconn:(s_idx+1)*Nconn]),
+                np.average(post_cntr[:,0]*Js[s_idx*Nconn:(s_idx+1)*Nconn])
+            )
+        #    set_trace()                
+        figpath = osjoin(sim.res_path, 'aniso_weights_'+ key+'.png')
+        plot_field(phis.reshape(gs_s, gs_s), figpath=figpath, vmin=-np.pi, vmax=np.pi)
+        
+        del post_cntr, pres, posts
